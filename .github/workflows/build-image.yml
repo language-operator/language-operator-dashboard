@@ -19,7 +19,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: language-operator/language-operator-dashboard
+  IMAGE_NAME: language-operator/dashboard
 
 jobs:
   build-dashboard:
