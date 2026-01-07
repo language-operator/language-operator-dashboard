@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { useOrganizations, useActiveOrganization } from '@/hooks/use-organizations'
 import { useOrganizationStore } from '@/store/organization-store'
+import { useOrganization } from '@/components/organization-provider'
 import { useRouter } from 'next/navigation'
 
 interface OrganizationSwitcherProps {
@@ -25,6 +26,7 @@ interface OrganizationSwitcherProps {
 export function OrganizationSwitcher({ className, onCreateNew }: OrganizationSwitcherProps) {
   const [open, setOpen] = useState(false)
   const router = useRouter()
+  const { getOrgUrl } = useOrganization()
   
   const { data: organizations = [] } = useOrganizations()
   const { organization: activeOrganization, userRole } = useActiveOrganization()
@@ -122,7 +124,7 @@ export function OrganizationSwitcher({ className, onCreateNew }: OrganizationSwi
           className="cursor-pointer"
           onSelect={() => {
             setOpen(false)
-            router.push('/settings/organizations')
+            router.push(getOrgUrl('/settings/organizations'))
           }}
         >
           <Building2 className="mr-2 h-4 w-4" />

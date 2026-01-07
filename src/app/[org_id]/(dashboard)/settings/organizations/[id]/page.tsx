@@ -13,6 +13,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { ResourceHeader } from '@/components/ui/resource-header'
 import { useOrganization, useActiveOrganization } from '@/hooks/use-organizations'
 import { useOrganizationStore } from '@/store/organization-store'
+import { useOrganization as useOrgProvider } from '@/components/organization-provider'
 import { toast } from 'sonner'
 import { Building2, Trash2, Save } from 'lucide-react'
 
@@ -24,6 +25,7 @@ const organizationFormSchema = z.object({
 export default function OrganizationSettingsPage() {
   const params = useParams()
   const router = useRouter()
+  const { getOrgUrl } = useOrgProvider()
   const organizationId = params.id as string
   
   const { data: organizationData, isLoading, refetch } = useOrganization(organizationId)
@@ -109,7 +111,7 @@ export default function OrganizationSettingsPage() {
       }
       
       // Redirect to organizations list
-      router.push('/settings/organizations')
+      router.push(getOrgUrl('/settings/organizations'))
     } catch (error) {
       console.error('Error deleting organization:', error)
       toast.error(error instanceof Error ? error.message : 'Failed to delete organization')
