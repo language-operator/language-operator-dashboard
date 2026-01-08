@@ -439,6 +439,7 @@ export function validateOrganizationContext(
 
 /**
  * Wrapper for org-aware API handlers with enhanced error handling
+ * Maintains frontend compatibility by preserving simple error messages
  */
 export function withOrganizationErrorHandler<T extends any[], R>(
   handler: (...args: T) => Promise<Response>
@@ -447,6 +448,18 @@ export function withOrganizationErrorHandler<T extends any[], R>(
     try {
       return await handler(...args)
     } catch (error) {
+      // Log structured error information for backend monitoring
+      if (error instanceof ApiError) {
+        console.error(`[API Error] ${error.code}: ${error.message}`, {
+          statusCode: error.statusCode,
+          details: error.details,
+          context: error.context,
+          timestamp: new Date().toISOString()
+        })
+      } else {
+        console.error('[API Error] Unhandled error:', error)
+      }
+      
       return createOrganizationErrorResponse(error)
     }
   }

@@ -47,6 +47,8 @@
 - **Root cause**: Hardcoded paths instead of `getOrgUrl()`
 - **Fix**: Import `useOrganization` from `@/components/organization-provider`, use `getOrgUrl()`
 - **Test**: Verify navigation maintains `/[org_id]/...` URL structure
+- **Common locations**: Organization switcher dropdowns, post-action redirects, navigation links
+- **Search pattern**: `router.push('/settings` to find hardcoded organization paths
 
 ### 2. TypeScript Errors
 - **Pattern**: Null safety violations, implicit any usage

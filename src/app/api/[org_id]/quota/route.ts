@@ -2,42 +2,39 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getOrganizationContext } from '@/lib/organization-utils'
 import { k8sClient } from '@/lib/k8s-client'
 import { db } from '@/lib/db'
+import { 
+  validateOrganizationContext, 
+  OrganizationNotFoundError,
+  withOrganizationErrorHandler,
+  createSuccessResponse
+} from '@/lib/api-error-handler'
 
 // GET /api/[org_id]/quota - Get organization ResourceQuota usage
-export async function GET(
+export const GET = withOrganizationErrorHandler(async function(
   request: NextRequest, 
   { params }: { params: Promise<{ org_id: string }> }
 ) {
-  try {
-    // Extract organization context from middleware
-    const context = await getOrganizationContext()
-    if (!context) {
-      return NextResponse.json({ error: 'Organization context not found' }, { status: 400 })
-    }
+  // Extract organization context from middleware
+  const context = await getOrganizationContext()
+  const resolvedParams = await params
+  const urlOrgId = resolvedParams.org_id
 
-    const resolvedParams = await params
-    const urlOrgId = resolvedParams.org_id
+  // Validate organization context with enhanced error handling
+  validateOrganizationContext(urlOrgId, context?.organizationId, context?.userId)
 
-    // Verify URL org ID matches context (security check)
-    if (urlOrgId !== context.organizationId) {
-      return NextResponse.json({ 
-        error: 'Organization ID mismatch' 
-      }, { status: 400 })
-    }
+  // Get organization details
+  const organization = await db.organization.findUnique({
+    where: { id: context!.organizationId },
+    select: { id: true, name: true, namespace: true, plan: true }
+  })
 
-    // Get organization details
-    const organization = await db.organization.findUnique({
-      where: { id: context.organizationId },
-      select: { id: true, name: true, namespace: true, plan: true }
-    })
+  if (!organization) {
+    throw new OrganizationNotFoundError(context!.organizationId)
+  }
 
-    if (!organization) {
-      return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
-    }
-
-    // Get ResourceQuota usage from Kubernetes
-    const quotaUsage = await k8sClient.getResourceQuotaUsage(organization.namespace)
-    console.log('[QUOTA API GET] Returning quota for org:', context.organizationId, JSON.stringify(quotaUsage.quota))
+  // Get ResourceQuota usage from Kubernetes
+  const quotaUsage = await k8sClient.getResourceQuotaUsage(organization.namespace)
+  console.log('[QUOTA API GET] Returning quota for org:', context!.organizationId, JSON.stringify(quotaUsage.quota))
 
     // Helper function to convert memory values to bytes
     function convertMemoryToBytes(value: string): number {
@@ -115,74 +112,54 @@ export async function GET(
       }
     })
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        organization: {
-          id: organization.id,
-          name: organization.name,
-          namespace: organization.namespace,
-          plan: organization.plan
-        },
-        quota: quotaUsage.quota,
-        used: quotaUsage.used,
-        available: quotaUsage.available,
-        percentUsed: correctedPercentUsed,
-        warnings,
-        isNearLimit: warnings.length > 0
-      }
-    })
-
-  } catch (error) {
-    console.error('Error fetching organization quota:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch organization quota' },
-      { status: 500 }
-    )
-  }
-}
+  return createSuccessResponse({
+    organization: {
+      id: organization.id,
+      name: organization.name,
+      namespace: organization.namespace,
+      plan: organization.plan
+    },
+    quota: quotaUsage.quota,
+    used: quotaUsage.used,
+    available: quotaUsage.available,
+    percentUsed: correctedPercentUsed,
+    warnings,
+    isNearLimit: warnings.length > 0
+  })
+})
 
 // PUT /api/[org_id]/quota - Update organization quota (plan-based or custom)
-export async function PUT(
+export const PUT = withOrganizationErrorHandler(async function(
   request: NextRequest,
   { params }: { params: Promise<{ org_id: string }> }
 ) {
-  try {
-    // Extract organization context from middleware
-    const context = await getOrganizationContext()
-    if (!context) {
-      return NextResponse.json({ error: 'Organization context not found' }, { status: 400 })
-    }
+  // Extract organization context from middleware
+  const context = await getOrganizationContext()
+  const resolvedParams = await params
+  const urlOrgId = resolvedParams.org_id
 
-    const resolvedParams = await params
-    const urlOrgId = resolvedParams.org_id
+  // Validate organization context with enhanced error handling
+  validateOrganizationContext(urlOrgId, context?.organizationId, context?.userId)
 
-    // Verify URL org ID matches context (security check)
-    if (urlOrgId !== context.organizationId) {
-      return NextResponse.json({ 
-        error: 'Organization ID mismatch' 
-      }, { status: 400 })
-    }
+  const body = await request.json()
+  const { plan, quotas } = body
 
-    const body = await request.json()
-    const { plan, quotas } = body
+  // Must provide either plan OR quotas
+  if (!plan && !quotas) {
+    return NextResponse.json({
+      error: 'Either plan or quotas must be provided'
+    }, { status: 400 })
+  }
 
-    // Must provide either plan OR quotas
-    if (!plan && !quotas) {
-      return NextResponse.json({
-        error: 'Either plan or quotas must be provided'
-      }, { status: 400 })
-    }
+  // Get organization details
+  const organization = await db.organization.findUnique({
+    where: { id: context!.organizationId },
+    select: { id: true, name: true, namespace: true, plan: true }
+  })
 
-    // Get organization details
-    const organization = await db.organization.findUnique({
-      where: { id: context.organizationId },
-      select: { id: true, name: true, namespace: true, plan: true }
-    })
-
-    if (!organization) {
-      return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
-    }
+  if (!organization) {
+    throw new OrganizationNotFoundError(context!.organizationId)
+  }
 
     // Note: Permission check for 'manage_billing' is done in middleware
     // Additional checks could be added here if needed
@@ -209,35 +186,35 @@ export async function PUT(
       newPlan = plan
     }
 
-    // Update database
-    await db.organization.update({
-      where: { id: context.organizationId },
-      data: { plan: newPlan }
-    })
+  // Update database
+  await db.organization.update({
+    where: { id: context!.organizationId },
+    data: { plan: newPlan }
+  })
 
     // Update Kubernetes ResourceQuota
     try {
-      console.log('[QUOTA UPDATE] Starting update for org:', context.organizationId, 'namespace:', organization.namespace)
+      console.log('[QUOTA UPDATE] Starting update for org:', context!.organizationId, 'namespace:', organization.namespace)
       if (quotas) {
         // Custom quota specification
         console.log('[QUOTA UPDATE] Using custom quotas:', JSON.stringify(quotas))
         await k8sClient.updateResourceQuotaWithCustomSpec(
           organization.namespace,
           quotas,
-          context.organizationId
+          context!.organizationId
         )
         console.log('[QUOTA UPDATE] Custom quota update succeeded')
       } else {
         // Plan-based quota
         console.log('[QUOTA UPDATE] Using plan-based quotas, plan:', plan)
-        await k8sClient.updateResourceQuota(organization.namespace, plan, context.organizationId)
+        await k8sClient.updateResourceQuota(organization.namespace, plan, context!.organizationId)
         console.log('[QUOTA UPDATE] Plan-based quota update succeeded')
       }
     } catch (k8sError: any) {
       console.error('[QUOTA UPDATE] Failed to update Kubernetes ResourceQuota:', k8sError.message, k8sError.stack)
       // Rollback database change
       await db.organization.update({
-        where: { id: context.organizationId },
+        where: { id: context!.organizationId },
         data: { plan: organization.plan }
       })
       return NextResponse.json({
@@ -249,25 +226,14 @@ export async function PUT(
     // Get updated quota usage
     const quotaUsage = await k8sClient.getResourceQuotaUsage(organization.namespace)
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        organization: {
-          ...organization,
-          plan: newPlan
-        },
-        quota: quotaUsage.quota,
-        used: quotaUsage.used,
-        available: quotaUsage.available,
-        percentUsed: quotaUsage.percentUsed
-      }
-    })
-
-  } catch (error) {
-    console.error('Error updating organization quota:', error)
-    return NextResponse.json(
-      { error: 'Failed to update organization quota' },
-      { status: 500 }
-    )
-  }
-}
+  return createSuccessResponse({
+    organization: {
+      ...organization,
+      plan: newPlan
+    },
+    quota: quotaUsage.quota,
+    used: quotaUsage.used,
+    available: quotaUsage.available,
+    percentUsed: quotaUsage.percentUsed
+  })
+})
