@@ -17,6 +17,9 @@ import { ClusterProvider } from '@/contexts/cluster-context'
 import { Sidebar } from '@/components/layout/sidebar'
 import { Header } from '@/components/layout/header'
 
+// Force dynamic rendering - these pages depend on database and authentication
+export const dynamic = 'force-dynamic'
+
 interface OrganizationLayoutProps {
   children: React.ReactNode
   params: Promise<{ org_id: string }>
@@ -94,9 +97,4 @@ export default async function OrganizationLayout({
   )
 }
 
-// Generate static params for build optimization
-export async function generateStaticParams() {
-  // In production, you might want to generate params for common organizations
-  // For now, return empty array to use dynamic routing
-  return []
-}
+// Remove generateStaticParams - we want full dynamic rendering
