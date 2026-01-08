@@ -61,14 +61,8 @@ export default async function OrganizationLayout({
     })
 
     if (userOrganizations.length > 0) {
-      // Preserve the current path when redirecting to accessible organization
-      const pathSegments = decodeURIComponent(new URL('http://localhost' + '/').pathname)
-        .split('/')
-        .filter(Boolean)
-        .slice(1) // Remove the org_id segment
-        
-      const newPath = pathSegments.length > 0 ? `/${pathSegments.join('/')}` : ''
-      redirect(`/${userOrganizations[0].organizationId}${newPath}`)
+      // Redirect to the user's first accessible organization dashboard
+      redirect(`/${userOrganizations[0].organizationId}`)
     } else {
       // No organizations at all - redirect to organization management
       redirect('/settings/organizations')
