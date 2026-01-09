@@ -39,14 +39,7 @@ export async function GET() {
     // Use the imported k8sClient instance
     
     try {
-      if (!k8sClient.coreV1Api) {
-        throw new Error('Kubernetes API not available')
-      }
-      
-      const configMapResponse = await k8sClient.coreV1Api.readNamespacedConfigMap({
-        name: CONFIG_MAP_NAME,
-        namespace: OPERATOR_NAMESPACE
-      })
+      const configMapResponse = await k8sClient.readConfigMap(OPERATOR_NAMESPACE, CONFIG_MAP_NAME)
 
       const registriesData = configMapResponse.data?.[REGISTRIES_KEY] || ''
       const registryPatterns = registriesData
@@ -115,19 +108,12 @@ export async function POST(request: NextRequest) {
     // Use the imported k8sClient instance
 
     try {
-      if (!k8sClient.coreV1Api) {
-        throw new Error('Kubernetes API not available')
-      }
-      
       // Try to read existing ConfigMap first
       let configMapExists = true
       let existingConfigMap: any
 
       try {
-        const response = await k8sClient.coreV1Api.readNamespacedConfigMap({
-          name: CONFIG_MAP_NAME,
-          namespace: OPERATOR_NAMESPACE
-        })
+        const response = await k8sClient.readConfigMap(OPERATOR_NAMESPACE, CONFIG_MAP_NAME)
         existingConfigMap = response
       } catch (error: any) {
         if (error.statusCode === 404) {
@@ -147,11 +133,7 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        await k8sClient.coreV1Api.replaceNamespacedConfigMap({
-          name: CONFIG_MAP_NAME,
-          namespace: OPERATOR_NAMESPACE,
-          body: updatedConfigMap
-        })
+        await k8sClient.replaceConfigMap(OPERATOR_NAMESPACE, CONFIG_MAP_NAME, updatedConfigMap)
       } else {
         // Create new ConfigMap
         const newConfigMap = {
@@ -170,10 +152,7 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        await k8sClient.coreV1Api.createNamespacedConfigMap({
-          namespace: OPERATOR_NAMESPACE,
-          body: newConfigMap
-        })
+        await k8sClient.createConfigMap(OPERATOR_NAMESPACE, newConfigMap)
       }
 
       return NextResponse.json({ 

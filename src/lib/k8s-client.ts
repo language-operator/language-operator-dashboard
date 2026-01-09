@@ -1157,6 +1157,38 @@ class KubernetesClient {
     })
   }
 
+  // ConfigMap API methods
+  async readConfigMap(namespace: string, name: string) {
+    if (!this.coreV1Api) {
+      throw new Error('Kubernetes API not available')
+    }
+    return await this.coreV1Api.readNamespacedConfigMap({
+      name,
+      namespace
+    })
+  }
+
+  async createConfigMap(namespace: string, configMap: any) {
+    if (!this.coreV1Api) {
+      throw new Error('Kubernetes API not available')
+    }
+    return await this.coreV1Api.createNamespacedConfigMap({
+      namespace,
+      body: configMap
+    })
+  }
+
+  async replaceConfigMap(namespace: string, name: string, configMap: any) {
+    if (!this.coreV1Api) {
+      throw new Error('Kubernetes API not available')
+    }
+    return await this.coreV1Api.replaceNamespacedConfigMap({
+      name,
+      namespace,
+      body: configMap
+    })
+  }
+
   // Helper methods for common query patterns
 
   /**

@@ -7,11 +7,9 @@ jest.mock('next-auth')
 jest.mock('@/lib/db')
 jest.mock('@/lib/k8s-client', () => ({
   k8sClient: {
-    coreV1Api: {
-      readNamespacedConfigMap: jest.fn(),
-      replaceNamespacedConfigMap: jest.fn(),
-      createNamespacedConfigMap: jest.fn(),
-    },
+    readConfigMap: jest.fn(),
+    replaceConfigMap: jest.fn(),
+    createConfigMap: jest.fn(),
   },
 }))
 
@@ -42,7 +40,7 @@ describe('/api/admin/registries', () => {
       } as any)
 
       // Mock ConfigMap response with actual structure
-      mockK8sClient.coreV1Api.readNamespacedConfigMap.mockResolvedValue({
+      mockK8sClient.readConfigMap.mockResolvedValue({
         data: {
           'allowed-registries': 'docker.io\ngcr.io\n*.gcr.io\nquay.io'
         }
@@ -90,7 +88,7 @@ describe('/api/admin/registries', () => {
       // Mock 404 error
       const error = new Error('Not found')
       ;(error as any).statusCode = 404
-      mockK8sClient.coreV1Api.readNamespacedConfigMap.mockRejectedValue(error)
+      mockK8sClient.readConfigMap.mockRejectedValue(error)
 
       const response = await GET()
       const data = await response.json()
@@ -115,13 +113,13 @@ describe('/api/admin/registries', () => {
       } as any)
 
       // Mock existing ConfigMap
-      mockK8sClient.coreV1Api.readNamespacedConfigMap.mockResolvedValue({
+      mockK8sClient.readConfigMap.mockResolvedValue({
         metadata: { name: 'language-operator-config' },
         data: { 'allowed-registries': 'docker.io' }
       })
 
       // Mock ConfigMap update
-      mockK8sClient.coreV1Api.replaceNamespacedConfigMap.mockResolvedValue({})
+      mockK8sClient.replaceConfigMap.mockResolvedValue({})
 
       const mockRequest = {
         json: jest.fn().mockResolvedValue({
@@ -134,15 +132,13 @@ describe('/api/admin/registries', () => {
 
       expect(response.status).toBe(200)
       expect(data.success).toBe(true)
-      expect(mockK8sClient.coreV1Api.replaceNamespacedConfigMap).toHaveBeenCalledWith(
+      expect(mockK8sClient.replaceConfigMap).toHaveBeenCalledWith(
+        'language-operator',
+        'language-operator-config',
         expect.objectContaining({
-          name: 'language-operator-config',
-          namespace: 'language-operator',
-          body: expect.objectContaining({
-            data: {
-              'allowed-registries': '*.example.com\ndocker.io\ngcr.io'
-            }
-          })
+          data: {
+            'allowed-registries': '*.example.com\ndocker.io\ngcr.io'
+          }
         })
       )
     })
