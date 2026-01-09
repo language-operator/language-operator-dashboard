@@ -79,6 +79,15 @@
 - **Integration**: Test end-to-end with actual Kubernetes clusters
 
 ### Issue Investigation Thoroughness
-- **Common mistake**: Fixing only the obvious symptom (e.g., Cancel button) 
+- **Common mistake**: Fixing only the obvious symptom (e.g., Cancel button)
 - **Complete fix**: Test all related navigation paths (e.g., Back arrow, breadcrumbs)
 - **Pattern**: UI issues often affect multiple components sharing the same broken pattern
+
+### Catalog Manifest Architecture
+- **Anti-pattern**: Custom manifest formats that differ from CRD specs
+- **Problem**: Requires error-prone transformation code (e.g., catalog format → LanguageTool CRD)
+- **Root cause example**: Dashboard bug #7 - DNS fields stripped during catalog-to-CRD transformation
+- **Better approach**: Store catalog manifests as valid CRD specs directly (filed in language-tools#9)
+- **Benefits**: No transformation bugs, schema validation, kubectl compatibility
+- **Principle**: Avoid abstraction layers between user input and Kubernetes when CRD format is sufficient
+- **When fixing**: Consider whether the bug indicates an upstream architectural issue
