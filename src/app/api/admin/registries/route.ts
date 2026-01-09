@@ -39,6 +39,10 @@ export async function GET() {
     // Use the imported k8sClient instance
     
     try {
+      if (!k8sClient.coreV1Api) {
+        throw new Error('Kubernetes API not available')
+      }
+      
       const configMapResponse = await k8sClient.coreV1Api.readNamespacedConfigMap({
         name: CONFIG_MAP_NAME,
         namespace: OPERATOR_NAMESPACE
@@ -111,6 +115,10 @@ export async function POST(request: NextRequest) {
     // Use the imported k8sClient instance
 
     try {
+      if (!k8sClient.coreV1Api) {
+        throw new Error('Kubernetes API not available')
+      }
+      
       // Try to read existing ConfigMap first
       let configMapExists = true
       let existingConfigMap: any
