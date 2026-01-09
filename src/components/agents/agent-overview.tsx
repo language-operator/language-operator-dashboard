@@ -4,6 +4,9 @@ import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { AlertCircle, CheckCircle, Clock } from 'lucide-react'
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
+import { oneLight, oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
+import { useTheme } from 'next-themes'
 import { useModels } from '@/hooks/use-models'
 import { useTools } from '@/hooks/use-tools'
 import { usePersonas } from '@/hooks/use-personas'
@@ -19,6 +22,7 @@ interface AgentOverviewProps {
 
 export function AgentOverview({ agent, clusterName }: AgentOverviewProps) {
   const { getOrgUrl } = useOrganization()
+  const { theme } = useTheme()
   const { data: modelsResponse } = useModels({ clusterName })
   const { data: toolsResponse } = useTools({ clusterName })
   const { data: personasResponse } = usePersonas({ clusterName })
@@ -83,10 +87,31 @@ export function AgentOverview({ agent, clusterName }: AgentOverviewProps) {
           <CardTitle>Goal</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="bg-stone-50 border border-stone-200 p-4 dark:bg-stone-800/50 dark:border-stone-700">
-            <p className="text-base leading-relaxed">
-              {agent.spec.instructions || 'No goal specified'}
-            </p>
+          <div className="border border-stone-200 dark:border-stone-700 rounded-md overflow-hidden">
+            {agent.spec.instructions ? (
+              <SyntaxHighlighter
+                language="markdown"
+                style={theme === 'dark' ? oneDark : oneLight}
+                customStyle={{
+                  margin: 0,
+                  padding: '1rem',
+                  background: 'transparent',
+                  fontSize: '0.875rem',
+                  lineHeight: '1.5',
+                }}
+                codeTagProps={{
+                  style: {
+                    fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Monaco, Consolas, "Liberation Mono", "Courier New", monospace'
+                  }
+                }}
+              >
+                {agent.spec.instructions}
+              </SyntaxHighlighter>
+            ) : (
+              <div className="p-4 text-base leading-relaxed text-stone-600 dark:text-stone-400">
+                No goal specified
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
