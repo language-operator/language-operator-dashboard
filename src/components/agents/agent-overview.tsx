@@ -92,12 +92,16 @@ export function AgentOverview({ agent, clusterName }: AgentOverviewProps) {
               <SyntaxHighlighter
                 language="markdown"
                 style={theme === 'dark' ? oneDark : oneLight}
+                wrapLines={true}
+                wrapLongLines={true}
                 customStyle={{
                   margin: 0,
                   padding: '1rem',
                   background: 'transparent',
                   fontSize: '0.875rem',
                   lineHeight: '1.5',
+                  whiteSpace: 'pre-wrap',
+                  wordWrap: 'break-word',
                 }}
                 codeTagProps={{
                   style: {
