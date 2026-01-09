@@ -203,7 +203,7 @@ export default function CreateClusterAgentPage() {
                       name="instructions"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-lg font-semibold">Goal *</FormLabel>
+                          <FormLabel>Goal *</FormLabel>
                           <FormControl>
                             <Textarea 
                               placeholder="Enter the goal for your agent (e.g., 'Write a short story', 'Analyze customer feedback', 'Generate test cases')..."
