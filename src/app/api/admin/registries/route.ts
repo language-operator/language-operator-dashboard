@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { k8sClient } from '@/lib/k8s-client'
 
-const OPERATOR_NAMESPACE = process.env.OPERATOR_NAMESPACE || 'kube-system'
+const OPERATOR_NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
 const CONFIG_MAP_NAME = 'operator-config'
 const REGISTRIES_KEY = 'allowed-registries'
 
@@ -53,7 +53,7 @@ export async function GET() {
         namespace: OPERATOR_NAMESPACE
       })
 
-      const registriesData = configMapResponse.body.data?.[REGISTRIES_KEY] || ''
+      const registriesData = configMapResponse.data?.[REGISTRIES_KEY] || ''
       const registryPatterns = registriesData
         .split('\n')
         .map(line => line.trim())
@@ -137,7 +137,7 @@ export async function POST(request: NextRequest) {
           name: CONFIG_MAP_NAME,
           namespace: OPERATOR_NAMESPACE
         })
-        existingConfigMap = response.body
+        existingConfigMap = response
       } catch (error: any) {
         if (error.statusCode === 404) {
           configMapExists = false
