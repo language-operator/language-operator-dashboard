@@ -39,6 +39,10 @@
 - **Egress requirements**: Must have both `ports` AND `to` fields
 - **Operator behavior**: Skips rules with `rule.To == nil`
 - **Common error**: Missing `to` field breaks external connectivity
+- **Catalog vs CRD Format**: Tool catalog manifests have flat structure (`dns: []`), but CRD requires nesting (`to: { dns: [] }`)
+- **Transformation Required**: `transformCatalogEntryToLanguageTool()` must nest DNS/CIDR under `to` object
+- **Boolean Precedence**: Use `((rule.dns && rule.dns.length > 0) || rule.cidr) && {...}` not `(rule.dns && rule.dns.length > 0 || rule.cidr) && {...}`
+- **Pattern**: See `src/lib/tool-catalog.ts` lines 103-121 for correct egress transformation
 
 ## Common Issue Patterns
 
