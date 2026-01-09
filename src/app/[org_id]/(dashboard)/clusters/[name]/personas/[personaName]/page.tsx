@@ -51,7 +51,7 @@ export default function ClusterPersonaDetailPage() {
   const { data: personaResponse, isLoading, error } = usePersona(personaName, clusterName)
   const deletePersona = useDeletePersona(clusterName)
 
-  const persona = personaResponse?.data
+  const persona = personaResponse?.data?.persona
 
   const getStatusIcon = (persona: any) => {
     const phase = persona?.status?.phase || 'Unknown'
@@ -172,7 +172,7 @@ export default function ClusterPersonaDetailPage() {
           icon={Users}
           title={
             <div className="flex items-center space-x-3">
-              <span>{persona.spec.displayName || persona.metadata.name}</span>
+              <span>{persona.spec?.displayName || persona.metadata?.name}</span>
               <div className="flex items-center space-x-2">
                 {getStatusIcon(persona)}
                 <Badge className={getStatusColor(persona)}>
@@ -226,9 +226,9 @@ export default function ClusterPersonaDetailPage() {
               <CardContent className="grid gap-4 md:grid-cols-2">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Name</p>
-                  <p className="text-sm">{persona.metadata.name}</p>
+                  <p className="text-sm">{persona.metadata?.name}</p>
                 </div>
-                {persona.spec.displayName && (
+                {persona.spec?.displayName && (
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Display Name</p>
                     <p className="text-sm">{persona.spec.displayName}</p>
@@ -242,7 +242,7 @@ export default function ClusterPersonaDetailPage() {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Created</p>
-                  <p className="text-sm">{formatTimeAgo(persona.metadata.creationTimestamp)}</p>
+                  <p className="text-sm">{formatTimeAgo(persona.metadata?.creationTimestamp)}</p>
                 </div>
               </CardContent>
             </Card>
@@ -288,7 +288,7 @@ export default function ClusterPersonaDetailPage() {
             )}
 
             {/* Additional Instructions */}
-            {persona.spec.instructions && persona.spec.instructions.length > 0 && (
+            {persona.spec.instructions && Array.isArray(persona.spec.instructions) && persona.spec.instructions.length > 0 && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
@@ -301,7 +301,7 @@ export default function ClusterPersonaDetailPage() {
                     {persona.spec.instructions.map((instruction: any, index: number) => (
                       <div key={index} className="bg-stone-50 border border-stone-200 p-4 dark:bg-stone-800/50 dark:border-stone-700">
                         <pre className="whitespace-pre-wrap text-sm font-mono text-stone-900 dark:text-stone-300">
-                          {instruction}
+                          {typeof instruction === 'string' ? instruction : JSON.stringify(instruction, null, 2)}
                         </pre>
                       </div>
                     ))}
@@ -315,7 +315,7 @@ export default function ClusterPersonaDetailPage() {
         <ResourceEventsActivity
           resourceType="persona"
           resourceName={personaName}
-          namespace={persona.metadata.namespace}
+          namespace={persona.metadata?.namespace}
           limit={15}
         />
       </div>
