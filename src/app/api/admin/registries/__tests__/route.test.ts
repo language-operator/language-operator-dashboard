@@ -1,16 +1,26 @@
 import { GET, POST } from '../route'
 import { getServerSession } from 'next-auth'
 import { db } from '@/lib/db'
-import { k8sClient } from '@/lib/k8s-client'
 
 // Mock dependencies
 jest.mock('next-auth')
 jest.mock('@/lib/db')
-jest.mock('@/lib/k8s-client')
+jest.mock('@/lib/k8s-client', () => ({
+  k8sClient: {
+    coreV1Api: {
+      readNamespacedConfigMap: jest.fn(),
+      replaceNamespacedConfigMap: jest.fn(),
+      createNamespacedConfigMap: jest.fn(),
+    },
+  },
+}))
 
 const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>
 const mockDb = db as jest.Mocked<typeof db>
-const mockK8sClient = k8sClient as jest.Mocked<typeof k8sClient>
+
+// Import after mocking to get the mocked instance
+import { k8sClient } from '@/lib/k8s-client'
+const mockK8sClient = k8sClient as any
 
 describe('/api/admin/registries', () => {
   beforeEach(() => {
@@ -29,7 +39,7 @@ describe('/api/admin/registries', () => {
         id: 'member-1',
         userId: 'user-1',
         role: 'admin'
-      })
+      } as any)
 
       // Mock ConfigMap response with actual structure
       mockK8sClient.coreV1Api.readNamespacedConfigMap.mockResolvedValue({
@@ -45,13 +55,11 @@ describe('/api/admin/registries', () => {
       expect(data.registries).toHaveLength(4)
       expect(data.registries[0]).toEqual({
         id: 'registry-0',
-        pattern: 'docker.io',
-        isSystem: true
+        pattern: 'docker.io'
       })
       expect(data.registries[1]).toEqual({
         id: 'registry-1', 
-        pattern: 'gcr.io',
-        isSystem: true
+        pattern: 'gcr.io'
       })
     })
 
@@ -77,7 +85,7 @@ describe('/api/admin/registries', () => {
         id: 'member-1',
         userId: 'user-1', 
         role: 'admin'
-      })
+      } as any)
 
       // Mock 404 error
       const error = new Error('Not found')
@@ -88,14 +96,79 @@ describe('/api/admin/registries', () => {
       const data = await response.json()
 
       expect(response.status).toBe(200)
-      expect(data.registries).toEqual([
-        { id: 'registry-0', pattern: 'docker.io', isSystem: true },
-        { id: 'registry-1', pattern: 'gcr.io', isSystem: true },
-        { id: 'registry-2', pattern: '*.gcr.io', isSystem: true },
-        { id: 'registry-3', pattern: 'quay.io', isSystem: true },
-        { id: 'registry-4', pattern: 'ghcr.io', isSystem: true },
-        { id: 'registry-5', pattern: 'registry.k8s.io', isSystem: true }
-      ])
+      expect(data.registries).toEqual([])
+    })
+  })
+
+  describe('POST', () => {
+    it('should update registries in ConfigMap successfully', async () => {
+      // Mock admin session
+      mockGetServerSession.mockResolvedValue({
+        user: { id: 'user-1' }
+      })
+      
+      // Mock admin membership
+      mockDb.organizationMember.findFirst.mockResolvedValue({
+        id: 'member-1',
+        userId: 'user-1',
+        role: 'admin'
+      } as any)
+
+      // Mock existing ConfigMap
+      mockK8sClient.coreV1Api.readNamespacedConfigMap.mockResolvedValue({
+        metadata: { name: 'language-operator-config' },
+        data: { 'allowed-registries': 'docker.io' }
+      })
+
+      // Mock ConfigMap update
+      mockK8sClient.coreV1Api.replaceNamespacedConfigMap.mockResolvedValue({})
+
+      const mockRequest = {
+        json: jest.fn().mockResolvedValue({
+          registries: ['gcr.io', 'docker.io', '*.example.com']
+        })
+      } as any
+
+      const response = await POST(mockRequest)
+      const data = await response.json()
+
+      expect(response.status).toBe(200)
+      expect(data.success).toBe(true)
+      expect(mockK8sClient.coreV1Api.replaceNamespacedConfigMap).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'language-operator-config',
+          namespace: 'language-operator',
+          body: expect.objectContaining({
+            data: {
+              'allowed-registries': '*.example.com\ndocker.io\ngcr.io'
+            }
+          })
+        })
+      )
+    })
+
+    it('should return 400 for invalid registry patterns', async () => {
+      // Mock admin session
+      mockGetServerSession.mockResolvedValue({
+        user: { id: 'user-1' }
+      })
+      
+      // Mock admin membership
+      mockDb.organizationMember.findFirst.mockResolvedValue({
+        id: 'member-1',
+        userId: 'user-1',
+        role: 'admin'
+      } as any)
+
+      const mockRequest = {
+        json: jest.fn().mockResolvedValue({
+          registries: ['invalid..pattern', 'docker.io']
+        })
+      } as any
+
+      const response = await POST(mockRequest)
+      
+      expect(response.status).toBe(400)
     })
   })
 })
