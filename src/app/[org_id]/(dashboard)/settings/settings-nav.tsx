@@ -3,12 +3,12 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import { Users, Building2, UserCircle } from 'lucide-react'
+import { Users, Building2, UserCircle, Package } from 'lucide-react'
 import { useOrganization } from '@/components/organization-provider'
 
 export function SettingsNav() {
   const pathname = usePathname()
-  const { getOrgUrl } = useOrganization()
+  const { getOrgUrl, isAdmin } = useOrganization()
 
   const settingsNavigation = [
     {
@@ -27,6 +27,15 @@ export function SettingsNav() {
       icon: UserCircle
     }
   ]
+
+  // Add admin-only navigation items
+  if (isAdmin) {
+    settingsNavigation.splice(-1, 0, {
+      name: 'Registries',
+      href: getOrgUrl('/settings/registries'),
+      icon: Package
+    })
+  }
 
   return (
     <nav className="flex flex-col w-24 gap-2 pr-4">
