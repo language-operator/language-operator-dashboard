@@ -5,18 +5,9 @@ import { db } from '@/lib/db'
 import { k8sClient } from '@/lib/k8s-client'
 
 const OPERATOR_NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
-const CONFIG_MAP_NAME = 'operator-config'
+const CONFIG_MAP_NAME = 'language-operator-config'
 const REGISTRIES_KEY = 'allowed-registries'
 
-// Default system registries that should always be present
-const SYSTEM_REGISTRIES = [
-  'docker.io',
-  'gcr.io',
-  '*.gcr.io',
-  'quay.io',
-  'ghcr.io',
-  'registry.k8s.io'
-]
 
 async function validateAdminAccess(session: any): Promise<boolean> {
   if (!session?.user?.id) {
@@ -59,11 +50,10 @@ export async function GET() {
         .map(line => line.trim())
         .filter(line => line.length > 0)
 
-      // Convert to registry objects with metadata
+      // Convert to registry objects
       const registries = registryPatterns.map((pattern, index) => ({
         id: `registry-${index}`,
-        pattern,
-        isSystem: SYSTEM_REGISTRIES.includes(pattern)
+        pattern
       }))
 
       return NextResponse.json({ registries })
@@ -71,13 +61,8 @@ export async function GET() {
       console.error('Error reading ConfigMap:', k8sError)
       
       if (k8sError.statusCode === 404) {
-        // ConfigMap doesn't exist, return default system registries
-        const defaultRegistries = SYSTEM_REGISTRIES.map((pattern, index) => ({
-          id: `registry-${index}`,
-          pattern,
-          isSystem: true
-        }))
-        return NextResponse.json({ registries: defaultRegistries })
+        // ConfigMap doesn't exist, return empty list
+        return NextResponse.json({ registries: [] })
       }
       
       throw k8sError
@@ -121,9 +106,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Ensure system registries are included
-    const allRegistries = [...new Set([...SYSTEM_REGISTRIES, ...registries])]
-    const registriesData = allRegistries.join('\n')
+    const registriesData = registries.sort().join('\n')
 
     // Use the imported k8sClient instance
 
