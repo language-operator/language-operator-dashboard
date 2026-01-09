@@ -135,6 +135,24 @@ export async function PUT(
             name: envVar.key,
             value: envVar.value
           }))
+        }),
+
+        // Update egress rules
+        ...(updateData.egressRules && {
+          egress: updateData.egressRules.map((rule: any) => ({
+            description: rule.description,
+            ...((rule.dns && rule.dns.length > 0) || rule.cidr) && {
+              to: {
+                ...(rule.dns && rule.dns.length > 0 && { dns: rule.dns }),
+                ...(rule.cidr && { cidr: rule.cidr }),
+              },
+            },
+            ...(rule.ports && rule.ports.length > 0) && {
+              ports: rule.ports,
+            },
+          })).filter((rule: any) =>
+            (rule.to?.dns && rule.to.dns.length > 0) || rule.to?.cidr
+          )
         })
       }
     }

@@ -1,6 +1,7 @@
 // Generated TypeScript types for LanguageTool CRD
 
 import { V1ObjectMeta, V1Affinity, V1ResourceRequirements, V1Toleration, V1PodSecurityContext, V1SecurityContext } from '@kubernetes/client-node'
+import { NetworkRule } from './model'
 
 // LanguageTool CRD Types
 export interface LanguageTool {
@@ -59,7 +60,10 @@ export interface LanguageToolSpec {
   
   // Networking
   networking?: NetworkingConfiguration
-  
+
+  // Network egress rules
+  egress?: NetworkRule[]
+
   // Authentication
   authentication?: AuthenticationConfiguration
   

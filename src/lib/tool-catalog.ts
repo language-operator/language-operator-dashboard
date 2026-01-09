@@ -100,7 +100,25 @@ export function transformCatalogEntryToLanguageTool(
       deploymentMode: entry.deploymentMode,
       ...(entry.port && { port: entry.port }),
       ...(clusterName && { clusterRef: clusterName }),
-      ...(entry.egress && { egress: entry.egress }),
+      // Transform egress rules from catalog format to CRD format
+      ...(entry.egress && entry.egress.length > 0 && {
+        egress: entry.egress.map(rule => ({
+          description: rule.description,
+          // Nest DNS/CIDR under 'to' object (CRD format requirement)
+          ...((rule.dns && rule.dns.length > 0) || (rule as any).cidr) && {
+            to: {
+              ...(rule.dns && rule.dns.length > 0 && { dns: rule.dns }),
+              ...((rule as any).cidr && { cidr: (rule as any).cidr }),
+            },
+          },
+          ...(rule.ports && rule.ports.length > 0 && {
+            ports: rule.ports,
+          }),
+        })).filter(rule =>
+          // Only include rules with valid targets
+          (rule.to?.dns && rule.to.dns.length > 0) || rule.to?.cidr
+        )
+      }),
     } as any,
   }
 

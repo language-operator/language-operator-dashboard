@@ -33,6 +33,7 @@ export default function CreateClusterToolPage() {
         requireApproval: formData.requireApproval,
         timeout: formData.timeout,
         retries: formData.retries,
+        egressRules: (formData as any).egressRules,
       }
       
       console.log('Sending payload:', payload)

@@ -191,7 +191,7 @@ export async function PATCH(
     if (body.egressRules) {
       updatedSpec.egress = body.egressRules.map(rule => ({
         description: rule.description,
-        ...(rule.dns && rule.dns.length > 0 || rule.cidr) && {
+        ...((rule.dns && rule.dns.length > 0) || rule.cidr) && {
           to: {
             ...(rule.dns && rule.dns.length > 0 && { dns: rule.dns }),
             ...(rule.cidr && { cidr: rule.cidr }),

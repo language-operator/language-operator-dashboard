@@ -137,7 +137,6 @@ export default function ClusterTools() {
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <CardTitle className="text-lg">{tool.displayName}</CardTitle>
-            <CardDescription className="text-sm text-muted-foreground mt-1">{toolId}</CardDescription>
             <CardDescription className="mt-1 line-clamp-2">
               {tool.description}
             </CardDescription>
@@ -170,7 +169,7 @@ export default function ClusterTools() {
             {tool.egress && (
               <div className="flex items-center gap-1">
                 <Network className="h-3 w-3" />
-                <span>Network Restrictions</span>
+                <span>Network Policy</span>
               </div>
             )}
           </div>

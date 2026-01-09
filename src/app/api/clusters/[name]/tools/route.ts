@@ -6,9 +6,9 @@ import { db } from '@/lib/db'
 import { requirePermission } from '@/lib/permissions'
 import { getUserOrganization } from '@/lib/organization-context'
 import { filterByClusterRef } from '@/lib/cluster-utils'
-import { validateClusterExists, validateResourceBelongsToCluster } from '@/lib/cluster-validation'
+import { validateClusterExists, validateResourceBelongsToCluster, validateClusterForResourceCreation } from '@/lib/cluster-validation'
 import { createErrorResponse, createSuccessResponse, handleKubernetesOperation, validateClusterNameFormat, createAuthenticationRequiredError, createPermissionDeniedError } from '@/lib/api-error-handler'
-import { LanguageTool, LanguageToolListParams } from '@/types/tool'
+import { LanguageTool, LanguageToolListParams, LanguageToolFormData } from '@/types/tool'
 
 // GET /api/clusters/[name]/tools - List all tools for specific cluster
 export async function GET(
@@ -120,5 +120,131 @@ export async function GET(
   } catch (error) {
     console.error('Error fetching cluster tools:', error)
     return createErrorResponse(error, 'Failed to fetch tools for cluster')
+  }
+}
+
+// POST /api/clusters/[name]/tools - Create new tool for specific cluster
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ name: string }> }
+) {
+  try {
+    // Get user's selected organization
+    const { user, organization, userRole } = await getUserOrganization(request)
+
+    if (!user?.id) {
+      throw createAuthenticationRequiredError()
+    }
+
+    const hasPermission = await requirePermission(user.id, organization.id, 'create')
+    if (!hasPermission) {
+      throw createPermissionDeniedError('create tools', 'cluster-scoped tools', userRole)
+    }
+
+    const { name: clusterName } = await params
+
+    // Validate cluster name format and existence
+    validateClusterNameFormat(clusterName)
+    await validateClusterForResourceCreation(organization.namespace, clusterName, organization.id, 'LanguageTool')
+
+    const formData: LanguageToolFormData = await request.json()
+
+    // Transform form data to LanguageTool CRD structure
+    const tool: LanguageTool = {
+      apiVersion: 'langop.io/v1alpha1',
+      kind: 'LanguageTool',
+      metadata: {
+        name: formData.name,
+        namespace: organization.namespace,
+        labels: {
+          'langop.io/organization-id': organization.id,
+          'langop.io/cluster': clusterName,
+        },
+        annotations: {
+          'langop.io/description': formData.description || '',
+          'langop.io/created-by-email': user.email,
+        },
+      },
+      spec: {
+        type: formData.type,
+        clusterRef: clusterName,
+        ...(formData.image && { image: formData.image }),
+        ...(formData.description && { description: formData.description }),
+
+        // Environment variables
+        ...(formData.envVars && formData.envVars.length > 0 && {
+          env: formData.envVars.map(v => ({
+            name: v.name,
+            value: v.value,
+          }))
+        }),
+
+        // Resource management
+        ...(formData.cpuRequest || formData.memoryRequest || formData.cpuLimit || formData.memoryLimit) && {
+          resources: {
+            requests: {
+              ...(formData.cpuRequest && { cpu: formData.cpuRequest }),
+              ...(formData.memoryRequest && { memory: formData.memoryRequest }),
+            },
+            limits: {
+              ...(formData.cpuLimit && { cpu: formData.cpuLimit }),
+              ...(formData.memoryLimit && { memory: formData.memoryLimit }),
+            }
+          }
+        },
+
+        // Service configuration
+        ...(formData.enableService && formData.servicePort && {
+          service: {
+            port: formData.servicePort,
+            ...(formData.serviceType && { type: formData.serviceType }),
+          }
+        }),
+
+        // Health check configuration
+        ...(formData.enableHealthCheck && formData.healthCheckPath && {
+          healthCheck: {
+            enabled: true,
+            path: formData.healthCheckPath,
+            ...(formData.healthCheckPort && { port: formData.healthCheckPort }),
+          }
+        }),
+
+        // Transform egressRules (form data) to egress (K8s spec) - CRITICAL FIX
+        ...(formData.egressRules && formData.egressRules.length > 0 && {
+          egress: formData.egressRules.map(rule => ({
+            description: rule.description,
+            // Fix: Add parentheses to ensure correct precedence
+            ...((rule.dns && rule.dns.length > 0) || rule.cidr) && {
+              to: {
+                ...(rule.dns && rule.dns.length > 0 && { dns: rule.dns }),
+                ...(rule.cidr && { cidr: rule.cidr }),
+              },
+            },
+            ...(rule.ports && rule.ports.length > 0) && {
+              ports: rule.ports,
+            },
+          })).filter(rule =>
+            // Only include rules that have at least one target
+            (rule.to?.dns && rule.to.dns.length > 0) || rule.to?.cidr
+          )
+        }),
+      },
+    }
+
+    // Create the tool using k8s client with proper error handling
+    const result = await handleKubernetesOperation(
+      'create tool',
+      k8sClient.createLanguageTool(organization.namespace, tool)
+    )
+
+    return createSuccessResponse(
+      result,
+      `Tool "${formData.name}" created successfully in cluster "${clusterName}"`
+    )
+
+  } catch (error) {
+    console.error('Error creating tool:', error)
+    return createErrorResponse(error, 'Failed to create tool')
   }
 }
