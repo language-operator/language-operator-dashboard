@@ -79,13 +79,29 @@ export default function CreateClusterAgentPage() {
     defaultValues: {
       instructions: '',
       name: '',
-      selectedModels: availableModels.length > 0 ? [availableModels[0].metadata.name] : [],
+      selectedModels: [],
       selectedTools: [],
       selectedPersona: 'none',
     },
   })
 
   const { formState } = form
+
+  // Set default selections when data is loaded
+  useEffect(() => {
+    if (availableModels.length > 0 && form.getValues('selectedModels').length === 0) {
+      // Select the first model by default
+      form.setValue('selectedModels', [availableModels[0].metadata.name])
+    }
+  }, [availableModels, form])
+
+  useEffect(() => {
+    if (availableTools.length > 0 && form.getValues('selectedTools').length === 0) {
+      // Select all available tools by default
+      const allToolNames = availableTools.map((tool: any) => tool.metadata.name)
+      form.setValue('selectedTools', allToolNames)
+    }
+  }, [availableTools, form])
 
 
   const onSubmit = async (values: AgentFormValues) => {
