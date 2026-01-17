@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Settings, AlertCircle, Server, Code } from 'lucide-react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Settings, AlertCircle, Server, Code, Globe, Plus, Minus, Network } from 'lucide-react'
 
 export interface ToolEditFormData {
   image: string
@@ -20,6 +21,14 @@ export interface ToolEditFormData {
     cpuLimit: string
     memoryLimit: string
   }
+  egress?: Array<{
+    description: string
+    to: {
+      dns?: string[]
+      cidr?: string
+    }
+    ports?: number[]
+  }>
 }
 
 interface ToolEditFormProps {
@@ -30,13 +39,14 @@ interface ToolEditFormProps {
   onCancel: () => void
 }
 
-export function ToolEditForm({ 
-  initialData, 
-  isLoading = false, 
-  error, 
-  onSubmit, 
+export function ToolEditForm({
+  initialData,
+  isLoading = false,
+  error,
+  onSubmit,
   onCancel
 }: ToolEditFormProps) {
+  const [currentTab, setCurrentTab] = useState('basic')
   const [formData, setFormData] = useState<ToolEditFormData>(() => ({
     image: '',
     port: 3000,
@@ -48,6 +58,7 @@ export function ToolEditForm({
       cpuLimit: '500m',
       memoryLimit: '512Mi'
     },
+    egress: [],
     ...initialData
   }))
 
@@ -68,6 +79,7 @@ export function ToolEditForm({
           cpuLimit: '500m',
           memoryLimit: '512Mi'
         },
+        egress: [],
         ...initialData
       })
       setHasInitialized(true)
@@ -171,8 +183,31 @@ export function ToolEditForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Configuration */}
-      <Card>
+      {/* Error Display */}
+      {displayError && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{displayError}</AlertDescription>
+        </Alert>
+      )}
+
+      {/* Tab-based Form */}
+      <Tabs value={currentTab} onValueChange={setCurrentTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="basic" className="flex items-center gap-2">
+            <Settings className="h-4 w-4" />
+            Basic
+          </TabsTrigger>
+          <TabsTrigger value="network" className="flex items-center gap-2">
+            <Globe className="h-4 w-4" />
+            Network
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Basic Tab */}
+        <TabsContent value="basic" className="space-y-6 mt-3">
+          {/* Configuration */}
+          <Card>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Settings className="h-5 w-5" />
@@ -384,14 +419,195 @@ export function ToolEditForm({
           </div>
         </CardContent>
       </Card>
+        </TabsContent>
 
-      {/* Error Display */}
-      {displayError && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{displayError}</AlertDescription>
-        </Alert>
-      )}
+        {/* Network Tab */}
+        <TabsContent value="network" className="space-y-6 mt-3">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Globe className="h-5 w-5" />
+                <span>Network Policy</span>
+              </CardTitle>
+              <CardDescription>
+                Configure external network access rules for this tool
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label className="text-base font-medium">Egress Rules</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const newRule = {
+                        description: "",
+                        to: { dns: [], cidr: "" },
+                        ports: [443]
+                      }
+                      setFormData(prev => ({ ...prev, egress: [...(prev.egress || []), newRule] }))
+                    }}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Rule
+                  </Button>
+                </div>
+
+                {(formData.egress || []).length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground border-2 border-dashed rounded-lg">
+                    <Network className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p>No egress rules configured</p>
+                    <p className="text-sm">Click "Add Rule" to configure external access</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {(formData.egress || []).map((rule, index) => (
+                      <Card key={index} className="border-l-4 border-l-amber-500">
+                        <CardContent className="pt-4">
+                          <div className="space-y-4">
+                            <div className="flex items-start justify-between">
+                              <div className="space-y-2 flex-1">
+                                <Label htmlFor={`rule-description-${index}`}>Description</Label>
+                                <Input
+                                  id={`rule-description-${index}`}
+                                  value={rule.description}
+                                  onChange={(e) => {
+                                    const newEgress = [...(formData.egress || [])]
+                                    newEgress[index] = { ...newEgress[index], description: e.target.value }
+                                    setFormData(prev => ({ ...prev, egress: newEgress }))
+                                  }}
+                                  placeholder="e.g., Allow access to external APIs"
+                                  disabled={isLoading}
+                                />
+                              </div>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="ml-2"
+                                onClick={() => {
+                                  const newEgress = (formData.egress || []).filter((_, i) => i !== index)
+                                  setFormData(prev => ({ ...prev, egress: newEgress }))
+                                }}
+                                disabled={isLoading}
+                              >
+                                <Minus className="h-4 w-4" />
+                              </Button>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <Label htmlFor={`rule-dns-${index}`}>DNS Names</Label>
+                                <Input
+                                  id={`rule-dns-${index}`}
+                                  type="text"
+                                  value={
+                                    typeof rule.to.dns === 'string'
+                                      ? rule.to.dns
+                                      : (rule.to.dns || []).join(', ')
+                                  }
+                                  onChange={(e) => {
+                                    // Store the raw value during typing, don't parse yet
+                                    const newEgress = [...(formData.egress || [])]
+                                    newEgress[index] = {
+                                      ...newEgress[index],
+                                      to: { ...newEgress[index].to, dns: e.target.value as any }
+                                    }
+                                    setFormData(prev => ({ ...prev, egress: newEgress }))
+                                  }}
+                                  onBlur={(e) => {
+                                    // Parse and validate on blur
+                                    const dnsNames = e.target.value
+                                      .split(',')
+                                      .map(name => name.trim())
+                                      .filter(name => name.length > 0)
+                                    const newEgress = [...(formData.egress || [])]
+                                    newEgress[index] = {
+                                      ...newEgress[index],
+                                      to: { ...newEgress[index].to, dns: dnsNames }
+                                    }
+                                    setFormData(prev => ({ ...prev, egress: newEgress }))
+                                  }}
+                                  placeholder="*.duckduckgo.com, example.com"
+                                  className="font-mono"
+                                  disabled={isLoading}
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                  Comma-separated. Use * for wildcards.
+                                </p>
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor={`rule-cidr-${index}`}>CIDR Block</Label>
+                                <Input
+                                  id={`rule-cidr-${index}`}
+                                  value={rule.to.cidr || ''}
+                                  onChange={(e) => {
+                                    const newEgress = [...(formData.egress || [])]
+                                    newEgress[index] = {
+                                      ...newEgress[index],
+                                      to: { ...newEgress[index].to, cidr: e.target.value }
+                                    }
+                                    setFormData(prev => ({ ...prev, egress: newEgress }))
+                                  }}
+                                  placeholder="192.168.1.0/24"
+                                  className="font-mono"
+                                  disabled={isLoading}
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                  For local networks. Use DNS for cloud APIs.
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label htmlFor={`rule-ports-${index}`}>Ports</Label>
+                              <Input
+                                id={`rule-ports-${index}`}
+                                type="text"
+                                value={
+                                  typeof rule.ports === 'string'
+                                    ? rule.ports
+                                    : (rule.ports || []).join(', ')
+                                }
+                                onChange={(e) => {
+                                  // Store the raw value during typing, don't parse yet
+                                  const newEgress = [...(formData.egress || [])]
+                                  newEgress[index] = {
+                                    ...newEgress[index],
+                                    ports: e.target.value as any // Store raw string temporarily
+                                  }
+                                  setFormData(prev => ({ ...prev, egress: newEgress }))
+                                }}
+                                onBlur={(e) => {
+                                  // Parse and validate on blur
+                                  const ports = e.target.value
+                                    .split(',')
+                                    .map(port => parseInt(port.trim()))
+                                    .filter(port => !isNaN(port) && port > 0 && port < 65536)
+                                  const newEgress = [...(formData.egress || [])]
+                                  newEgress[index] = { ...newEgress[index], ports }
+                                  setFormData(prev => ({ ...prev, egress: newEgress }))
+                                }}
+                                placeholder="443, 80"
+                                disabled={isLoading}
+                              />
+                              <p className="text-xs text-muted-foreground">
+                                Comma-separated port numbers. Use 443 for HTTPS, 80 for HTTP.
+                              </p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Actions */}
       <div className="flex justify-end space-x-4">

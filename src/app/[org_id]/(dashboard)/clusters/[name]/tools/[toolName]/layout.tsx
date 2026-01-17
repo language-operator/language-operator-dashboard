@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter, useParams, usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { Wrench, Edit, MoreVertical, FileCode, Trash2, Home, ScrollText, Copy, Check } from 'lucide-react'
+import { Wrench, Edit, MoreVertical, FileCode, Trash2, Home, ScrollText, Copy, Check, Globe } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -21,10 +21,11 @@ import { cn } from '@/lib/utils'
 
 function getCurrentTabValue(pathname: string, clusterName: string, toolName: string): string {
   const basePath = `/clusters/${clusterName}/tools/${toolName}`
-  
+
   if (pathname === basePath) return 'overview'
+  if (pathname.endsWith('/network')) return 'network'
   if (pathname.endsWith('/logs')) return 'logs'
-  
+
   return 'overview'
 }
 
@@ -206,6 +207,12 @@ export default function ToolDetailLayout({ children }: ToolDetailLayoutProps) {
               <Link href={getOrgUrl(`/clusters/${clusterName}/tools/${toolName}`)}>
                 <Home className="w-4 h-4 mr-2" />
                 Overview
+              </Link>
+            </TabsTrigger>
+            <TabsTrigger value="network" asChild>
+              <Link href={getOrgUrl(`/clusters/${clusterName}/tools/${toolName}/network`)}>
+                <Globe className="w-4 h-4 mr-2" />
+                Network
               </Link>
             </TabsTrigger>
             <TabsTrigger value="logs" asChild>

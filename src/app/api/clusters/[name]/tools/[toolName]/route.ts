@@ -138,18 +138,21 @@ export async function PUT(
         }),
 
         // Update egress rules
-        ...(updateData.egressRules && {
-          egress: updateData.egressRules.map((rule: any) => ({
+        ...(updateData.egress && {
+          egress: updateData.egress.map((rule: any) => ({
             description: rule.description,
-            ...((rule.dns && rule.dns.length > 0) || rule.cidr) && {
+            ...(((rule.to?.dns && rule.to.dns.length > 0) || rule.to?.cidr) && {
               to: {
-                ...(rule.dns && rule.dns.length > 0 && { dns: rule.dns }),
-                ...(rule.cidr && { cidr: rule.cidr }),
+                ...(rule.to?.dns && rule.to.dns.length > 0 && { dns: rule.to.dns }),
+                ...(rule.to?.cidr && { cidr: rule.to.cidr }),
               },
-            },
-            ...(rule.ports && rule.ports.length > 0) && {
-              ports: rule.ports,
-            },
+            }),
+            ...(rule.ports && rule.ports.length > 0 && {
+              ports: rule.ports.map((port: number) => ({
+                port,
+                protocol: 'TCP'
+              })),
+            }),
           })).filter((rule: any) =>
             (rule.to?.dns && rule.to.dns.length > 0) || rule.to?.cidr
           )
