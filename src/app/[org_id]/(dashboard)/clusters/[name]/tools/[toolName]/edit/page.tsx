@@ -57,17 +57,18 @@ export default function EditClusterToolPage() {
 
     try {
       // Normalize egress data: ensure ports and DNS are arrays, not strings
+      // (fields may be strings during editing before onBlur fires)
       const normalizedFormData = {
         ...formData,
         egress: formData.egress?.map(rule => ({
           ...rule,
           ports: typeof rule.ports === 'string'
-            ? rule.ports.split(',').map(p => parseInt(p.trim())).filter(p => !isNaN(p) && p > 0 && p < 65536)
+            ? (rule.ports as string).split(',').map((p: string) => parseInt(p.trim())).filter((p: number) => !isNaN(p) && p > 0 && p < 65536)
             : rule.ports,
           to: {
             ...rule.to,
             dns: typeof rule.to.dns === 'string'
-              ? rule.to.dns.split(',').map(d => d.trim()).filter(d => d.length > 0)
+              ? (rule.to.dns as string).split(',').map((d: string) => d.trim()).filter((d: string) => d.length > 0)
               : rule.to.dns
           }
         }))
