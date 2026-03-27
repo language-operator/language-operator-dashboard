@@ -1,25 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/user-context'
 import { k8sClient } from '@/lib/k8s-client'
-import { db } from '@/lib/db'
-import { requirePermission } from '@/lib/permissions'
-import { getUserOrganization } from '@/lib/organization-context'
 import yaml from 'js-yaml'
 
 // GET /api/clusters/[name]/models/[modelName]/yaml - Get model YAML
+const NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
+
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ name: string; modelName: string }> }
 ) {
   try {
-    // Get user's selected organization (replaces broken memberships[0] pattern)
-    const { user, organization, userRole } = await getUserOrganization(request)
+    const { email } = await getAuthenticatedUser(request)
     
-    const hasPermission = await requirePermission(user.id, organization.id, 'view')
-    if (!hasPermission) {
-      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
-    }
 
     const { name: clusterName, modelName } = await params
     if (!clusterName || !modelName) {
@@ -30,7 +24,7 @@ export async function GET(
     let model: any = null
     
     try {
-      const response = await k8sClient.getLanguageModel(organization.namespace, modelName)
+      const response = await k8sClient.getLanguageModel(NAMESPACE, modelName)
       
       // Handle different response structures from k8s client
       if ((response as any)?.body) {
@@ -62,7 +56,7 @@ export async function GET(
 
     // Verify model belongs to user's organization
     const modelOrgLabel = model.metadata?.labels?.['langop.io/organization-id']
-    if (modelOrgLabel && modelOrgLabel !== organization.id) {
+    if (modelOrgLabel && modelOrgLabel !== '') {
       return NextResponse.json({ 
         error: 'Model not found',
         details: `Model "${modelName}" not found in cluster "${clusterName}"` 

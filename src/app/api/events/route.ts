@@ -1,28 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/user-context'
 import { k8sClient } from '@/lib/k8s-client'
-import { db } from '@/lib/db'
-import { requirePermission } from '@/lib/permissions'
-import { getUserOrganization } from '@/lib/organization-context'
 
 // GET /api/events - Get Kubernetes events with optional filtering
+const NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
+
+
 export async function GET(request: NextRequest) {
   try {
-    // Get user's selected organization
-    const { user, organization, userRole } = await getUserOrganization(request)
+    const { email } = await getAuthenticatedUser(request)
     
     // Check permissions
-    const hasPermission = await requirePermission(user.id, organization.id, 'view')
-    if (!hasPermission) {
-      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
-    }
 
     // Parse query parameters
     const url = new URL(request.url)
     const limit = parseInt(url.searchParams.get('limit') || '20')
     const clusterName = url.searchParams.get('clusterName')
-    const namespace = url.searchParams.get('namespace') || organization.namespace
+    const namespace = url.searchParams.get('namespace') || NAMESPACE
     const resourceType = url.searchParams.get('resourceType')
     const resourceName = url.searchParams.get('resourceName')
 
@@ -50,12 +44,12 @@ export async function GET(request: NextRequest) {
     // If cluster name is specified, try to find the cluster's namespace
     if (clusterName && !namespace) {
       try {
-        const clusterResponse = await k8sClient.getLanguageCluster(organization.namespace, clusterName)
+        const clusterResponse = await k8sClient.getLanguageCluster(NAMESPACE, clusterName)
         const cluster = (clusterResponse as any)?.body || (clusterResponse as any)?.data || clusterResponse
-        targetNamespace = cluster?.metadata?.namespace || organization.namespace
+        targetNamespace = cluster?.metadata?.namespace || NAMESPACE
       } catch (error) {
         console.warn(`Could not find cluster ${clusterName}, using organization namespace`)
-        targetNamespace = organization.namespace
+        targetNamespace = NAMESPACE
       }
     }
 

@@ -1,47 +1,43 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import { k8sClient } from '@/lib/k8s-client'
-import { db } from '@/lib/db'
-import { requirePermission } from '@/lib/permissions'
-import { getUserOrganization } from '@/lib/organization-context'
+import { getAuthenticatedUser } from '@/lib/user-context'
 
-// GET /api/dashboard/counts - Get resource counts for dashboard
+// GET /api/dashboard/counts - Get global resource counts across all accessible clusters
 export async function GET(request: NextRequest) {
   try {
-    // Get user's selected organization (replaces broken memberships[0] pattern)
-    const { user, organization, userRole } = await getUserOrganization(request)
-    
-    // Check permissions
-    const hasPermission = await requirePermission(user.id, organization.id, 'view')
-    if (!hasPermission) {
-      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
-    }
+    const { email } = await getAuthenticatedUser(request)
+    const client = k8sClient.forUser(email)
 
-    // Get resource counts from Kubernetes
-    // Filter by organization ID to ensure consistent counts with individual resource pages
-    const counts = await k8sClient.getNamespaceResourceCounts(
-      organization.namespace,
-      organization.id
-    )
+    // List all clusters the user can see (cluster-scoped, impersonation filters by RBAC)
+    const clustersRes = await client.listLanguageClusters('')
+    const clusters = (clustersRes as any)?.items ?? (clustersRes as any)?.body?.items ?? []
 
-    // Get quota usage information
-    let quotaUsage = null
-    try {
-      quotaUsage = await k8sClient.getResourceQuotaUsage(organization.namespace)
-    } catch (quotaError) {
-      console.error('Failed to fetch quota usage:', quotaError)
-      // Continue without quota info
+    // List namespaced resources across all namespaces the user can access.
+    // Each resource type is cluster-scoped in its listing (no namespace filter) so
+    // K8s returns everything the impersonated user is permitted to list.
+    const [agentsRes, modelsRes, toolsRes, personasRes] = await Promise.allSettled([
+      client.listLanguageAgents(''),
+      client.listLanguageModels(''),
+      client.listLanguageTools(''),
+      client.listLanguagePersonas(''),
+    ])
+
+    const extract = (res: PromiseSettledResult<unknown>) => {
+      if (res.status === 'rejected') return []
+      const val = res.value as any
+      return val?.items ?? val?.body?.items ?? val?.data?.items ?? []
     }
 
     return NextResponse.json({
       success: true,
       data: {
-        ...counts,
-        quota: quotaUsage
+        clusters: clusters.length,
+        agents: extract(agentsRes).length,
+        models: extract(modelsRes).length,
+        tools: extract(toolsRes).length,
+        personas: extract(personasRes).length,
       },
     })
-
   } catch (error) {
     console.error('Error fetching dashboard counts:', error)
     return NextResponse.json(

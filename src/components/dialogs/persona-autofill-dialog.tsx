@@ -10,8 +10,6 @@ import { Loader2, Sparkles, AlertCircle, RefreshCw, ExternalLink } from 'lucide-
 import { useGeneratePersona } from '@/hooks/use-personas'
 import { useModels } from '@/hooks/use-models'
 import { PersonaFormData } from '@/components/forms/persona-form-simple'
-import { useOrganization } from '@/components/organization-provider'
-
 interface PersonaAutofillDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -23,10 +21,9 @@ interface ErrorDisplayProps {
   error: any
   onRetry?: () => void
   clusterName?: string
-  getOrgUrl: (path: string) => string
 }
 
-function ErrorDisplay({ error, onRetry, clusterName, getOrgUrl }: ErrorDisplayProps) {
+function ErrorDisplay({ error, onRetry, clusterName }: ErrorDisplayProps) {
   if (!error) return null
   
   let errorMessage = 'An unexpected error occurred'
@@ -114,7 +111,7 @@ function ErrorDisplay({ error, onRetry, clusterName, getOrgUrl }: ErrorDisplayPr
   if (showModelLink && clusterName) {
     actionButtons = (
       <Button variant="outline" size="sm" asChild className="mt-2">
-        <a href={getOrgUrl(`/clusters/${clusterName}/models`)} target="_blank" rel="noopener noreferrer">
+        <a href={`/clusters/${clusterName}/models`} target="_blank" rel="noopener noreferrer">
           <ExternalLink className="mr-2 h-3 w-3" />
           Check Models
         </a>
@@ -146,8 +143,6 @@ export function PersonaAutofillDialog({
 }: PersonaAutofillDialogProps) {
   const [idea, setIdea] = useState('')
   const [selectedModel, setSelectedModel] = useState('')
-  const { getOrgUrl } = useOrganization()
-
   const { data: modelsResponse, isLoading: modelsLoading } = useModels({ clusterName, limit: 100 })
   const generatePersona = useGeneratePersona()
 
@@ -252,7 +247,6 @@ export function PersonaAutofillDialog({
               error={generatePersona.error} 
               onRetry={handleRetry}
               clusterName={clusterName}
-              getOrgUrl={getOrgUrl}
             />
           )}
         </div>

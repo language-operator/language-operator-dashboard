@@ -28,8 +28,9 @@ export interface LanguageAgentSpec {
   
   // Execution configuration - matches CRD enum
   executionMode?: 'autonomous' | 'interactive' | 'scheduled' | 'event-driven'
+  schedule?: string
   replicas?: number
-  
+
   // Model references - matches CRD structure (optional for backward compatibility)
   modelRefs?: ModelReference[]
   
@@ -45,9 +46,6 @@ export interface LanguageAgentSpec {
   maxIterations?: number
   timeout?: string
   restartPolicy?: 'OnFailure' | 'Always' | 'Never'
-  
-  // Agent version reference
-  agentVersionRef?: AgentVersionReference
   
   // Workspace configuration
   workspace?: WorkspaceConfig
@@ -94,12 +92,6 @@ export interface ToolReference {
 export interface PersonaReference {
   name: string
   namespace?: string
-}
-
-export interface AgentVersionReference {
-  name: string
-  namespace?: string
-  lock?: boolean
 }
 
 export interface WorkspaceConfig {
@@ -187,18 +179,6 @@ export interface LanguageAgentStatus {
   lastExecution?: string
   metrics?: LanguageAgentMetrics
   observedGeneration?: number
-  synthesisInfo?: SynthesisInfo
-  runsPendingLearning?: number
-  learningRequestPending?: boolean
-}
-
-export interface SynthesisInfo {
-  lastSynthesisTime?: string
-  synthesisModel?: string
-  synthesisDuration?: number
-  synthesisAttempts?: number
-  codeHash?: string
-  instructionsHash?: string
 }
 
 export interface LanguageAgentCondition {

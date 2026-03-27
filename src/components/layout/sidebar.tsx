@@ -6,7 +6,6 @@ import { cn } from '@/lib/utils'
 import { useClusterContext } from '@/contexts/cluster-context'
 import { ClusterSelector } from '@/components/cluster-selector'
 import { useSidebarContext } from '@/contexts/sidebar-context'
-import { useOrganization } from '@/components/organization-provider'
 import {
   Home,
   Bot,
@@ -16,7 +15,6 @@ import {
   Boxes,
   Settings,
   BarChart3,
-  MessageSquare,
   Palette,
   ChevronLeft,
   Gauge,
@@ -30,8 +28,7 @@ const globalNavigation = [
 ]
 
 const clusterNavigation = [
-  { name: 'Dashboard', href: '', icon: Gauge }, // Will be prefixed with /clusters/[name]
-  { name: 'Console', href: '/console', icon: MessageSquare },
+  { name: 'Dashboard', href: '', icon: Gauge },
   { name: 'Agents', href: '/agents', icon: Bot },
   { name: 'Tools', href: '/tools', icon: Wrench },
   { name: 'Personas', href: '/personas', icon: Users },
@@ -42,20 +39,6 @@ export function Sidebar() {
   const pathname = usePathname()
   const { selectedCluster, isClusterSelected } = useClusterContext()
   const { isCollapsed, setIsCollapsed, isLoaded } = useSidebarContext()
-  
-  // Try to get organization context, but don't crash if not available (e.g., settings pages)
-  const orgContext = (() => {
-    try {
-      return useOrganization()
-    } catch {
-      return null
-    }
-  })()
-  
-  const getOrgUrl = orgContext?.getOrgUrl || ((path: string) => path)
-  
-  // Check if we're on a console page to remove background overrides
-  const isConsolePage = pathname.includes('/console')
 
   // Prevent hydration mismatch by not rendering until localStorage is loaded
   if (!isLoaded) {
@@ -68,9 +51,8 @@ export function Sidebar() {
 
   return (
     <div className={cn(
-      "flex h-screen flex-col border-r border-stone-800/80 dark:border-stone-600/80 transition-all duration-300",
+      "flex h-screen flex-col border-r border-stone-800/80 dark:border-stone-600/80 transition-all duration-300 bg-stone-100 dark:bg-stone-950",
       isCollapsed ? "w-16" : "w-64",
-      !isConsolePage && "bg-stone-100 dark:bg-stone-950"
     )}>
       <div className="flex h-16 items-center border-b border-stone-800/80 px-4 dark:border-stone-600/80">
         <div className="w-full">
@@ -86,10 +68,10 @@ export function Sidebar() {
           )}
         </div>
       </div>
-      
+
       {/* Cluster Selector */}
       {!isCollapsed && <ClusterSelector />}
-      
+
       <nav className={cn(
         "flex-1 space-y-1",
         isCollapsed ? "px-2 py-2" : "px-4 py-6"
@@ -102,16 +84,15 @@ export function Sidebar() {
             </div>
           )}
           {globalNavigation.map((item) => {
-            const href = getOrgUrl(item.href)
-            const isActive = pathname === href
+            const isActive = item.href === '/' ? pathname === item.href : pathname.startsWith(item.href)
             return (
               <Link
                 key={item.name}
-                href={href}
+                href={item.href}
                 className={cn(
                   'flex items-center transition-colors',
-                  isCollapsed 
-                    ? 'justify-center p-3 mx-auto my-1 rounded' 
+                  isCollapsed
+                    ? 'justify-center p-3 mx-auto my-1 rounded'
                     : 'gap-3 px-3 py-3 border-l-2',
                   isActive
                     ? isCollapsed
@@ -139,13 +120,11 @@ export function Sidebar() {
               </div>
             )}
             {clusterNavigation.map((item) => {
-              const clusterPath = item.href === '' 
-                ? `/clusters/${selectedCluster}` 
+              const href = item.href === ''
+                ? `/clusters/${selectedCluster}`
                 : `/clusters/${selectedCluster}${item.href}`
-              const href = getOrgUrl(clusterPath)
-              // Use exact match for Dashboard, prefix match for sub-routes
-              const isActive = item.href === '' 
-                ? pathname === href 
+              const isActive = item.href === ''
+                ? pathname === href
                 : pathname.startsWith(href)
               return (
                 <Link
@@ -153,8 +132,8 @@ export function Sidebar() {
                   href={href}
                   className={cn(
                     'flex items-center transition-colors',
-                    isCollapsed 
-                      ? 'justify-center p-3 mx-auto my-1 rounded' 
+                    isCollapsed
+                      ? 'justify-center p-3 mx-auto my-1 rounded'
                       : 'gap-3 px-3 py-3 border-l-2',
                     isActive
                       ? isCollapsed
@@ -173,7 +152,7 @@ export function Sidebar() {
             })}
           </div>
         )}
-        
+
         {!isClusterSelected && !isCollapsed && (
           <div className="flex items-center justify-center py-8">
             <div className="text-center">
@@ -184,17 +163,17 @@ export function Sidebar() {
           </div>
         )}
       </nav>
-      
+
       <div className={cn(
         "border-t border-stone-800/80 dark:border-stone-600/80 space-y-1",
         isCollapsed ? "p-2" : "p-4"
       )}>
         <Link
-          href={getOrgUrl('/settings/users')}
+          href="/settings/profile"
           className={cn(
             'flex items-center transition-colors',
-            isCollapsed 
-              ? 'justify-center p-3 mx-auto my-1 rounded' 
+            isCollapsed
+              ? 'justify-center p-3 mx-auto my-1 rounded'
               : 'gap-3 px-3 py-3 border-l-2',
             pathname.startsWith('/settings')
               ? isCollapsed
@@ -209,15 +188,15 @@ export function Sidebar() {
           <Settings className="h-5 w-5 flex-shrink-0" />
           {!isCollapsed && <span className="text-sm font-light">Settings</span>}
         </Link>
-        
+
         <Link
           href="/styleguide"
           target="_blank"
           rel="noopener noreferrer"
           className={cn(
             'flex items-center transition-colors',
-            isCollapsed 
-              ? 'justify-center p-3 mx-auto my-1 rounded' 
+            isCollapsed
+              ? 'justify-center p-3 mx-auto my-1 rounded'
               : 'gap-3 px-3 py-3 border-l-2',
             pathname === '/styleguide'
               ? isCollapsed
@@ -232,13 +211,13 @@ export function Sidebar() {
           <Palette className="h-5 w-5 flex-shrink-0" />
           {!isCollapsed && <span className="text-sm font-light">Style Guide</span>}
         </Link>
-        
+
         {/* Collapse Toggle */}
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
           className={cn(
             'flex items-center transition-all duration-300',
-            isCollapsed 
+            isCollapsed
               ? 'justify-center p-3 mx-auto my-1 rounded text-stone-600 hover:bg-stone-100 hover:text-amber-900 dark:text-stone-400 dark:hover:bg-stone-800 dark:hover:text-amber-500'
               : 'gap-3 px-3 py-3 border-l-2 text-stone-600 border-transparent hover:text-amber-900 dark:text-stone-400 dark:hover:text-amber-500'
           )}

@@ -10,7 +10,6 @@ import { useTheme } from 'next-themes'
 import { useModels } from '@/hooks/use-models'
 import { useTools } from '@/hooks/use-tools'
 import { usePersonas } from '@/hooks/use-personas'
-import { useOrganization } from '@/components/organization-provider'
 import { ResourceEventsActivity } from '@/components/ui/events-activity'
 import { LanguageAgent } from '@/types/agent'
 import { formatTimeAgo } from './utils'
@@ -21,7 +20,6 @@ interface AgentOverviewProps {
 }
 
 export function AgentOverview({ agent, clusterName }: AgentOverviewProps) {
-  const { getOrgUrl } = useOrganization()
   const { theme } = useTheme()
   const { data: modelsResponse } = useModels({ clusterName })
   const { data: toolsResponse } = useTools({ clusterName })
@@ -64,7 +62,7 @@ export function AgentOverview({ agent, clusterName }: AgentOverviewProps) {
           <CardTitle>Basic Information</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-4">
             <div>
               <p className="text-sm font-medium text-stone-600 dark:text-stone-400">Name</p>
               <p className="text-sm">{agent.metadata.name}</p>
@@ -73,6 +71,12 @@ export function AgentOverview({ agent, clusterName }: AgentOverviewProps) {
               <p className="text-sm font-medium text-stone-600 dark:text-stone-400">Execution Mode</p>
               <Badge variant="secondary">{agent.spec.executionMode}</Badge>
             </div>
+            {agent.spec.executionMode === 'scheduled' && agent.spec.schedule && (
+              <div>
+                <p className="text-sm font-medium text-stone-600 dark:text-stone-400">Schedule</p>
+                <p className="text-sm font-mono">{agent.spec.schedule}</p>
+              </div>
+            )}
             <div>
               <p className="text-sm font-medium text-stone-600 dark:text-stone-400">Created</p>
               <p className="text-sm">{formatTimeAgo(agent.metadata.creationTimestamp)}</p>
@@ -133,7 +137,7 @@ export function AgentOverview({ agent, clusterName }: AgentOverviewProps) {
                 {agent.spec.model?.name && (
                   <>
                     {referencedModel ? (
-                      <Link href={getOrgUrl(`/clusters/${clusterName}/models/${agent.spec.model.name}`)}>
+                      <Link href={`/clusters/${clusterName}/models/${agent.spec.model.name}`}>
                         <Badge variant="outline" className="hover:bg-primary/10 cursor-pointer">
                           {agent.spec.model.name}
                         </Badge>
@@ -151,7 +155,7 @@ export function AgentOverview({ agent, clusterName }: AgentOverviewProps) {
                   return (
                     <div key={index}>
                       {foundModel ? (
-                        <Link href={getOrgUrl(`/clusters/${clusterName}/models/${modelRef.name}`)}>
+                        <Link href={`/clusters/${clusterName}/models/${modelRef.name}`}>
                           <Badge variant="outline" className="hover:bg-primary/10 cursor-pointer">
                             {modelRef.name}
                           </Badge>
@@ -184,7 +188,7 @@ export function AgentOverview({ agent, clusterName }: AgentOverviewProps) {
                   return (
                     <div key={`old-${index}`}>
                       {referencedTool ? (
-                        <Link href={getOrgUrl(`/clusters/${clusterName}/tools/${toolRef.name}`)}>
+                        <Link href={`/clusters/${clusterName}/tools/${toolRef.name}`}>
                           <Badge variant="outline" className="hover:bg-primary/10 cursor-pointer">
                             {toolRef.name}
                           </Badge>
@@ -203,7 +207,7 @@ export function AgentOverview({ agent, clusterName }: AgentOverviewProps) {
                   return (
                     <div key={`new-${index}`}>
                       {referencedTool ? (
-                        <Link href={getOrgUrl(`/clusters/${clusterName}/tools/${toolRef.name}`)}>
+                        <Link href={`/clusters/${clusterName}/tools/${toolRef.name}`}>
                           <Badge variant="outline" className="hover:bg-primary/10 cursor-pointer">
                             {toolRef.name}
                           </Badge>
@@ -234,7 +238,7 @@ export function AgentOverview({ agent, clusterName }: AgentOverviewProps) {
                 {agent.spec.persona?.name && (
                   <>
                     {referencedPersona ? (
-                      <Link href={getOrgUrl(`/clusters/${clusterName}/personas/${agent.spec.persona.name}`)}>
+                      <Link href={`/clusters/${clusterName}/personas/${agent.spec.persona.name}`}>
                         <Badge variant="outline" className="hover:bg-primary/10 cursor-pointer">
                           {agent.spec.persona.name}
                         </Badge>
@@ -252,7 +256,7 @@ export function AgentOverview({ agent, clusterName }: AgentOverviewProps) {
                   return (
                     <div key={index}>
                       {foundPersona ? (
-                        <Link href={getOrgUrl(`/clusters/${clusterName}/personas/${personaRef.name}`)}>
+                        <Link href={`/clusters/${clusterName}/personas/${personaRef.name}`}>
                           <Badge variant="outline" className="hover:bg-primary/10 cursor-pointer">
                             {personaRef.name}
                           </Badge>

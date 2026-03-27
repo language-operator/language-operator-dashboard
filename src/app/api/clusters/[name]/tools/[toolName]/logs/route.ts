@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/user-context'
 import { k8sClient } from '@/lib/k8s-client'
-import { db } from '@/lib/db'
-import { requirePermission } from '@/lib/permissions'
-import { getUserOrganization } from '@/lib/organization-context'
 
 interface RouteParams {
   params: Promise<{
@@ -12,26 +8,23 @@ interface RouteParams {
     toolName: string
   }>
 }
+const NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
+
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
-    // Get user's selected organization
-    const { user, organization, userRole } = await getUserOrganization(request)
+    const { email } = await getAuthenticatedUser(request)
     
-    const hasPermission = await requirePermission(user.id, organization.id, 'view')
-    if (!hasPermission) {
-      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
-    }
 
     const { name: clusterName, toolName } = await params
     const searchParams = new URL(request.url).searchParams
     const podName = searchParams.get('podName')
     const containerName = searchParams.get('containerName')
 
-    console.log(`Fetching logs for tool ${toolName} in cluster ${clusterName}, namespace ${organization.namespace}${podName ? `, pod ${podName}` : ''}${containerName ? `, container ${containerName}` : ''}`)
+    console.log(`Fetching logs for tool ${toolName} in cluster ${clusterName}, namespace ${NAMESPACE}${podName ? `, pod ${podName}` : ''}${containerName ? `, container ${containerName}` : ''}`)
 
     // First, get the tool to understand its deployment mode
-    const toolResource = await k8sClient.getLanguageTool(organization.namespace, toolName)
+    const toolResource = await k8sClient.getLanguageTool(NAMESPACE, toolName)
     
     let toolData: any
     if ((toolResource as any)?.body) {
@@ -58,7 +51,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       labelSelector = `app.kubernetes.io/name=${toolName}`
     }
 
-    const pods = await k8sClient.listPods(organization.namespace, {
+    const pods = await k8sClient.listPods(NAMESPACE, {
       labelSelector
     })
 
@@ -179,7 +172,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       }
     }
 
-    const logs = await k8sClient.getPodLogs(organization.namespace, pod.metadata.name, logOptions)
+    const logs = await k8sClient.getPodLogs(NAMESPACE, pod.metadata.name, logOptions)
 
     // Handle different response structures from k8s client
     let logContent = ''

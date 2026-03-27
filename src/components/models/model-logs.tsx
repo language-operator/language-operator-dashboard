@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { fetchWithOrganization } from '@/lib/api-client'
 import { LanguageModel } from '@/types/model'
 import { useLogViewer } from '@/hooks/useLogViewer'
 import { PodLogViewer } from '@/components/ui/pod-log-viewer'
@@ -34,7 +33,7 @@ export function ModelLogs({ model, clusterName }: ModelLogsProps) {
       setPodsLoading(true)
       logs.setError(null)
 
-      const response = await fetchWithOrganization(`/api/clusters/${clusterName}/models/${model.metadata.name}/pods`)
+      const response = await fetch(`/api/clusters/${clusterName}/models/${model.metadata.name}/pods`)
       if (!response.ok) {
         throw new Error(`Failed to fetch pods: ${response.status} ${response.statusText}`)
       }
@@ -63,7 +62,7 @@ export function ModelLogs({ model, clusterName }: ModelLogsProps) {
 
       const url = `/api/clusters/${clusterName}/models/${model.metadata.name}/logs?podName=${selectedPod}`
 
-      const response = await fetchWithOrganization(url)
+      const response = await fetch(url)
       if (!response.ok) {
         throw new Error(`Failed to fetch logs: ${response.status} ${response.statusText}`)
       }

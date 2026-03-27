@@ -1,13 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { fetchWithOrganization } from '@/lib/api-client'
-import { useOrganizationStore } from '@/store/organization-store'
 import { LanguageCluster, LanguageClusterListParams, LanguageClusterFormData } from '@/types/cluster'
 
 export function useClusters(params?: LanguageClusterListParams) {
-  const { activeOrganizationId } = useOrganizationStore()
-  
   return useQuery({
-    queryKey: ['clusters', activeOrganizationId, params],
+    queryKey: ['clusters', params],
     queryFn: async () => {
       const searchParams = new URLSearchParams()
       if (params?.page) searchParams.append('page', params.page.toString())
@@ -19,7 +15,7 @@ export function useClusters(params?: LanguageClusterListParams) {
       if (params?.sortBy) searchParams.append('sortBy', params.sortBy)
       if (params?.sortOrder) searchParams.append('sortOrder', params.sortOrder)
 
-      const response = await fetchWithOrganization(`/api/clusters?${searchParams}`)
+      const response = await fetch(`/api/clusters?${searchParams}`)
       if (!response.ok) {
         throw new Error('Failed to fetch clusters')
       }
@@ -29,12 +25,10 @@ export function useClusters(params?: LanguageClusterListParams) {
 }
 
 export function useCluster(name: string) {
-  const { activeOrganizationId } = useOrganizationStore()
-  
   return useQuery({
-    queryKey: ['clusters', activeOrganizationId, name],
+    queryKey: ['clusters', name],
     queryFn: async () => {
-      const response = await fetchWithOrganization(`/api/clusters/${name}`)
+      const response = await fetch(`/api/clusters/${name}`)
       if (!response.ok) {
         throw new Error('Failed to fetch cluster')
       }
@@ -50,7 +44,7 @@ export function useDeleteCluster() {
   
   return useMutation({
     mutationFn: async (name: string) => {
-      const response = await fetchWithOrganization(`/api/clusters/${name}`, {
+      const response = await fetch(`/api/clusters/${name}`, {
         method: 'DELETE',
       })
       if (!response.ok) {

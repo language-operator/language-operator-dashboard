@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getUserOrganization } from '@/lib/organization-context'
-import { requirePermission } from '@/lib/permissions'
+import { getAuthenticatedUser } from '@/lib/user-context'
 import { 
   createErrorResponse, 
   createAuthenticationRequiredError, 
@@ -15,20 +14,15 @@ import { k8sClient } from '@/lib/k8s-client'
 import { serviceResolver } from '@/lib/service-resolver'
 
 // POST /api/personas/generate - Generate a persona using a cluster model
+const NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
+
+
 export async function POST(request: NextRequest) {
   try {
-    // Get user's selected organization
-    const { user, organization, userRole } = await getUserOrganization(request)
+    const { email } = await getAuthenticatedUser(request)
 
-    if (!user?.id) {
-      throw createAuthenticationRequiredError()
-    }
 
     // Check permissions
-    const hasPermission = await requirePermission(user.id, organization.id, 'create')
-    if (!hasPermission) {
-      throw createPermissionDeniedError('generate personas', 'AI-generated personas', userRole)
-    }
 
     const body = await request.json()
     const { idea, modelName } = body
@@ -75,22 +69,28 @@ Guidelines:
 
     console.log(`Generating persona with model ${modelName} for idea: "${idea}"`)
 
-    // Fetch the LanguageModel resource to get the actual model name
+    // Fetch the LanguageModel resource to get the actual model name and cluster ref
     let actualModelName: string
+    let clusterRef: string | undefined
     let modelStatus: string | undefined
     try {
-      const modelResource = await k8sClient.getLanguageModel(organization.namespace, modelName)
+      const modelResource = await k8sClient.getLanguageModel(NAMESPACE, modelName)
       const modelBody = (modelResource as any)?.body || modelResource
       actualModelName = modelBody.spec?.modelName
+      clusterRef = modelBody.spec?.clusterRef
       modelStatus = modelBody.status?.phase
 
       if (!actualModelName) {
-        throw new ModelNotAvailableError(modelName, organization.namespace, 'missing_spec')
+        throw new ModelNotAvailableError(modelName, NAMESPACE, 'missing_spec')
       }
 
-      // Check if model is ready
-      if (modelStatus && modelStatus !== 'Ready') {
-        throw new ModelNotAvailableError(modelName, organization.namespace, modelStatus)
+      if (!clusterRef) {
+        throw new ModelNotAvailableError(modelName, NAMESPACE, 'missing_cluster_ref')
+      }
+
+      // Check if model is ready - 'Managed' means it is registered with the cluster proxy
+      if (modelStatus && modelStatus !== 'Ready' && modelStatus !== 'Managed') {
+        throw new ModelNotAvailableError(modelName, NAMESPACE, modelStatus)
       }
 
       console.log(`Resolved model name: ${modelName} -> ${actualModelName} (status: ${modelStatus})`)
@@ -99,7 +99,7 @@ Guidelines:
       
       // Check if it's a 404 error (model not found)
       if (error?.response?.statusCode === 404 || error?.statusCode === 404) {
-        throw new ModelNotAvailableError(modelName, organization.namespace, 'not_found')
+        throw new ModelNotAvailableError(modelName, NAMESPACE, 'not_found')
       }
       
       // Re-throw our custom errors
@@ -108,14 +108,13 @@ Guidelines:
       }
       
       // For other errors, wrap in a generic model availability error
-      throw new ModelNotAvailableError(modelName, organization.namespace, 'fetch_failed')
+      throw new ModelNotAvailableError(modelName, NAMESPACE, 'fetch_failed')
     }
 
-    // Resolve model endpoint based on environment (K8s vs Docker Compose)  
-    const modelEndpoint = serviceResolver.resolveModelUrl(modelName, organization.namespace, 8000)
-    
-    console.log(`Environment: ${JSON.stringify(serviceResolver.getEnvironmentInfo())}`)
-    console.log(`Resolved model endpoint: ${modelEndpoint}`)
+    // Resolve endpoint: shared cluster proxy (one proxy per cluster)
+    const modelEndpoint = serviceResolver.resolveClusterProxyUrl(clusterRef!)
+
+    console.log(`Resolved cluster proxy endpoint: ${modelEndpoint}`)
 
     // Set a timeout for the generation request
     const timeoutSeconds = 60

@@ -1,21 +1,14 @@
 import { NextRequest } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
-import { db } from '@/lib/db'
-import { requirePermission } from '@/lib/permissions'
-import { getUserOrganization } from '@/lib/organization-context'
+import { getAuthenticatedUser } from '@/lib/user-context'
 import { watchService, WatchEvent } from '@/lib/watch-service'
 import { createSSEWatchStream } from '@/lib/sse-watch-helper'
+const NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
+
 
 export async function GET(request: NextRequest) {
   try {
-    // Get user's selected organization
-    const { user, organization, userRole } = await getUserOrganization(request)
+    const { email } = await getAuthenticatedUser(request)
 
-    const hasPermission = await requirePermission(user.id, organization.id, 'view')
-    if (!hasPermission) {
-      return new Response('Insufficient permissions', { status: 403 })
-    }
 
     // Get optional filters from query params
     const url = new URL(request.url)
@@ -23,7 +16,7 @@ export async function GET(request: NextRequest) {
     const resourceType = url.searchParams.get('resourceType')
     const resourceName = url.searchParams.get('resourceName')
 
-    console.log(`🔍 Starting events watch for organization ${organization.name}`, {
+    console.log(`🔍 Starting events watch in namespace ${NAMESPACE}`, {
       cluster: clusterName,
       resourceType,
       resourceName
@@ -81,11 +74,11 @@ export async function GET(request: NextRequest) {
         const fieldSelector = fieldSelectors.length > 0 ? fieldSelectors.join(',') : undefined
 
         // Build label selector for organization filtering
-        const labelSelector = `langop.io/organization-id=${organization.id}`
+        const labelSelector = `langop.io/organization-id=${''}`
 
         watchCleanup = await watchService.watchEvents(
           {
-            namespace: organization.namespace,
+            namespace: NAMESPACE,
             labelSelector,
             fieldSelector,
             resourceVersion: lastResourceVersion,
@@ -108,7 +101,7 @@ export async function GET(request: NextRequest) {
               const clientEvent: any = {
                 type: mapK8sEventToClientEventType(k8sEvent),
                 resource: 'event',
-                data: transformEventData(k8sEvent, organization.namespace),
+                data: transformEventData(k8sEvent, NAMESPACE),
                 timestamp: new Date().toISOString(),
                 resourceVersion: event.resourceVersion,
                 eventType: event.type, // ADDED, MODIFIED, DELETED

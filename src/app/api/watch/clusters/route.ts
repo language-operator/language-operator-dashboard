@@ -1,23 +1,16 @@
 import { NextRequest } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
-import { db } from '@/lib/db'
-import { requirePermission } from '@/lib/permissions'
-import { getUserOrganization } from '@/lib/organization-context'
+import { getAuthenticatedUser } from '@/lib/user-context'
 import { watchService, WatchEvent } from '@/lib/watch-service'
 import { createSSEWatchStream } from '@/lib/sse-watch-helper'
+const NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
+
 
 export async function GET(request: NextRequest) {
   try {
-    // Get user's selected organization
-    const { user, organization, userRole } = await getUserOrganization(request)
+    const { email } = await getAuthenticatedUser(request)
 
-    const hasPermission = await requirePermission(user.id, organization.id, 'view')
-    if (!hasPermission) {
-      return new Response('Insufficient permissions', { status: 403 })
-    }
 
-    console.log(`🔍 Starting cluster watch for organization ${organization.name}`)
+    console.log(`🔍 Starting cluster watch in namespace ${NAMESPACE}`)
 
     // Track watch state
     let watchCleanup: (() => void) | null = null
@@ -49,9 +42,8 @@ export async function GET(request: NextRequest) {
       try {
         watchCleanup = await watchService.watchLanguageClusters(
           {
-            namespace: organization.namespace,
-            labelSelector: `langop.io/organization-id=${organization.id}`,
-            resourceVersion: lastResourceVersion,
+            namespace: NAMESPACE,
+                        resourceVersion: lastResourceVersion,
             // No timeout - let the watch run indefinitely
             // K8s will close it eventually, but we'll reconnect immediately
           },

@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
-import { requirePermission } from '@/lib/permissions'
-import { getUserOrganization } from '@/lib/organization-context'
+import { getAuthenticatedUser } from '@/lib/user-context'
 import { validateClusterExists } from '@/lib/cluster-validation'
 import { validateClusterNameFormat } from '@/lib/api-error-handler'
 
 // POST /api/clusters/[name]/models/discover - Discover available models from an endpoint
+const NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
+
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ name: string }> }
@@ -17,21 +17,10 @@ export async function POST(
     // Validate cluster name format
     validateClusterNameFormat(clusterName)
     
-    // Get user's selected organization
-    const { user, organization, userRole } = await getUserOrganization(request)
-    
-    if (!user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    await getAuthenticatedUser(request)
 
-    // Check permissions
-    const hasPermission = await requirePermission(user.id, organization.id, 'create')
-    if (!hasPermission) {
-      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
-    }
-    
     // Validate cluster exists and user has access
-    await validateClusterExists(organization.namespace, clusterName, { validateAccess: true })
+    await validateClusterExists(NAMESPACE, clusterName, { validateAccess: true })
 
     const body = await request.json()
     const { endpoint, provider, apiKey } = body

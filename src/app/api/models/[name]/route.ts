@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/user-context'
 import { k8sClient } from '@/lib/k8s-client'
-import { db } from '@/lib/db'
-import { requirePermission } from '@/lib/permissions'
-import { getUserOrganization } from '@/lib/organization-context'
 import { z } from 'zod'
 
 const updateModelSchema = z.object({
@@ -45,15 +41,17 @@ const updateModelSchema = z.object({
 })
 
 // GET /api/models/[name] - Get a specific model
+const NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
+
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ name: string }> }
 ) {
   try {
     const { name } = await params
-    // Get user's selected organization (replaces broken memberships[0] pattern)
-    const { user, organization, userRole } = await getUserOrganization(request)
-    const namespace = organization.namespace
+    const { email } = await getAuthenticatedUser(request)
+    const namespace = NAMESPACE
     const model = await k8sClient.getLanguageModel(namespace, name)
     
     if (!model) {
@@ -77,9 +75,8 @@ export async function PATCH(
 ) {
   try {
     const { name } = await params
-    // Get user's selected organization (replaces broken memberships[0] pattern)
-    const { user, organization, userRole } = await getUserOrganization(request)
-    const namespace = organization.namespace
+    const { email } = await getAuthenticatedUser(request)
+    const namespace = NAMESPACE
 
     // Parse and validate request body
     const body = await request.json()
@@ -98,7 +95,7 @@ export async function PATCH(
         annotations: {
           ...existingModel.metadata.annotations,
           'langop.io/updated-at': new Date().toISOString(),
-          'langop.io/updated-by': user.email || 'unknown'
+          'langop.io/updated-by': email || 'unknown'
         }
       },
       spec: {
@@ -114,7 +111,7 @@ export async function PATCH(
     })
 
     // Log the update for audit trail
-    console.log(`Model updated: ${name} by ${user.email} in ${namespace}`)
+    console.log(`Model updated: ${name} by ${email} in ${namespace}`)
 
     return NextResponse.json({ data: updatedModel })
   } catch (error) {
@@ -143,9 +140,8 @@ export async function PUT(
     console.log('🔥 PUT /api/models/[name] - Starting model update')
     const { name } = await params
     console.log('🔥 Model name:', name)
-    // Get user's selected organization (replaces broken memberships[0] pattern)
-    const { user, organization, userRole } = await getUserOrganization(request)
-    const namespace = organization.namespace
+    const { email } = await getAuthenticatedUser(request)
+    const namespace = NAMESPACE
 
     // Parse and validate request body
     const body = await request.json()
@@ -165,7 +161,7 @@ export async function PUT(
         annotations: {
           ...existingModel.metadata.annotations,
           'langop.io/updated-at': new Date().toISOString(),
-          'langop.io/updated-by': user.email || 'unknown'
+          'langop.io/updated-by': email || 'unknown'
         }
       },
       spec: {
@@ -181,7 +177,7 @@ export async function PUT(
     })
 
     // Log the update for audit trail
-    console.log(`Model updated via PUT: ${name} by ${user.email} in ${namespace}`)
+    console.log(`Model updated via PUT: ${name} by ${email} in ${namespace}`)
 
     return NextResponse.json({ data: updatedModel })
   } catch (error) {
@@ -209,9 +205,8 @@ export async function DELETE(
 ) {
   try {
     const { name } = await params
-    // Get user's selected organization (replaces broken memberships[0] pattern)
-    const { user, organization, userRole } = await getUserOrganization(request)
-    const namespace = organization.namespace
+    const { email } = await getAuthenticatedUser(request)
+    const namespace = NAMESPACE
 
     // Check if model exists
     const existingModel = await k8sClient.getLanguageModel(namespace, name)
@@ -223,7 +218,7 @@ export async function DELETE(
     await k8sClient.deleteLanguageModel(namespace, name)
 
     // Log the deletion for audit trail
-    console.log(`Model deleted: ${name} by ${user.email} in ${namespace}`)
+    console.log(`Model deleted: ${name} by ${email} in ${namespace}`)
 
     return NextResponse.json({ success: true })
   } catch (error) {

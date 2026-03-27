@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import { k8sClient } from '@/lib/k8s-client'
-import { db } from '@/lib/db'
-import { requirePermission } from '@/lib/permissions'
-import { getUserOrganization } from '@/lib/organization-context'
+import { getAuthenticatedUser } from '@/lib/user-context'
+
+const NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
 
 interface RouteParams {
   params: Promise<{
@@ -15,23 +13,16 @@ interface RouteParams {
 
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
-    // Get user's selected organization (replaces broken memberships[0] pattern)
-    const { user, organization, userRole } = await getUserOrganization(request)
-    
-    // Check permissions - user needs edit access to manually run agents
-    const hasPermission = await requirePermission(user.id, organization.id, 'edit')
-    if (!hasPermission) {
-      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
-    }
+    const { email } = await getAuthenticatedUser(request)
 
     const { name: clusterName, agentName } = await params
 
-    console.log(`Manual execution requested for agent ${agentName} in cluster ${clusterName}, namespace ${organization.namespace}`)
+    console.log(`Manual execution requested for agent ${agentName} in cluster ${clusterName}, namespace ${NAMESPACE}`)
 
     // Get the agent to validate it exists and is scheduled
-    const agent = await k8sClient.getLanguageAgent(organization.namespace, agentName)
+    const agent = await k8sClient.getLanguageAgent(NAMESPACE, agentName)
 
-    // Handle different response structures from k8s client  
+    // Handle different response structures from k8s client
     let agentData: any = null
     if ((agent as any)?.body) {
       agentData = (agent as any).body
@@ -42,9 +33,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     if (!agentData) {
-      return NextResponse.json({ 
+      return NextResponse.json({
         error: `Agent "${agentName}" not found`,
-        message: `Agent "${agentName}" not found in namespace ${organization.namespace}`
+        message: `Agent "${agentName}" not found in namespace ${NAMESPACE}`
       }, { status: 404 })
     }
 
@@ -61,8 +52,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const jobName = `${agentName}-manual-${timestamp}`
 
     // Create manual execution Job from the agent's CronJob
-    const createdJob = await k8sClient.createJobFromCronJob(organization.namespace, agentName, jobName)
-    
+    const createdJob = await k8sClient.createJobFromCronJob(NAMESPACE, agentName, jobName)
+
     console.log(`Manual execution Job created: ${jobName}`)
 
     // Return job information
@@ -70,20 +61,20 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       success: true,
       jobName,
       agentName,
-      namespace: organization.namespace,
+      namespace: NAMESPACE,
       message: `Manual execution started for agent "${agentName}"`,
       job: {
         name: jobName,
-        namespace: organization.namespace,
+        namespace: NAMESPACE,
         createdAt: new Date().toISOString()
       }
     })
 
   } catch (error) {
     console.error('Error creating manual execution job:', error)
-    
+
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to execute agent manually',
         message: error instanceof Error ? error.message : 'Unknown error'
       },

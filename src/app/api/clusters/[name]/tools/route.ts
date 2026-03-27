@@ -1,32 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/user-context'
 import { k8sClient } from '@/lib/k8s-client'
-import { db } from '@/lib/db'
-import { requirePermission } from '@/lib/permissions'
-import { getUserOrganization } from '@/lib/organization-context'
 import { filterByClusterRef } from '@/lib/cluster-utils'
 import { validateClusterExists, validateResourceBelongsToCluster, validateClusterForResourceCreation } from '@/lib/cluster-validation'
 import { createErrorResponse, createSuccessResponse, handleKubernetesOperation, validateClusterNameFormat, createAuthenticationRequiredError, createPermissionDeniedError } from '@/lib/api-error-handler'
 import { LanguageTool, LanguageToolListParams, LanguageToolFormData } from '@/types/tool'
 
 // GET /api/clusters/[name]/tools - List all tools for specific cluster
+const NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
+
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ name: string }> }
 ) {
   try {
-    // Get user's selected organization
-    const { user, organization, userRole } = await getUserOrganization(request)
+    const { email } = await getAuthenticatedUser(request)
     
-    if (!user?.id) {
-      throw createAuthenticationRequiredError()
-    }
 
-    const hasPermission = await requirePermission(user.id, organization.id, 'view')
-    if (!hasPermission) {
-      throw createPermissionDeniedError('view tools', 'cluster-scoped tools', userRole)
-    }
 
     const { name: clusterName } = await params
     
@@ -34,7 +25,7 @@ export async function GET(
     validateClusterNameFormat(clusterName)
     
     // Validate cluster exists and user has access
-    await validateClusterExists(organization.namespace, clusterName, { validateAccess: true })
+    await validateClusterExists(NAMESPACE, clusterName, { validateAccess: true })
 
     const url = new URL(request.url)
     const queryParams: LanguageToolListParams = {
@@ -50,7 +41,7 @@ export async function GET(
     // Fetch all tools from organization namespace with proper error handling
     const response = await handleKubernetesOperation(
       'list tools',
-      k8sClient.listLanguageTools(organization.namespace)
+      k8sClient.listLanguageTools(NAMESPACE)
     )
     
     // Handle different response structures from k8s client
@@ -129,23 +120,15 @@ export async function POST(
   { params }: { params: Promise<{ name: string }> }
 ) {
   try {
-    // Get user's selected organization
-    const { user, organization, userRole } = await getUserOrganization(request)
+    const { email } = await getAuthenticatedUser(request)
 
-    if (!user?.id) {
-      throw createAuthenticationRequiredError()
-    }
 
-    const hasPermission = await requirePermission(user.id, organization.id, 'create')
-    if (!hasPermission) {
-      throw createPermissionDeniedError('create tools', 'cluster-scoped tools', userRole)
-    }
 
     const { name: clusterName } = await params
 
     // Validate cluster name format and existence
     validateClusterNameFormat(clusterName)
-    await validateClusterForResourceCreation(organization.namespace, clusterName, organization.id, 'LanguageTool')
+    await validateClusterForResourceCreation(NAMESPACE, clusterName, 'LanguageTool')
 
     const formData: LanguageToolFormData = await request.json()
 
@@ -155,14 +138,13 @@ export async function POST(
       kind: 'LanguageTool',
       metadata: {
         name: formData.name,
-        namespace: organization.namespace,
+        namespace: NAMESPACE,
         labels: {
-          'langop.io/organization-id': organization.id,
           'langop.io/cluster': clusterName,
         },
         annotations: {
           'langop.io/description': formData.description || '',
-          'langop.io/created-by-email': user.email,
+          'langop.io/created-by-email': email,
         },
       },
       spec: {
@@ -235,7 +217,7 @@ export async function POST(
     // Create the tool using k8s client with proper error handling
     const result = await handleKubernetesOperation(
       'create tool',
-      k8sClient.createLanguageTool(organization.namespace, tool)
+      k8sClient.createLanguageTool(NAMESPACE, tool)
     )
 
     return createSuccessResponse(

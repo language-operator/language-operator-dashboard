@@ -1,13 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { fetchWithOrganization } from '@/lib/api-client'
-import { useOrganizationStore } from '@/store/organization-store'
 import { LanguageModel, LanguageModelListParams, LanguageModelFormData } from '@/types/model'
 
 export function useModels(params: LanguageModelListParams & { clusterName: string }) {
-  const { activeOrganizationId } = useOrganizationStore()
-  
   return useQuery({
-    queryKey: ['models', activeOrganizationId, params.clusterName, params],
+    queryKey: ['models', params.clusterName, params],
     queryFn: async () => {
       if (!params.clusterName) {
         throw new Error('Cluster name is required to fetch models')
@@ -29,7 +25,7 @@ export function useModels(params: LanguageModelListParams & { clusterName: strin
 
       const endpoint = `/api/clusters/${params.clusterName}/models?${searchParams}`
 
-      const response = await fetchWithOrganization(endpoint)
+      const response = await fetch(endpoint)
       if (!response.ok) {
         throw new Error('Failed to fetch models')
       }
@@ -46,7 +42,7 @@ export function useModel(name: string, clusterName: string) {
         throw new Error('Cluster name is required to fetch model')
       }
       
-      const response = await fetchWithOrganization(`/api/clusters/${clusterName}/models/${name}`)
+      const response = await fetch(`/api/clusters/${clusterName}/models/${name}`)
       if (!response.ok) {
         throw new Error('Failed to fetch model')
       }
@@ -58,7 +54,6 @@ export function useModel(name: string, clusterName: string) {
 
 export function useUpdateModel(clusterName: string) {
   const queryClient = useQueryClient()
-  const { activeOrganizationId } = useOrganizationStore()
 
   return useMutation({
     mutationFn: async ({ modelName, updateData }: { modelName: string; updateData: any }) => {
@@ -66,7 +61,7 @@ export function useUpdateModel(clusterName: string) {
         throw new Error('Cluster name is required for model update')
       }
 
-      const response = await fetchWithOrganization(`/api/clusters/${clusterName}/models/${modelName}`, {
+      const response = await fetch(`/api/clusters/${clusterName}/models/${modelName}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -87,8 +82,8 @@ export function useUpdateModel(clusterName: string) {
       })
       
       // Also invalidate the models list to update any summary data
-      queryClient.invalidateQueries({ 
-        queryKey: ['models', activeOrganizationId, clusterName] 
+      queryClient.invalidateQueries({
+        queryKey: ['models', clusterName]
       })
       queryClient.invalidateQueries({ 
         queryKey: ['models'] 
@@ -102,7 +97,6 @@ export function useUpdateModel(clusterName: string) {
 
 export function useDeleteModel(clusterName: string) {
   const queryClient = useQueryClient()
-  const { activeOrganizationId } = useOrganizationStore()
 
   return useMutation({
     mutationFn: async (name: string) => {
@@ -110,7 +104,7 @@ export function useDeleteModel(clusterName: string) {
         throw new Error('Cluster name is required for model deletion')
       }
 
-      const response = await fetchWithOrganization(`/api/clusters/${clusterName}/models/${name}`, {
+      const response = await fetch(`/api/clusters/${clusterName}/models/${name}`, {
         method: 'DELETE',
       })
       if (!response.ok) {
@@ -124,10 +118,10 @@ export function useDeleteModel(clusterName: string) {
 
       // Snapshot the previous value
       const previousModels = queryClient.getQueryData(['models'])
-      const previousClusterModels = queryClient.getQueryData(['models', activeOrganizationId, clusterName])
+      const previousClusterModels = queryClient.getQueryData(['models', clusterName])
 
       // Optimistically remove from cache
-      queryClient.setQueryData(['models', activeOrganizationId, clusterName], (old: any) => {
+      queryClient.setQueryData(['models', clusterName], (old: any) => {
         if (!old?.data) return old
 
         return {
@@ -145,7 +139,7 @@ export function useDeleteModel(clusterName: string) {
         queryClient.setQueryData(['models'], context.previousModels)
       }
       if (context?.previousClusterModels) {
-        queryClient.setQueryData(['models', activeOrganizationId, clusterName], context.previousClusterModels)
+        queryClient.setQueryData(['models', clusterName], context.previousClusterModels)
       }
       console.error('Failed to delete model:', err)
     },

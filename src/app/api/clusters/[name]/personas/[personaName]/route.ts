@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/user-context'
 import { k8sClient } from '@/lib/k8s-client'
-import { db } from '@/lib/db'
-import { requirePermission } from '@/lib/permissions'
-import { getUserOrganization } from '@/lib/organization-context'
 import { validateClusterExists } from '@/lib/cluster-validation'
 import {
   createErrorResponse,
@@ -16,23 +12,18 @@ import {
 } from '@/lib/api-error-handler'
 
 // GET /api/clusters/[name]/personas/[personaName] - Get a specific persona in a cluster
+const NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
+
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ name: string; personaName: string }> }
 ) {
   try {
-    // Get user's selected organization
-    const { user, organization, userRole } = await getUserOrganization(request)
+    const { email } = await getAuthenticatedUser(request)
 
-    if (!user?.id) {
-      throw createAuthenticationRequiredError()
-    }
 
     // Check permissions
-    const hasPermission = await requirePermission(user.id, organization.id, 'view')
-    if (!hasPermission) {
-      throw createPermissionDeniedError('view persona', 'cluster-scoped personas', userRole)
-    }
 
     const { name: clusterName, personaName } = await params
 
@@ -40,14 +31,14 @@ export async function GET(
     validateClusterNameFormat(clusterName)
 
     // Validate cluster exists and user has access
-    await validateClusterExists(organization.namespace, clusterName, { validateAccess: true })
+    await validateClusterExists(NAMESPACE, clusterName, { validateAccess: true })
 
-    console.log(`Fetching persona ${personaName} for cluster ${clusterName} from namespace:`, organization.namespace)
+    console.log(`Fetching persona ${personaName} for cluster ${clusterName} from namespace:`, NAMESPACE)
 
     // Fetch the specific persona from Kubernetes
     const response = await handleKubernetesOperation(
       'get persona',
-      k8sClient.getLanguagePersona(organization.namespace, personaName)
+      k8sClient.getLanguagePersona(NAMESPACE, personaName)
     )
 
     // Extract persona data from response
@@ -93,18 +84,10 @@ export async function PATCH(
   { params }: { params: Promise<{ name: string; personaName: string }> }
 ) {
   try {
-    // Get user's selected organization
-    const { user, organization, userRole } = await getUserOrganization(request)
+    const { email } = await getAuthenticatedUser(request)
 
-    if (!user?.id) {
-      throw createAuthenticationRequiredError()
-    }
 
     // Check permissions
-    const hasPermission = await requirePermission(user.id, organization.id, 'edit')
-    if (!hasPermission) {
-      throw createPermissionDeniedError('edit persona', 'cluster-scoped personas', userRole)
-    }
 
     const { name: clusterName, personaName } = await params
 
@@ -112,16 +95,16 @@ export async function PATCH(
     validateClusterNameFormat(clusterName)
 
     // Validate cluster exists and user has access
-    await validateClusterExists(organization.namespace, clusterName, { validateAccess: true })
+    await validateClusterExists(NAMESPACE, clusterName, { validateAccess: true })
 
     const body = await request.json()
 
-    console.log(`Updating persona ${personaName} for cluster ${clusterName} in namespace:`, organization.namespace)
+    console.log(`Updating persona ${personaName} for cluster ${clusterName} in namespace:`, NAMESPACE)
 
     // First, get the existing persona to merge with updates
     const existingResponse = await handleKubernetesOperation(
       'get persona for update',
-      k8sClient.getLanguagePersona(organization.namespace, personaName)
+      k8sClient.getLanguagePersona(NAMESPACE, personaName)
     )
 
     let existingPersona = null
@@ -167,7 +150,7 @@ export async function PATCH(
     // Update the persona in Kubernetes
     const response = await handleKubernetesOperation(
       'update persona',
-      k8sClient.updateLanguagePersona(organization.namespace, personaName, updatedPersona)
+      k8sClient.updateLanguagePersona(NAMESPACE, personaName, updatedPersona)
     )
 
     console.log(`Successfully updated persona ${personaName} for cluster ${clusterName}`)
@@ -186,18 +169,10 @@ export async function DELETE(
   { params }: { params: Promise<{ name: string; personaName: string }> }
 ) {
   try {
-    // Get user's selected organization
-    const { user, organization, userRole } = await getUserOrganization(request)
+    const { email } = await getAuthenticatedUser(request)
 
-    if (!user?.id) {
-      throw createAuthenticationRequiredError()
-    }
 
     // Check permissions
-    const hasPermission = await requirePermission(user.id, organization.id, 'delete')
-    if (!hasPermission) {
-      throw createPermissionDeniedError('delete persona', 'cluster-scoped personas', userRole)
-    }
 
     const { name: clusterName, personaName } = await params
 
@@ -205,14 +180,14 @@ export async function DELETE(
     validateClusterNameFormat(clusterName)
 
     // Validate cluster exists and user has access
-    await validateClusterExists(organization.namespace, clusterName, { validateAccess: true })
+    await validateClusterExists(NAMESPACE, clusterName, { validateAccess: true })
 
-    console.log(`Deleting persona ${personaName} for cluster ${clusterName} from namespace:`, organization.namespace)
+    console.log(`Deleting persona ${personaName} for cluster ${clusterName} from namespace:`, NAMESPACE)
 
     // First verify the persona belongs to this cluster
     const existingResponse = await handleKubernetesOperation(
       'get persona for deletion',
-      k8sClient.getLanguagePersona(organization.namespace, personaName)
+      k8sClient.getLanguagePersona(NAMESPACE, personaName)
     )
 
     let existingPersona = null
@@ -242,7 +217,7 @@ export async function DELETE(
     // Delete the persona from Kubernetes
     const response = await handleKubernetesOperation(
       'delete persona',
-      k8sClient.deleteLanguagePersona(organization.namespace, personaName)
+      k8sClient.deleteLanguagePersona(NAMESPACE, personaName)
     )
 
     console.log(`Successfully deleted persona ${personaName} for cluster ${clusterName}`)

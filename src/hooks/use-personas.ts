@@ -1,13 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { fetchWithOrganization } from '@/lib/api-client'
-import { useOrganizationStore } from '@/store/organization-store'
 import { LanguagePersona, LanguagePersonaListParams, LanguagePersonaFormData } from '@/types/persona'
 
 export function usePersonas(params: LanguagePersonaListParams & { clusterName: string }) {
-  const { activeOrganizationId } = useOrganizationStore()
-  
   return useQuery({
-    queryKey: ['personas', activeOrganizationId, params.clusterName, params],
+    queryKey: ['personas', params.clusterName, params],
     queryFn: async () => {
       if (!params.clusterName) {
         throw new Error('Cluster name is required to fetch personas')
@@ -25,7 +21,7 @@ export function usePersonas(params: LanguagePersonaListParams & { clusterName: s
 
       const endpoint = `/api/clusters/${params.clusterName}/personas?${searchParams}`
 
-      const response = await fetchWithOrganization(endpoint)
+      const response = await fetch(endpoint)
       if (!response.ok) {
         throw new Error('Failed to fetch personas')
       }
@@ -42,7 +38,7 @@ export function usePersona(name: string, clusterName: string) {
         throw new Error('Cluster name is required to fetch persona')
       }
       
-      const response = await fetchWithOrganization(`/api/clusters/${clusterName}/personas/${name}`)
+      const response = await fetch(`/api/clusters/${clusterName}/personas/${name}`)
       if (!response.ok) {
         throw new Error('Failed to fetch persona')
       }
@@ -61,7 +57,7 @@ export function useUpdatePersona(clusterName: string) {
         throw new Error('Cluster name is required for persona update')
       }
 
-      const response = await fetchWithOrganization(`/api/clusters/${clusterName}/personas/${name}`, {
+      const response = await fetch(`/api/clusters/${clusterName}/personas/${name}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -88,7 +84,6 @@ export function useUpdatePersona(clusterName: string) {
 
 export function useDeletePersona(clusterName: string) {
   const queryClient = useQueryClient()
-  const { activeOrganizationId } = useOrganizationStore()
 
   return useMutation({
     mutationFn: async (name: string) => {
@@ -96,7 +91,7 @@ export function useDeletePersona(clusterName: string) {
         throw new Error('Cluster name is required for persona deletion')
       }
 
-      const response = await fetchWithOrganization(`/api/clusters/${clusterName}/personas/${name}`, {
+      const response = await fetch(`/api/clusters/${clusterName}/personas/${name}`, {
         method: 'DELETE',
       })
       if (!response.ok) {
@@ -110,10 +105,10 @@ export function useDeletePersona(clusterName: string) {
 
       // Snapshot the previous value
       const previousPersonas = queryClient.getQueryData(['personas'])
-      const previousClusterPersonas = queryClient.getQueryData(['personas', activeOrganizationId, clusterName])
+      const previousClusterPersonas = queryClient.getQueryData(['personas', clusterName])
 
       // Optimistically remove from cache
-      queryClient.setQueryData(['personas', activeOrganizationId, clusterName], (old: any) => {
+      queryClient.setQueryData(['personas', clusterName], (old: any) => {
         if (!old?.data) return old
 
         return {
@@ -131,7 +126,7 @@ export function useDeletePersona(clusterName: string) {
         queryClient.setQueryData(['personas'], context.previousPersonas)
       }
       if (context?.previousClusterPersonas) {
-        queryClient.setQueryData(['personas', activeOrganizationId, clusterName], context.previousClusterPersonas)
+        queryClient.setQueryData(['personas', clusterName], context.previousClusterPersonas)
       }
       console.error('Failed to delete persona:', err)
     },
@@ -154,7 +149,7 @@ export interface GeneratePersonaParams {
 export function useGeneratePersona() {
   return useMutation({
     mutationFn: async (params: GeneratePersonaParams) => {
-      const response = await fetchWithOrganization('/api/personas/generate', {
+      const response = await fetch('/api/personas/generate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

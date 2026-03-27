@@ -4,7 +4,7 @@ import GoogleProvider from 'next-auth/providers/google'
 import GitHubProvider from 'next-auth/providers/github'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import { compare } from 'bcryptjs'
-import { db } from './db'
+import { db } from '@/lib/db'
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(db),
@@ -83,48 +83,10 @@ export const authOptions: NextAuthOptions = {
       return token
     },
     async session({ session, token }) {
-      console.log('🔧 [SESSION] Building JWT session for user:', token.sub)
-      
-      // With JWT sessions, user ID comes from token
-      const userId = token.sub
-      
-      if (session.user && userId) {
-        session.user.id = userId
-
-        try {
-          console.log('👥 [SESSION] Fetching organizations for user:', userId)
-          // Get user's organizations and active organization
-          const memberships = await db.organizationMember.findMany({
-            where: { userId: userId },
-            include: {
-              organization: true,
-            },
-            orderBy: { createdAt: 'asc' },
-          })
-
-          console.log('📋 [SESSION] Found', memberships.length, 'memberships')
-
-          // Store organizations in session for easy access
-          session.organizations = memberships.map((m: any) => ({
-            id: m.organization.id,
-            name: m.organization.name,
-            slug: m.organization.slug,
-            namespace: m.organization.namespace,
-            role: m.role,
-          }))
-
-          // Set active organization (first one by default)
-          session.activeOrganization = session.organizations[0] || null
-          
-          console.log('✅ [SESSION] Session built successfully')
-        } catch (error) {
-          console.error('❌ [SESSION] Error building session:', error)
-          // Continue with basic session even if organizations fail
-          session.organizations = []
-          session.activeOrganization = null
-        }
+      // With JWT sessions, user ID and email come from token
+      if (session.user && token.sub) {
+        session.user.id = token.sub
       }
-
       return session
     },
   },

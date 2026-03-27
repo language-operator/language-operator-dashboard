@@ -1,4 +1,5 @@
 import * as k8s from '@kubernetes/client-node'
+import { existsSync } from 'fs'
 import { k8sClient } from './k8s-client'
 
 export interface WatchEvent<T = any> {
@@ -14,6 +15,7 @@ export interface WatchOptions {
   fieldSelector?: string
   resourceVersion?: string
   timeoutSeconds?: number
+  clusterScoped?: boolean
 }
 
 export class KubernetesWatchService {
@@ -71,7 +73,8 @@ export class KubernetesWatchService {
           contexts: [context],
           currentContext: context.name,
         })
-      } else if (process.env.NODE_ENV === 'development') {
+      } else if (process.env.NODE_ENV === 'development' &&
+                 !existsSync('/var/run/secrets/kubernetes.io/serviceaccount/token')) {
         this.kc.loadFromDefault()
       } else {
         this.kc.loadFromCluster()
@@ -109,7 +112,9 @@ export class KubernetesWatchService {
     this.watchers.set(watchKey, watch)
     this.activeStreams.add(watchKey)
 
-    const path = `/apis/${group}/${version}/namespaces/${options.namespace}/${plural}`
+    const path = options.clusterScoped
+      ? `/apis/${group}/${version}/${plural}`
+      : `/apis/${group}/${version}/namespaces/${options.namespace}/${plural}`
     const queryParams = new URLSearchParams()
     
     if (options.labelSelector) queryParams.append('labelSelector', options.labelSelector)
@@ -211,7 +216,7 @@ export class KubernetesWatchService {
       'langop.io',
       'v1alpha1',
       'languageclusters',
-      options,
+      { ...options, clusterScoped: true },
       onEvent,
       onError
     )

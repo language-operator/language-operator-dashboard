@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { fetchWithOrganization } from '@/lib/api-client'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Box } from 'lucide-react'
@@ -46,7 +45,7 @@ export function ToolLogs({ tool, clusterName }: ToolLogsProps) {
   const fetchPods = useCallback(async () => {
     try {
       setPodsLoading(true)
-      const response = await fetchWithOrganization(`/api/clusters/${clusterName}/tools/${tool.metadata.name}/pods`)
+      const response = await fetch(`/api/clusters/${clusterName}/tools/${tool.metadata.name}/pods`)
       if (!response.ok) {
         throw new Error(`Failed to fetch pods: ${response.status} ${response.statusText}`)
       }
@@ -77,7 +76,7 @@ export function ToolLogs({ tool, clusterName }: ToolLogsProps) {
 
       const url = `/api/clusters/${clusterName}/tools/${tool.metadata.name}/logs?podName=${selectedPod}`
 
-      const response = await fetchWithOrganization(url)
+      const response = await fetch(url)
       if (!response.ok) {
         throw new Error(`Failed to fetch logs: ${response.status} ${response.statusText}`)
       }

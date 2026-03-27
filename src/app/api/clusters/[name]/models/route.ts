@@ -1,33 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/user-context'
 import { k8sClient } from '@/lib/k8s-client'
-import { db } from '@/lib/db'
-import { requirePermission } from '@/lib/permissions'
-import { getUserOrganization } from '@/lib/organization-context'
 import { filterByClusterRef } from '@/lib/cluster-utils'
 import { validateClusterExists, validateResourceBelongsToCluster } from '@/lib/cluster-validation'
 import { createErrorResponse, createSuccessResponse, handleKubernetesOperation, validateClusterNameFormat, createAuthenticationRequiredError, createPermissionDeniedError, KubernetesError } from '@/lib/api-error-handler'
 import { LanguageModel, LanguageModelListParams } from '@/types/model'
 
 // GET /api/clusters/[name]/models - List models for a specific cluster
+const NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
+
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ name: string }> }
 ) {
   try {
-    // Get user's selected organization
-    const { user, organization, userRole } = await getUserOrganization(request)
+    const { email } = await getAuthenticatedUser(request)
     
-    if (!user?.id) {
-      throw createAuthenticationRequiredError()
-    }
 
     // Check permissions
-    const hasPermission = await requirePermission(user.id, organization.id, 'view')
-    if (!hasPermission) {
-      throw createPermissionDeniedError('view models', 'cluster-scoped models', userRole)
-    }
 
     const { name: clusterName } = await params
     
@@ -35,12 +26,12 @@ export async function GET(
     validateClusterNameFormat(clusterName)
     
     // Validate cluster exists and user has access
-    await validateClusterExists(organization.namespace, clusterName, { validateAccess: true })
+    await validateClusterExists(NAMESPACE, clusterName, { validateAccess: true })
 
     // Parse query parameters
     const url = new URL(request.url)
     const listParams: LanguageModelListParams = {
-      namespace: organization.namespace,
+      namespace: NAMESPACE,
       page: parseInt(url.searchParams.get('page') || '1'),
       limit: parseInt(url.searchParams.get('limit') || '50'),
       sortBy: (url.searchParams.get('sortBy') as any) || 'name',
@@ -52,11 +43,11 @@ export async function GET(
     }
 
     // Fetch models from Kubernetes namespace with proper error handling
-    console.log(`Fetching models for cluster ${clusterName} from namespace:`, organization.namespace)
+    console.log(`Fetching models for cluster ${clusterName} from namespace:`, NAMESPACE)
     
     const response = await handleKubernetesOperation(
       'list models',
-      k8sClient.listLanguageModels(organization.namespace)
+      k8sClient.listLanguageModels(NAMESPACE)
     )
     
     // Handle different response structures
@@ -186,18 +177,10 @@ export async function POST(
   { params }: { params: Promise<{ name: string }> }
 ) {
   try {
-    // Get user's selected organization
-    const { user, organization, userRole } = await getUserOrganization(request)
+    const { email } = await getAuthenticatedUser(request)
     
-    if (!user?.id) {
-      throw createAuthenticationRequiredError()
-    }
 
     // Check permissions
-    const hasPermission = await requirePermission(user.id, organization.id, 'create')
-    if (!hasPermission) {
-      throw createPermissionDeniedError('create models', 'cluster-scoped models', userRole)
-    }
 
     const { name: clusterName } = await params
     
@@ -205,7 +188,7 @@ export async function POST(
     validateClusterNameFormat(clusterName)
     
     // Validate cluster exists and user has access
-    await validateClusterExists(organization.namespace, clusterName, { validateAccess: true })
+    await validateClusterExists(NAMESPACE, clusterName, { validateAccess: true })
 
     const body = await request.json()
     
@@ -237,9 +220,8 @@ export async function POST(
       kind: 'LanguageModel',
       metadata: {
         name: body.name,
-        namespace: organization.namespace,
+        namespace: NAMESPACE,
         labels: {
-          'langop.io/organization-id': organization.id,
           'langop.io/cluster': clusterName,
           'langop.io/managed-by': 'language-operator-dashboard'
         }
@@ -259,13 +241,13 @@ export async function POST(
       }
     }
 
-    console.log(`Creating model ${body.name} for cluster ${clusterName} in namespace:`, organization.namespace)
+    console.log(`Creating model ${body.name} for cluster ${clusterName} in namespace:`, NAMESPACE)
     console.log('Model spec being sent to Kubernetes:', JSON.stringify(modelSpec, null, 2))
     
     // Create the model in Kubernetes
     const response = await handleKubernetesOperation(
       'create model',
-      k8sClient.createLanguageModel(organization.namespace, modelSpec)
+      k8sClient.createLanguageModel(NAMESPACE, modelSpec)
     )
     
     console.log(`Model ${body.name} created successfully for cluster ${clusterName}`)

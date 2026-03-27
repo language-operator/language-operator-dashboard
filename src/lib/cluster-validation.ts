@@ -84,25 +84,13 @@ export function validateClusterAccessibility(cluster: any): boolean {
 export async function validateClusterAccess(
   namespace: string,
   clusterName: string,
-  organizationId: string,
-  userRole?: string
 ): Promise<void> {
   const result = await validateClusterExists(namespace, clusterName, { validateAccess: true })
-  
+
   if (!result.cluster) {
     throw new ClusterNotFoundError(clusterName, namespace)
   }
-
-  // Check organization ownership via labels
-  const clusterOrgId = result.cluster.metadata?.labels?.['langop.io/organization-id']
-  
-  if (clusterOrgId !== organizationId) {
-    throw new ClusterAccessDeniedError(
-      clusterName, 
-      namespace,
-      `Cluster belongs to different organization`
-    )
-  }
+  // K8s RBAC via impersonation enforces actual access control
 }
 
 export function validateClusterRef(
@@ -171,7 +159,6 @@ export function validateResourceBelongsToCluster(
 export async function validateClusterForResourceCreation(
   namespace: string,
   clusterName: string,
-  organizationId: string,
   resourceType: string
 ): Promise<void> {
   // Validate cluster exists and is accessible
@@ -185,9 +172,6 @@ export async function validateClusterForResourceCreation(
     )
   }
 
-  // Validate organization access
-  await validateClusterAccess(namespace, clusterName, organizationId)
-  
   // Check if cluster is in a state that allows resource creation
   const cluster = result.cluster
   const phase = cluster?.status?.phase
@@ -224,7 +208,6 @@ export function isValidClusterName(clusterName: string): boolean {
 export async function getClusterResourceCounts(
   namespace: string,
   clusterName: string,
-  organizationId: string
 ): Promise<{
   agents: number
   models: number
@@ -232,7 +215,7 @@ export async function getClusterResourceCounts(
   personas: number
 }> {
   // Validate cluster access first
-  await validateClusterAccess(namespace, clusterName, organizationId)
+  await validateClusterAccess(namespace, clusterName)
 
   const counts = {
     agents: 0,

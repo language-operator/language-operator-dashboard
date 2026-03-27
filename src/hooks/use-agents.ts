@@ -1,13 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { fetchWithOrganization } from '@/lib/api-client'
-import { useOrganizationStore } from '@/store/organization-store'
 import { LanguageAgent, LanguageAgentListParams, LanguageAgentFormData } from '@/types/agent'
 
 export function useAgents(params: LanguageAgentListParams & { clusterName: string }) {
-  const { activeOrganizationId } = useOrganizationStore()
-  
   return useQuery({
-    queryKey: ['agents', activeOrganizationId, params.clusterName, params],
+    queryKey: ['agents', params.clusterName, params],
     queryFn: async () => {
       if (!params.clusterName) {
         throw new Error('Cluster name is required to fetch agents')
@@ -28,7 +24,7 @@ export function useAgents(params: LanguageAgentListParams & { clusterName: strin
 
       const endpoint = `/api/clusters/${params.clusterName}/agents?${searchParams}`
 
-      const response = await fetchWithOrganization(endpoint)
+      const response = await fetch(endpoint)
       if (!response.ok) {
         throw new Error('Failed to fetch agents')
       }
@@ -47,7 +43,7 @@ export function useAgent(name: string, clusterName: string) {
       
       const endpoint = `/api/clusters/${clusterName}/agents/${name}`
       
-      const response = await fetchWithOrganization(endpoint)
+      const response = await fetch(endpoint)
       if (!response.ok) {
         // Parse error response for better error handling
         let errorMessage = 'Failed to fetch agent'
@@ -85,7 +81,6 @@ export function useAgent(name: string, clusterName: string) {
 
 export function useCreateAgent(clusterName: string) {
   const queryClient = useQueryClient()
-  const { activeOrganizationId } = useOrganizationStore()
 
   return useMutation({
     mutationFn: async (agent: LanguageAgentFormData) => {
@@ -93,7 +88,7 @@ export function useCreateAgent(clusterName: string) {
         throw new Error('Cluster name is required for agent creation')
       }
 
-      const response = await fetchWithOrganization(`/api/clusters/${clusterName}/agents`, {
+      const response = await fetch(`/api/clusters/${clusterName}/agents`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(agent),
@@ -109,17 +104,16 @@ export function useCreateAgent(clusterName: string) {
     onMutate: async (newAgent: LanguageAgentFormData) => {
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ['agents'] })
-      await queryClient.cancelQueries({ queryKey: ['agents', activeOrganizationId, clusterName] })
+      await queryClient.cancelQueries({ queryKey: ['agents', clusterName] })
 
       // Snapshot the previous value
       const previousAgents = queryClient.getQueryData(['agents'])
-      const previousClusterAgents = queryClient.getQueryData(['agents', activeOrganizationId, clusterName])
+      const previousClusterAgents = queryClient.getQueryData(['agents', clusterName])
 
       // Create optimistic agent object
       const optimisticAgent: any = {
         metadata: {
           name: newAgent.name,
-          namespace: activeOrganizationId,
           labels: {
             'langop.io/cluster': clusterName,
           },
@@ -131,7 +125,7 @@ export function useCreateAgent(clusterName: string) {
       }
 
       // Optimistically update the agents cache
-      queryClient.setQueryData(['agents', activeOrganizationId, clusterName], (old: any) => {
+      queryClient.setQueryData(['agents', clusterName], (old: any) => {
         if (!old?.data) return old
 
         return {
@@ -149,7 +143,7 @@ export function useCreateAgent(clusterName: string) {
         queryClient.setQueryData(['agents'], context.previousAgents)
       }
       if (context?.previousClusterAgents) {
-        queryClient.setQueryData(['agents', activeOrganizationId, clusterName], context.previousClusterAgents)
+        queryClient.setQueryData(['agents', clusterName], context.previousClusterAgents)
       }
       console.error('Failed to create agent:', err)
     },
@@ -163,7 +157,6 @@ export function useCreateAgent(clusterName: string) {
 
 export function useUpdateAgent(clusterName: string) {
   const queryClient = useQueryClient()
-  const { activeOrganizationId } = useOrganizationStore()
 
   return useMutation({
     mutationFn: async ({ name, agent }: { name: string; agent: Partial<LanguageAgent> }) => {
@@ -173,7 +166,7 @@ export function useUpdateAgent(clusterName: string) {
 
       const endpoint = `/api/clusters/${clusterName}/agents/${name}`
 
-      const response = await fetchWithOrganization(endpoint, {
+      const response = await fetch(endpoint, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(agent),
@@ -196,11 +189,11 @@ export function useUpdateAgent(clusterName: string) {
     onMutate: async ({ name, agent }) => {
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ['agents', clusterName, name] })
-      await queryClient.cancelQueries({ queryKey: ['agents', activeOrganizationId, clusterName] })
+      await queryClient.cancelQueries({ queryKey: ['agents', clusterName] })
 
       // Snapshot the previous values
       const previousAgent = queryClient.getQueryData(['agents', clusterName, name])
-      const previousClusterAgents = queryClient.getQueryData(['agents', activeOrganizationId, clusterName])
+      const previousClusterAgents = queryClient.getQueryData(['agents', clusterName])
 
       // Optimistically update individual agent query
       queryClient.setQueryData(['agents', clusterName, name], (old: any) => {
@@ -212,7 +205,7 @@ export function useUpdateAgent(clusterName: string) {
       })
 
       // Optimistically update agents list
-      queryClient.setQueryData(['agents', activeOrganizationId, clusterName], (old: any) => {
+      queryClient.setQueryData(['agents', clusterName], (old: any) => {
         if (!old?.data) return old
 
         return {
@@ -231,7 +224,7 @@ export function useUpdateAgent(clusterName: string) {
         queryClient.setQueryData(['agents', clusterName, variables.name], context.previousAgent)
       }
       if (context?.previousClusterAgents) {
-        queryClient.setQueryData(['agents', activeOrganizationId, clusterName], context.previousClusterAgents)
+        queryClient.setQueryData(['agents', clusterName], context.previousClusterAgents)
       }
 
       // Log conflict errors specially
@@ -261,10 +254,10 @@ export function useDeleteAgent(clusterName: string) {
       
       const endpoint = `/api/clusters/${clusterName}/agents/${name}`
       
-      const response = await fetchWithOrganization(endpoint, {
+      const response = await fetch(endpoint, {
         method: 'DELETE',
       })
-      
+
       if (!response.ok) {
         throw new Error('Failed to delete agent')
       }
@@ -327,172 +320,3 @@ export function useDeleteAgent(clusterName: string) {
   })
 }
 
-export function useAgentVersions(agentName: string, clusterName: string) {
-  const { activeOrganizationId } = useOrganizationStore()
-  
-  return useQuery({
-    queryKey: ['agent-versions', activeOrganizationId, clusterName, agentName],
-    queryFn: async () => {
-      if (!clusterName || !agentName) {
-        throw new Error('Cluster name and agent name are required to fetch agent versions')
-      }
-      
-      const endpoint = `/api/clusters/${clusterName}/agents/${agentName}/versions`
-      
-      const response = await fetchWithOrganization(endpoint)
-      if (!response.ok) {
-        let errorMessage = 'Failed to fetch agent versions'
-        let errorData: any = null
-        
-        try {
-          errorData = await response.json()
-          errorMessage = errorData.error || errorData.message || errorMessage
-        } catch {
-          if (response.status === 404) {
-            errorMessage = `Agent "${agentName}" not found in cluster "${clusterName}"`
-          }
-        }
-        
-        const error = new Error(errorMessage) as any
-        error.status = response.status
-        error.data = errorData
-        throw error
-      }
-      return response.json()
-    },
-    enabled: !!agentName && !!clusterName,
-  })
-}
-
-export function useRollbackAgent(clusterName: string) {
-  const queryClient = useQueryClient()
-  const { activeOrganizationId } = useOrganizationStore()
-  
-  return useMutation({
-    mutationFn: async ({ agentName, versionName, lock = false }: { agentName: string; versionName: string; lock?: boolean }) => {
-      if (!clusterName) {
-        throw new Error('Cluster name is required for agent rollback')
-      }
-      
-      const endpoint = `/api/clusters/${clusterName}/agents/${agentName}/rollback`
-      
-      const response = await fetchWithOrganization(endpoint, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ versionName, lock }),
-      })
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
-        throw new Error(errorData.error || errorData.message || 'Failed to rollback agent')
-      }
-      
-      return response.json()
-    },
-    onSuccess: (data, variables) => {
-      // Invalidate agent and version queries with correct keys
-      queryClient.invalidateQueries({ queryKey: ['agents', activeOrganizationId, clusterName, variables.agentName] })
-      queryClient.invalidateQueries({ queryKey: ['agent-versions', activeOrganizationId, clusterName, variables.agentName] })
-      queryClient.invalidateQueries({ queryKey: ['agents'] })
-    },
-  })
-}
-
-export function useToggleAgentLock(clusterName: string) {
-  const queryClient = useQueryClient()
-  const { activeOrganizationId } = useOrganizationStore()
-  
-  return useMutation({
-    mutationFn: async ({ agentName, lock }: { agentName: string; lock: boolean }) => {
-      if (!clusterName) {
-        throw new Error('Cluster name is required for agent lock operation')
-      }
-      
-      const endpoint = `/api/clusters/${clusterName}/agents/${agentName}/lock`
-      
-      const response = await fetchWithOrganization(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lock }),
-      })
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
-        throw new Error(errorData.error || errorData.message || 'Failed to update agent lock status')
-      }
-      
-      return response.json()
-    },
-    onSuccess: (data, variables) => {
-      // Invalidate agent and version queries with correct keys
-      queryClient.invalidateQueries({ queryKey: ['agents', activeOrganizationId, clusterName, variables.agentName] })
-      queryClient.invalidateQueries({ queryKey: ['agent-versions', activeOrganizationId, clusterName, variables.agentName] })
-      queryClient.invalidateQueries({ queryKey: ['agents'] })
-    },
-  })
-}
-
-export function useTriggerOptimization(clusterName: string) {
-  const queryClient = useQueryClient()
-  const { activeOrganizationId } = useOrganizationStore()
-  
-  return useMutation({
-    mutationFn: async ({ agentName }: { agentName: string }) => {
-      if (!clusterName) {
-        throw new Error('Cluster name is required for optimization trigger')
-      }
-      
-      const endpoint = `/api/clusters/${clusterName}/agents/${agentName}/optimize`
-      
-      const response = await fetchWithOrganization(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      })
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
-        throw new Error(errorData.error || errorData.message || 'Failed to trigger agent optimization')
-      }
-      
-      return response.json()
-    },
-    onSuccess: (data, variables) => {
-      // Invalidate agent and version queries to pick up the optimization results with correct keys
-      queryClient.invalidateQueries({ queryKey: ['agents', activeOrganizationId, clusterName, variables.agentName] })
-      queryClient.invalidateQueries({ queryKey: ['agent-versions', activeOrganizationId, clusterName, variables.agentName] })
-      queryClient.invalidateQueries({ queryKey: ['agents'] })
-    },
-  })
-}
-
-export function useDeleteAgentVersion(clusterName: string) {
-  const queryClient = useQueryClient()
-  const { activeOrganizationId } = useOrganizationStore()
-  
-  return useMutation({
-    mutationFn: async ({ agentName, versionName }: { agentName: string; versionName: string }) => {
-      if (!clusterName) {
-        throw new Error('Cluster name is required for version deletion')
-      }
-      
-      const endpoint = `/api/clusters/${clusterName}/agents/${agentName}/versions/${versionName}`
-      
-      const response = await fetchWithOrganization(endpoint, {
-        method: 'DELETE',
-      })
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
-        throw new Error(errorData.error || errorData.message || 'Failed to delete agent version')
-      }
-      
-      return response.json()
-    },
-    onSuccess: (data, variables) => {
-      // Invalidate agent and version queries to pick up changes
-      queryClient.invalidateQueries({ queryKey: ['agents', activeOrganizationId, clusterName, variables.agentName] })
-      queryClient.invalidateQueries({ queryKey: ['agent-versions', activeOrganizationId, clusterName, variables.agentName] })
-      queryClient.invalidateQueries({ queryKey: ['agents'] })
-    },
-  })
-}

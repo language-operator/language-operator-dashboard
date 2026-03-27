@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/user-context'
 import { k8sClient } from '@/lib/k8s-client'
-import { db } from '@/lib/db'
-import { requirePermission } from '@/lib/permissions'
-import { getUserOrganization } from '@/lib/organization-context'
 import { filterByClusterRef } from '@/lib/cluster-utils'
 import { validateClusterForResourceCreation, validateClusterExists, validateResourceBelongsToCluster } from '@/lib/cluster-validation'
 import { createErrorResponse, createSuccessResponse, handleKubernetesOperation, validateClusterNameFormat, ApiError, createAuthenticationRequiredError, createPermissionDeniedError } from '@/lib/api-error-handler'
@@ -12,22 +8,17 @@ import { safeValidateLanguagePersona } from '@/lib/validation'
 import { LanguagePersona, LanguagePersonaListParams, LanguagePersonaFormData } from '@/types/persona'
 
 // GET /api/clusters/[name]/personas - List personas for a specific cluster
+const NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
+
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ name: string }> }
 ) {
   try {
-    // Get user's selected organization
-    const { user, organization, userRole } = await getUserOrganization(request)
+    const { email } = await getAuthenticatedUser(request)
     
-    if (!user?.id) {
-      throw createAuthenticationRequiredError()
-    }
 
-    const hasPermission = await requirePermission(user.id, organization.id, 'view')
-    if (!hasPermission) {
-      throw createPermissionDeniedError('view personas', 'cluster-scoped personas', userRole)
-    }
 
     const { name: clusterName } = await params
     
@@ -35,7 +26,7 @@ export async function GET(
     validateClusterNameFormat(clusterName)
     
     // Validate cluster exists and user has access
-    await validateClusterExists(organization.namespace, clusterName, { validateAccess: true })
+    await validateClusterExists(NAMESPACE, clusterName, { validateAccess: true })
 
     const url = new URL(request.url)
     const queryParams: LanguagePersonaListParams = {
@@ -51,7 +42,7 @@ export async function GET(
     // Fetch all personas from organization namespace with proper error handling
     const response = await handleKubernetesOperation(
       'list personas',
-      k8sClient.listLanguagePersonas(organization.namespace)
+      k8sClient.listLanguagePersonas(NAMESPACE)
     )
     
     // Handle different response structures from k8s client
@@ -132,23 +123,15 @@ export async function POST(
   { params }: { params: Promise<{ name: string }> }
 ) {
   try {
-    // Get user's selected organization
-    const { user, organization, userRole } = await getUserOrganization(request)
+    const { email } = await getAuthenticatedUser(request)
     
-    if (!user?.id) {
-      throw createAuthenticationRequiredError()
-    }
 
-    const hasPermission = await requirePermission(user.id, organization.id, 'create')
-    if (!hasPermission) {
-      throw createPermissionDeniedError('create personas', 'cluster-scoped personas', userRole)
-    }
 
     const { name: clusterName } = await params
     
     // Validate cluster name format and existence
     validateClusterNameFormat(clusterName)
-    await validateClusterForResourceCreation(organization.namespace, clusterName, organization.id, 'LanguagePersona')
+    await validateClusterForResourceCreation(NAMESPACE, clusterName, 'LanguagePersona')
 
     const formData: LanguagePersonaFormData = await request.json()
     
@@ -158,13 +141,12 @@ export async function POST(
       kind: 'LanguagePersona',
       metadata: {
         name: formData.name,
-        namespace: organization.namespace,
+        namespace: NAMESPACE,
         labels: {
-          'langop.io/organization-id': organization.id,
           'langop.io/cluster': clusterName,
         },
         annotations: {
-          'langop.io/created-by-email': user.email,
+          'langop.io/created-by-email': email,
           'langop.io/created-at': new Date().toISOString(),
         },
       },
@@ -205,7 +187,7 @@ export async function POST(
     // Create the persona using k8s client with proper error handling
     const result = await handleKubernetesOperation(
       'create persona',
-      k8sClient.createLanguagePersona(organization.namespace, persona)
+      k8sClient.createLanguagePersona(NAMESPACE, persona)
     )
 
     return createSuccessResponse(

@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import { k8sClient } from '@/lib/k8s-client'
-import { db } from '@/lib/db'
-import { requirePermission } from '@/lib/permissions'
-import { getUserOrganization } from '@/lib/organization-context'
+import { getAuthenticatedUser } from '@/lib/user-context'
+
+const NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
 
 interface RouteParams {
   params: Promise<{
@@ -15,22 +13,16 @@ interface RouteParams {
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
-    // Get user's selected organization (replaces broken memberships[0] pattern)
-    const { user, organization, userRole } = await getUserOrganization(request)
-    
-    const hasPermission = await requirePermission(user.id, organization.id, 'view')
-    if (!hasPermission) {
-      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
-    }
+    const { email } = await getAuthenticatedUser(request)
 
     const { name: clusterName, agentName } = await params
     const searchParams = new URL(request.url).searchParams
     const podName = searchParams.get('podName')
 
-    console.log(`Fetching logs for agent ${agentName} in cluster ${clusterName}, namespace ${organization.namespace}${podName ? `, pod ${podName}` : ''}`)
+    console.log(`Fetching logs for agent ${agentName} in cluster ${clusterName}, namespace ${NAMESPACE}${podName ? `, pod ${podName}` : ''}`)
 
     // Find the pod for this agent
-    const pods = await k8sClient.listPods(organization.namespace, {
+    const pods = await k8sClient.listPods(NAMESPACE, {
       labelSelector: `app.kubernetes.io/name=${agentName}`
     })
 
@@ -58,7 +50,6 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     // Select the appropriate pod
     let pod
     if (podName) {
-      // Find the specific pod requested
       pod = podList.find(p => p.metadata.name === podName)
       if (!pod) {
         return NextResponse.json({
@@ -70,13 +61,13 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       // Default behavior: get the most recent running pod, or most recent if none running
       const runningPods = podList.filter(p => p.status?.phase === 'Running')
       if (runningPods.length > 0) {
-        pod = runningPods.sort((a, b) => 
-          new Date(b.metadata.creationTimestamp).getTime() - 
+        pod = runningPods.sort((a, b) =>
+          new Date(b.metadata.creationTimestamp).getTime() -
           new Date(a.metadata.creationTimestamp).getTime()
         )[0]
       } else {
-        pod = podList.sort((a, b) => 
-          new Date(b.metadata.creationTimestamp).getTime() - 
+        pod = podList.sort((a, b) =>
+          new Date(b.metadata.creationTimestamp).getTime() -
           new Date(a.metadata.creationTimestamp).getTime()
         )[0]
       }
@@ -85,8 +76,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     console.log(`Getting logs from pod: ${pod.metadata.name}`)
 
     // Fetch logs from the pod
-    const logs = await k8sClient.getPodLogs(organization.namespace, pod.metadata.name, {
-      tailLines: 500, // Get last 500 lines
+    const logs = await k8sClient.getPodLogs(NAMESPACE, pod.metadata.name, {
+      tailLines: 500,
       timestamps: true
     })
 
@@ -108,9 +99,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
   } catch (error) {
     console.error('Error fetching agent logs:', error)
-    
+
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to fetch agent logs',
         message: error instanceof Error ? error.message : 'Unknown error'
       },

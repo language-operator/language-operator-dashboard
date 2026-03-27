@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
-import { db } from '@/lib/db'
-import { requirePermission } from '@/lib/permissions'
-import { getUserOrganization } from '@/lib/organization-context'
+import { getAuthenticatedUser } from '@/lib/user-context'
 import { workspaceClient } from '@/lib/workspace-client'
 import { WorkspaceError } from '@/types/workspace'
+
+const NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
 
 // GET /api/clusters/[name]/agents/[agentName]/workspace/files/download?path=/file.txt - Download file
 export async function GET(
@@ -13,13 +11,7 @@ export async function GET(
   { params }: { params: Promise<{ name: string; agentName: string }> }
 ) {
   try {
-    // Get user's selected organization (replaces broken memberships[0] pattern)
-    const { user, organization, userRole } = await getUserOrganization(request)
-    
-    const hasPermission = await requirePermission(user.id, organization.id, 'view')
-    if (!hasPermission) {
-      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
-    }
+    const { email } = await getAuthenticatedUser(request)
 
     const { name: clusterName, agentName } = await params
     const { searchParams } = new URL(request.url)
@@ -31,7 +23,7 @@ export async function GET(
 
     try {
       const fileBlob = await workspaceClient.downloadFile(
-        organization.namespace,
+        NAMESPACE,
         agentName,
         path
       )

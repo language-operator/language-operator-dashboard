@@ -1,6 +1,4 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { fetchWithOrganization } from '@/lib/api-client'
-import { useOrganizationStore } from '@/store/organization-store'
 
 export interface ResourceCounts {
   agents: number
@@ -34,10 +32,9 @@ export function useResourceCounts(clusterName?: string): UseResourceCountsReturn
   const [loading, setLoading] = useState(true)
   const [isStale, setIsStale] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const { activeOrganizationId } = useOrganizationStore()
   const abortControllerRef = useRef<AbortController | null>(null)
-  
-  const cacheKey = `${activeOrganizationId}:${clusterName || 'dashboard'}`
+
+  const cacheKey = clusterName || 'dashboard'
 
   const fetchCounts = useCallback(async (showStaleData = true) => {
     try {
@@ -85,7 +82,7 @@ export function useResourceCounts(clusterName?: string): UseResourceCountsReturn
         ? `/api/clusters/${clusterName}/counts`
         : '/api/dashboard/counts'
       
-      const response = await fetchWithOrganization(endpoint, {
+      const response = await fetch(endpoint, {
         signal: abortControllerRef.current.signal
       })
       
@@ -126,7 +123,7 @@ export function useResourceCounts(clusterName?: string): UseResourceCountsReturn
     } finally {
       setLoading(false)
     }
-  }, [clusterName, activeOrganizationId, cacheKey, counts])
+  }, [clusterName, cacheKey, counts])
 
   useEffect(() => {
     fetchCounts(true)

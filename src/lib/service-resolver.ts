@@ -59,7 +59,7 @@ export class ServiceResolver {
   }
 
   /**
-   * Helper method for model endpoints (LiteLLM proxy)
+   * Helper method for model endpoints (LiteLLM proxy) - per-model service (legacy)
    */
   public resolveModelUrl(modelName: string, namespace: string, port: number = 8000): string {
     return this.resolveServiceUrl({
@@ -68,6 +68,15 @@ export class ServiceResolver {
       port,
       path: '/v1/chat/completions'
     })
+  }
+
+  /**
+   * Resolve the shared cluster proxy endpoint.
+   * The operator creates a 'proxy' Service in a namespace named after the cluster.
+   * All models in a cluster are served through this single proxy.
+   */
+  public resolveClusterProxyUrl(clusterName: string, path: string = '/v1/chat/completions'): string {
+    return `http://proxy.${clusterName}.svc.cluster.local:8000${path}`
   }
 
   /**

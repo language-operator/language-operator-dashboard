@@ -1,45 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
-import { db } from '@/lib/db'
+import { getAuthenticatedUser } from '@/lib/user-context'
 import { k8sClient } from '@/lib/k8s-client'
 
 const OPERATOR_NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
 const CONFIG_MAP_NAME = 'language-operator-config'
 const REGISTRIES_KEY = 'allowed-registries'
 
-
-async function validateAdminAccess(session: any): Promise<boolean> {
-  if (!session?.user?.id) {
-    return false
-  }
-
-  // Check if user has admin access to any organization
-  const membership = await db.organizationMember.findFirst({
-    where: {
-      userId: session.user.id,
-      role: { in: ['owner', 'admin'] }
-    }
-  })
-
-  return !!membership
-}
-
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    
-    if (!await validateAdminAccess(session)) {
-      return NextResponse.json(
-        { error: 'Admin privileges required' }, 
-        { status: 403 }
-      )
-    }
+    const { email } = await getAuthenticatedUser(request)
+    const client = k8sClient.forUser(email)
 
-    // Use the imported k8sClient instance
-    
     try {
-      const configMapResponse = await k8sClient.readConfigMap(OPERATOR_NAMESPACE, CONFIG_MAP_NAME)
+      const configMapResponse = await client.readConfigMap(OPERATOR_NAMESPACE, CONFIG_MAP_NAME)
 
       const registriesData = configMapResponse.data?.[REGISTRIES_KEY] || ''
       const registryPatterns = registriesData
@@ -75,14 +48,8 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    
-    if (!await validateAdminAccess(session)) {
-      return NextResponse.json(
-        { error: 'Admin privileges required' }, 
-        { status: 403 }
-      )
-    }
+    const { email } = await getAuthenticatedUser(request)
+    const client = k8sClient.forUser(email)
 
     const body = await request.json()
     const { registries } = body
@@ -105,15 +72,13 @@ export async function POST(request: NextRequest) {
 
     const registriesData = registries.sort().join('\n')
 
-    // Use the imported k8sClient instance
-
     try {
       // Try to read existing ConfigMap first
       let configMapExists = true
       let existingConfigMap: any
 
       try {
-        const response = await k8sClient.readConfigMap(OPERATOR_NAMESPACE, CONFIG_MAP_NAME)
+        const response = await client.readConfigMap(OPERATOR_NAMESPACE, CONFIG_MAP_NAME)
         existingConfigMap = response
       } catch (error: any) {
         if (error.statusCode === 404) {
@@ -133,7 +98,7 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        await k8sClient.replaceConfigMap(OPERATOR_NAMESPACE, CONFIG_MAP_NAME, updatedConfigMap)
+        await client.replaceConfigMap(OPERATOR_NAMESPACE, CONFIG_MAP_NAME, updatedConfigMap)
       } else {
         // Create new ConfigMap
         const newConfigMap = {
@@ -152,7 +117,7 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        await k8sClient.createConfigMap(OPERATOR_NAMESPACE, newConfigMap)
+        await client.createConfigMap(OPERATOR_NAMESPACE, newConfigMap)
       }
 
       return NextResponse.json({ 

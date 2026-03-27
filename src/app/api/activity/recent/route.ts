@@ -1,32 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/user-context'
 import { k8sClient } from '@/lib/k8s-client'
-import { db } from '@/lib/db'
-import { requirePermission } from '@/lib/permissions'
-import { getUserOrganization } from '@/lib/organization-context'
 
 // GET /api/activity/recent - Get recent activity from Kubernetes events
+const NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
+
+
 export async function GET(request: NextRequest) {
   try {
-    // Get user's selected organization (replaces broken memberships[0] pattern)
-    const { user, organization, userRole } = await getUserOrganization(request)
+    const { email } = await getAuthenticatedUser(request)
     
     // Check permissions
-    const hasPermission = await requirePermission(user.id, organization.id, 'view')
-    if (!hasPermission) {
-      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
-    }
 
     // Parse query parameters
     const url = new URL(request.url)
     const limit = parseInt(url.searchParams.get('limit') || '10')
 
     // Fetch recent events from organization's namespace
-    const eventsResponse = await k8sClient.listEvents(organization.namespace, {
+    const eventsResponse = await k8sClient.listEvents(NAMESPACE, {
       limit: Math.min(limit, 50), // Cap at 50 for performance
-      labelSelector: `langop.io/organization-id=${organization.id}`,
-      // Sort by creation timestamp descending (most recent first)
+            // Sort by creation timestamp descending (most recent first)
     })
 
     // Handle different response structures from k8s client
@@ -59,7 +52,7 @@ export async function GET(request: NextRequest) {
         const resourceType = involvedObject.kind.replace('Language', '').toLowerCase()
         const resourceName = involvedObject.name
         const action = getActionFromEvent(event)
-        const namespace = involvedObject.namespace || organization.namespace
+        const namespace = involvedObject.namespace || NAMESPACE
 
         return {
           id: event.metadata.uid,
@@ -78,7 +71,7 @@ export async function GET(request: NextRequest) {
       success: true,
       data: activities,
       total: activities.length,
-      namespace: organization.namespace,
+      namespace: NAMESPACE,
     })
 
   } catch (error) {

@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/user-context'
 import { k8sClient } from '@/lib/k8s-client'
-import { requirePermission } from '@/lib/permissions'
-import { getUserOrganization } from '@/lib/organization-context'
 import { validateClusterExists } from '@/lib/cluster-validation'
 import { createErrorResponse, createSuccessResponse, handleKubernetesOperation, validateClusterNameFormat, createAuthenticationRequiredError, createPermissionDeniedError } from '@/lib/api-error-handler'
 import { z } from 'zod'
@@ -93,24 +90,20 @@ const updateModelSchema = z.object({
   }).optional()
 })
 
+const NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
+
 // GET /api/clusters/[name]/models/[modelName] - Get individual model details
+
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ name: string; modelName: string }> }
 ) {
   try {
-    // Get user's selected organization
-    const { user, organization, userRole } = await getUserOrganization(request)
+    const { email } = await getAuthenticatedUser(request)
     
-    if (!user?.id) {
-      throw createAuthenticationRequiredError()
-    }
 
     // Check permissions
-    const hasPermission = await requirePermission(user.id, organization.id, 'view')
-    if (!hasPermission) {
-      throw createPermissionDeniedError('view model', 'cluster-scoped models', userRole)
-    }
 
     const { name: clusterName, modelName } = await params
     
@@ -118,14 +111,14 @@ export async function GET(
     validateClusterNameFormat(clusterName)
     
     // Validate cluster exists and user has access
-    await validateClusterExists(organization.namespace, clusterName, { validateAccess: true })
+    await validateClusterExists(NAMESPACE, clusterName, { validateAccess: true })
 
-    console.log(`Fetching model ${modelName} for cluster ${clusterName} from namespace:`, organization.namespace)
+    console.log(`Fetching model ${modelName} for cluster ${clusterName} from namespace:`, NAMESPACE)
     
     // Fetch the specific model from Kubernetes
     const response = await handleKubernetesOperation(
       'get model',
-      k8sClient.getLanguageModel(organization.namespace, modelName)
+      k8sClient.getLanguageModel(NAMESPACE, modelName)
     )
     
     // Extract model data from response
@@ -171,18 +164,10 @@ export async function PUT(
   { params }: { params: Promise<{ name: string; modelName: string }> }
 ) {
   try {
-    // Get user's selected organization
-    const { user, organization, userRole } = await getUserOrganization(request)
+    const { email } = await getAuthenticatedUser(request)
     
-    if (!user?.id) {
-      throw createAuthenticationRequiredError()
-    }
 
     // Check permissions
-    const hasPermission = await requirePermission(user.id, organization.id, 'edit')
-    if (!hasPermission) {
-      throw createPermissionDeniedError('edit model', 'cluster-scoped models', userRole)
-    }
 
     const { name: clusterName, modelName } = await params
     
@@ -190,17 +175,17 @@ export async function PUT(
     validateClusterNameFormat(clusterName)
     
     // Validate cluster exists and user has access
-    await validateClusterExists(organization.namespace, clusterName, { validateAccess: true })
+    await validateClusterExists(NAMESPACE, clusterName, { validateAccess: true })
 
     const body = await request.json()
     const validatedData = updateModelSchema.parse(body)
 
-    console.log(`Updating model ${modelName} for cluster ${clusterName} in namespace:`, organization.namespace)
+    console.log(`Updating model ${modelName} for cluster ${clusterName} in namespace:`, NAMESPACE)
     
     // First, get the existing model to merge with updates
     const existingResponse = await handleKubernetesOperation(
       'get model for update',
-      k8sClient.getLanguageModel(organization.namespace, modelName)
+      k8sClient.getLanguageModel(NAMESPACE, modelName)
     )
     
     let existingModel = null
@@ -247,7 +232,7 @@ export async function PUT(
     // Update the model in Kubernetes using replace (patch format issues with CRDs)
     const response = await handleKubernetesOperation(
       'update model',
-      k8sClient.replaceLanguageModel(organization.namespace, modelName, updatedModel)
+      k8sClient.replaceLanguageModel(NAMESPACE, modelName, updatedModel)
     )
     
     console.log(`Successfully updated model ${modelName} for cluster ${clusterName}`)
@@ -266,18 +251,10 @@ export async function DELETE(
   { params }: { params: Promise<{ name: string; modelName: string }> }
 ) {
   try {
-    // Get user's selected organization
-    const { user, organization, userRole } = await getUserOrganization(request)
+    const { email } = await getAuthenticatedUser(request)
     
-    if (!user?.id) {
-      throw createAuthenticationRequiredError()
-    }
 
     // Check permissions
-    const hasPermission = await requirePermission(user.id, organization.id, 'delete')
-    if (!hasPermission) {
-      throw createPermissionDeniedError('delete model', 'cluster-scoped models', userRole)
-    }
 
     const { name: clusterName, modelName } = await params
     
@@ -285,14 +262,14 @@ export async function DELETE(
     validateClusterNameFormat(clusterName)
     
     // Validate cluster exists and user has access
-    await validateClusterExists(organization.namespace, clusterName, { validateAccess: true })
+    await validateClusterExists(NAMESPACE, clusterName, { validateAccess: true })
 
-    console.log(`Deleting model ${modelName} for cluster ${clusterName} from namespace:`, organization.namespace)
+    console.log(`Deleting model ${modelName} for cluster ${clusterName} from namespace:`, NAMESPACE)
     
     // First verify the model belongs to this cluster
     const existingResponse = await handleKubernetesOperation(
       'get model for deletion',
-      k8sClient.getLanguageModel(organization.namespace, modelName)
+      k8sClient.getLanguageModel(NAMESPACE, modelName)
     )
     
     let existingModel = null
@@ -322,7 +299,7 @@ export async function DELETE(
     // Delete the model from Kubernetes
     const response = await handleKubernetesOperation(
       'delete model',
-      k8sClient.deleteLanguageModel(organization.namespace, modelName)
+      k8sClient.deleteLanguageModel(NAMESPACE, modelName)
     )
     
     console.log(`Successfully deleted model ${modelName} for cluster ${clusterName}`)

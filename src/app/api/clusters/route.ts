@@ -1,23 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/user-context'
 import { k8sClient } from '@/lib/k8s-client'
-import { db } from '@/lib/db'
-import { requirePermission } from '@/lib/permissions'
-import { getUserOrganization } from '@/lib/organization-context'
 import { LanguageCluster, LanguageClusterListParams, LanguageClusterFormData } from '@/types/cluster'
 import { safeValidateLanguageCluster } from '@/lib/validation'
 
-// GET /api/clusters - List all clusters for user's organization
+const NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
+
+// GET /api/clusters - List all clusters
+
+
 export async function GET(request: NextRequest) {
   try {
-    // Get user's selected organization (replaces broken memberships[0] pattern)
-    const { user, organization, userRole } = await getUserOrganization(request)
+    const { email } = await getAuthenticatedUser(request)
     
-    const hasPermission = await requirePermission(user.id, organization.id, 'view')
-    if (!hasPermission) {
-      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
-    }
 
     const url = new URL(request.url)
     const params: LanguageClusterListParams = {
@@ -34,8 +29,8 @@ export async function GET(request: NextRequest) {
     let clusters: LanguageCluster[] = []
     
     try {
-      console.log(`Fetching clusters from namespace: ${organization.namespace}`)
-      const response = await k8sClient.listByOrganization('clusters', organization.namespace, organization.id)
+      console.log(`Fetching clusters from namespace: ${NAMESPACE}`)
+      const response = await k8sClient.listByOrganization('clusters', NAMESPACE, '')
       
       // Handle different response structures from k8s client
       // Live K8s mode: { body: { items: [...] } }
@@ -85,7 +80,7 @@ export async function GET(request: NextRequest) {
     let agentCountsByCluster: Record<string, number> = {}
     
     try {
-      const agentsResponse = await k8sClient.listByOrganization('agents', organization.namespace, organization.id)
+      const agentsResponse = await k8sClient.listByOrganization('agents', NAMESPACE, '')
       
       // Handle different response structures from k8s client
       const allAgents = (agentsResponse as any)?.body?.items || 
@@ -143,13 +138,8 @@ export async function GET(request: NextRequest) {
 // POST /api/clusters - Create a new cluster
 export async function POST(request: NextRequest) {
   try {
-    // Get user's selected organization (replaces broken memberships[0] pattern)
-    const { user, organization, userRole } = await getUserOrganization(request)
+    const { email } = await getAuthenticatedUser(request)
     
-    const hasPermission = await requirePermission(user.id, organization.id, 'create')
-    if (!hasPermission) {
-      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
-    }
 
     const formData: LanguageClusterFormData = await request.json()
 
@@ -158,13 +148,11 @@ export async function POST(request: NextRequest) {
       kind: 'LanguageCluster',
       metadata: {
         name: formData.name,
-        namespace: organization.namespace,
+        namespace: NAMESPACE,
         labels: {
-          'langop.io/organization-id': organization.id,
-          'langop.io/created-by': user.id,
         },
         annotations: {
-          'langop.io/created-by-email': user.email!,
+          'langop.io/created-by-email': email,
           'langop.io/created-at': new Date().toISOString(),
         },
       },
@@ -195,9 +183,9 @@ export async function POST(request: NextRequest) {
       },
     }
 
-    const response = await k8sClient.createLanguageCluster(organization.namespace, cluster)
+    const response = await k8sClient.createLanguageCluster(NAMESPACE, cluster)
     
-    console.log(`User ${user.email} created LanguageCluster ${formData.name} in organization ${organization.name}`)
+    console.log(`User ${email} created LanguageCluster ${formData.name}`)
     console.log('K8s API response structure:', JSON.stringify(response, null, 2))
 
     return NextResponse.json({

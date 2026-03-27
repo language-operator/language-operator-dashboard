@@ -1,27 +1,20 @@
 import { NextRequest } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
-import { db } from '@/lib/db'
-import { requirePermission } from '@/lib/permissions'
-import { getUserOrganization } from '@/lib/organization-context'
+import { getAuthenticatedUser } from '@/lib/user-context'
 import { watchService, WatchEvent } from '@/lib/watch-service'
 import { createSSEWatchStream } from '@/lib/sse-watch-helper'
+const NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
+
 
 export async function GET(request: NextRequest) {
   try {
-    // Get user's selected organization
-    const { user, organization, userRole } = await getUserOrganization(request)
+    const { email } = await getAuthenticatedUser(request)
 
-    const hasPermission = await requirePermission(user.id, organization.id, 'view')
-    if (!hasPermission) {
-      return new Response('Insufficient permissions', { status: 403 })
-    }
 
     // Get optional cluster filter from query params
     const url = new URL(request.url)
     const clusterName = url.searchParams.get('cluster')
 
-    console.log(`🔍 Starting agent watch for organization ${organization.name}${clusterName ? ` (cluster: ${clusterName})` : ''}`)
+    console.log(`🔍 Starting agent watch in namespace ${NAMESPACE}${clusterName ? ` (cluster: ${clusterName})` : ''}`)
 
     // Track watch state
     let watchCleanup: (() => void) | null = null
@@ -57,14 +50,14 @@ export async function GET(request: NextRequest) {
 
       try {
         // Build label selector
-        let labelSelector = `langop.io/organization-id=${organization.id}`
+        let labelSelector = ``
         if (clusterName) {
           labelSelector += `,langop.io/cluster=${clusterName}`
         }
 
         watchCleanup = await watchService.watchLanguageAgents(
           {
-            namespace: organization.namespace,
+            namespace: NAMESPACE,
             labelSelector,
             resourceVersion: lastResourceVersion,
             // No timeout - let the watch run indefinitely

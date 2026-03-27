@@ -1,25 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/user-context'
 import { k8sClient } from '@/lib/k8s-client'
-import { db } from '@/lib/db'
-import { requirePermission } from '@/lib/permissions'
-import { getUserOrganization } from '@/lib/organization-context'
 import yaml from 'js-yaml'
 
 // GET /api/clusters/[name]/tools/[toolName]/yaml - Get tool YAML
+const NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
+
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ name: string; toolName: string }> }
 ) {
   try {
-    // Get user's selected organization (replaces broken memberships[0] pattern)
-    const { user, organization, userRole } = await getUserOrganization(request)
+    const { email } = await getAuthenticatedUser(request)
     
-    const hasPermission = await requirePermission(user.id, organization.id, 'view')
-    if (!hasPermission) {
-      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
-    }
 
     const { name: clusterName, toolName } = await params
     if (!clusterName || !toolName) {
@@ -30,7 +24,7 @@ export async function GET(
     let tool: any = null
     
     try {
-      const response = await k8sClient.getLanguageTool(organization.namespace, toolName)
+      const response = await k8sClient.getLanguageTool(NAMESPACE, toolName)
       
       // Handle different response structures from k8s client
       if ((response as any)?.body) {
@@ -62,7 +56,7 @@ export async function GET(
 
     // Verify tool belongs to user's organization
     const toolOrgLabel = tool.metadata?.labels?.['langop.io/organization-id']
-    if (toolOrgLabel && toolOrgLabel !== organization.id) {
+    if (toolOrgLabel && toolOrgLabel !== '') {
       return NextResponse.json({ 
         error: 'Tool not found',
         details: `Tool "${toolName}" not found in cluster "${clusterName}"` 

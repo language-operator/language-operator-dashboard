@@ -1,5 +1,6 @@
 import yaml from 'js-yaml'
 import { ToolCatalog, ToolCatalogEntry } from '@/types/tool-catalog'
+import { LanguageTool } from '@/types/tool'
 
 const CATALOG_URL = 'https://raw.githubusercontent.com/language-operator/language-tools/main/index.yaml'
 const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
@@ -62,65 +63,50 @@ export function getToolById(catalog: ToolCatalog, toolId: string): ToolCatalogEn
 
 export function searchTools(catalog: ToolCatalog, query: string): ToolCatalogEntry[] {
   const lowercaseQuery = query.toLowerCase()
-  
-  return Object.values(catalog.tools).filter(tool => 
-    tool.name.toLowerCase().includes(lowercaseQuery) ||
-    tool.displayName.toLowerCase().includes(lowercaseQuery) ||
-    tool.description.toLowerCase().includes(lowercaseQuery) ||
-    tool.tags?.some(tag => tag.toLowerCase().includes(lowercaseQuery))
-  )
+
+  return Object.values(catalog.tools).filter(tool => {
+    const displayName = tool.metadata.annotations?.['langop.io/display-name'] || tool.metadata.name || ''
+    const description = tool.spec?.description || ''
+    const tags = tool.metadata.annotations?.['langop.io/tags']?.split(',').map(t => t.trim()) || []
+
+    return (tool.metadata.name || '').toLowerCase().includes(lowercaseQuery) ||
+      displayName.toLowerCase().includes(lowercaseQuery) ||
+      description.toLowerCase().includes(lowercaseQuery) ||
+      tags.some(tag => tag.toLowerCase().includes(lowercaseQuery))
+  })
 }
 
 export function getToolsByTag(catalog: ToolCatalog, tag: string): ToolCatalogEntry[] {
-  return Object.values(catalog.tools).filter(tool => 
-    tool.tags?.includes(tag)
-  )
+  return Object.values(catalog.tools).filter(tool => {
+    const tags = tool.metadata.annotations?.['langop.io/tags']?.split(',').map(t => t.trim()) || []
+    return tags.includes(tag)
+  })
 }
 
-export function transformCatalogEntryToLanguageTool(
+export function prepareCatalogEntryForInstallation(
   entry: ToolCatalogEntry,
   namespace: string,
   clusterName?: string
-): any {
-  const languageTool = {
-    apiVersion: 'langop.io/v1alpha1',
-    kind: 'LanguageTool',
-    metadata: {
-      name: entry.name,
-      namespace: namespace,
-      labels: {
-        'langop.io/source': 'catalog',
-        'langop.io/catalog-name': entry.name,
-      },
-    },
-    spec: {
-      // Core LanguageTool spec fields
-      type: entry.type,
-      image: entry.image,
-      deploymentMode: entry.deploymentMode,
-      ...(entry.port && { port: entry.port }),
-      ...(clusterName && { clusterRef: clusterName }),
-      // Transform egress rules from catalog format to CRD format
-      ...(entry.egress && entry.egress.length > 0 && {
-        egress: entry.egress.map(rule => ({
-          description: rule.description,
-          // Nest DNS/CIDR under 'to' object (CRD format requirement)
-          ...((rule.dns && rule.dns.length > 0) || (rule as any).cidr) && {
-            to: {
-              ...(rule.dns && rule.dns.length > 0 && { dns: rule.dns }),
-              ...((rule as any).cidr && { cidr: (rule as any).cidr }),
-            },
-          },
-          ...(rule.ports && rule.ports.length > 0 && {
-            ports: rule.ports,
-          }),
-        })).filter(rule =>
-          // Only include rules with valid targets
-          (rule.to?.dns && rule.to.dns.length > 0) || rule.to?.cidr
-        )
-      }),
-    } as any,
+): LanguageTool {
+  // Deep clone to avoid mutating catalog
+  const tool: LanguageTool = JSON.parse(JSON.stringify(entry))
+
+  // Inject required metadata
+  tool.metadata.namespace = namespace
+
+  // Ensure labels exist
+  if (!tool.metadata.labels) {
+    tool.metadata.labels = {}
   }
 
-  return languageTool
+  // Add catalog labels (preserve existing)
+  tool.metadata.labels['langop.io/source'] = 'catalog'
+  tool.metadata.labels['langop.io/catalog-name'] = entry.metadata.name || ''
+
+  // Inject cluster reference if provided
+  if (clusterName && tool.spec) {
+    tool.spec.clusterRef = clusterName
+  }
+
+  return tool
 }

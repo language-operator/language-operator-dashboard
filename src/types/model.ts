@@ -180,7 +180,7 @@ export interface ServiceReference {
 
 // Status types
 export interface LanguageModelStatus {
-  phase?: 'Pending' | 'Ready' | 'Failed' | 'Unknown'
+  phase?: 'Pending' | 'Ready' | 'Failed' | 'Unknown' | 'Managed'
   healthy?: boolean
   conditions?: LanguageModelCondition[]
   endpoints?: EndpointStatus[]

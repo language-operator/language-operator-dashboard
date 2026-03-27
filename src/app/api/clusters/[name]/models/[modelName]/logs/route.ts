@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getAuthenticatedUser } from '@/lib/user-context'
 import { k8sClient } from '@/lib/k8s-client'
-import { requirePermission } from '@/lib/permissions'
-import { getUserOrganization } from '@/lib/organization-context'
 import type { V1Pod } from '@kubernetes/client-node'
 
 interface RouteParams {
@@ -13,23 +12,19 @@ interface RouteParams {
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
-    // Get user's selected organization (replaces broken memberships[0] pattern)
-    const { user, organization } = await getUserOrganization(request)
+    const { email } = await getAuthenticatedUser(request)
     
-    const hasPermission = await requirePermission(user.id, organization.id, 'view')
-    if (!hasPermission) {
-      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
-    }
 
     const { name: clusterName, modelName } = await params
     const searchParams = new URL(request.url).searchParams
     const podName = searchParams.get('podName')
 
-    console.log(`Fetching logs for model ${modelName} in cluster ${clusterName}, namespace ${organization.namespace}${podName ? `, pod ${podName}` : ''}`)
+    console.log(`Fetching proxy logs for cluster ${clusterName} (model ${modelName})${podName ? `, pod ${podName}` : ''}`)
 
-    // Find the pod for this model
-    const pods = await k8sClient.listPods(organization.namespace, {
-      labelSelector: `app.kubernetes.io/name=${modelName}`
+    // Models no longer have their own pods. Find the shared proxy pod in the cluster's namespace.
+    // The operator creates a namespace named after the cluster and deploys 'proxy' there.
+    const pods = await k8sClient.listPods(clusterName, {
+      labelSelector: `langop.io/kind=proxy,langop.io/cluster=${clusterName}`
     })
 
     // Handle different response structures from k8s client
@@ -44,12 +39,12 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       podList = (pods as any).items
     }
 
-    console.log(`Found ${podList.length} pods for model ${modelName}`)
+    console.log(`Found ${podList.length} proxy pod(s) for cluster ${clusterName}`)
 
     if (podList.length === 0) {
       return NextResponse.json({
-        logs: 'No pods found for this model.',
-        message: 'Model has no running pods'
+        logs: 'No proxy pods found for this cluster. The cluster proxy may not be running yet.',
+        message: 'Cluster proxy has no running pods'
       })
     }
 
@@ -85,8 +80,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     console.log(`Getting logs from pod: ${pod.metadata?.name}`)
 
-    // Fetch logs from the pod
-    const logs = await k8sClient.getPodLogs(organization.namespace, pod.metadata?.name || '', {
+    // Fetch logs from the proxy pod (in the cluster's namespace)
+    const logs = await k8sClient.getPodLogs(clusterName, pod.metadata?.name || '', {
       tailLines: 500, // Get last 500 lines
       timestamps: true
     })

@@ -1,32 +1,28 @@
-# Development Dockerfile for Language Operator Dashboard
 FROM node:20-alpine
 
-# Install dependencies for native modules
 RUN apk add --no-cache libc6-compat openssl
 
 WORKDIR /app
 
-# Copy package files
+# Install dependencies
 COPY package.json package-lock.json* ./
-
-# Install all dependencies (including dev dependencies)
 RUN npm ci
 
-# Copy source code
-COPY . .
-
-# Generate Prisma Client
+# Generate Prisma client (writes into /app/node_modules/.prisma/client)
+COPY prisma ./prisma
 ENV PRISMA_ENGINES_CHECKSUM_IGNORE_MISSING=1
 RUN npx prisma generate
 
-# Expose the port
-EXPOSE 3000
+# Move node_modules to /opt so the hostPath mount of /app doesn't shadow them.
+# The init container copies /opt/node_modules into the emptyDir at /app/node_modules.
+RUN mv /app/node_modules /opt/node_modules
 
-# Set environment
+ENV NODE_PATH=/opt/node_modules
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 ENV NODE_ENV=development
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Start the development server
-CMD ["npm", "run", "dev"]
+EXPOSE 3000
+
+CMD ["node", "/opt/node_modules/.bin/next", "dev"]

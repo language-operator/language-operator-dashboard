@@ -1,0 +1,74 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: dashboard-dev
+  namespace: language-operator
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: dashboard-dev
+rules:
+  # Impersonation — allows the dashboard SA to make K8s calls as the logged-in user.
+  # K8s RBAC is then evaluated as that user's identity (their email address).
+  - apiGroups: [""]
+    resources: ["users", "groups", "serviceaccounts"]
+    verbs: ["impersonate"]
+
+  # CRD access for all language-operator resources
+  - apiGroups: ["langop.io"]
+    resources:
+      - languageagents
+      - languagemodels
+      - languagetools
+      - languagepersonas
+      - languageclusters
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+  # Namespace management for organizations
+  - apiGroups: [""]
+    resources: ["namespaces"]
+    verbs: ["get", "list", "create", "update", "patch"]
+
+  # Pod access for debugging and workspace file management
+  - apiGroups: [""]
+    resources: ["pods", "pods/log", "pods/exec"]
+    verbs: ["get", "list", "create", "delete"]
+
+  # ResourceQuota management for organization plan enforcement
+  - apiGroups: [""]
+    resources: ["resourcequotas"]
+    verbs: ["get", "list", "create", "update", "patch", "delete"]
+
+  # PersistentVolumeClaim access for workspace file management
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims"]
+    verbs: ["get", "list"]
+
+  # Events access for audit logging and status information
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["get", "list", "watch", "create"]
+
+  # ConfigMap access for registry whitelist management
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list", "update", "patch"]
+
+  # Job and CronJob access for manual agent execution
+  - apiGroups: ["batch"]
+    resources: ["jobs", "cronjobs"]
+    verbs: ["get", "list", "create", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: dashboard-dev
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: dashboard-dev
+subjects:
+  - kind: ServiceAccount
+    name: dashboard-dev
+    namespace: language-operator

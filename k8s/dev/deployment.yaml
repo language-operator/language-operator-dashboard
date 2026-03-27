@@ -1,0 +1,120 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dashboard-dev
+  namespace: language-operator
+  labels:
+    app: dashboard-dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dashboard-dev
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: dashboard-dev
+    spec:
+      serviceAccountName: dashboard-dev
+      initContainers:
+        # Copy node_modules from the image (/opt/node_modules) into the emptyDir
+        # at /app/node_modules before source code is available via the hostPath mount.
+        - name: install-deps
+          image: docker.io/library/language-operator-dashboard-dev:dev
+          imagePullPolicy: Never
+          command:
+            - /bin/sh
+            - -c
+            - cp -r /opt/node_modules/. /app/node_modules/
+          volumeMounts:
+            - name: node-modules
+              mountPath: /app/node_modules
+
+        # Run Prisma migrations against the in-cluster postgres
+        - name: db-migrate
+          image: docker.io/library/language-operator-dashboard-dev:dev
+          imagePullPolicy: Never
+          command:
+            - node
+            - /app/node_modules/.bin/prisma
+            - migrate
+            - deploy
+          workingDir: /app
+          envFrom:
+            - secretRef:
+                name: dashboard-dev-config
+          volumeMounts:
+            - name: source
+              mountPath: /app
+            - name: node-modules
+              mountPath: /app/node_modules
+
+        # Initialize admin user and default organization (idempotent)
+        - name: initialize-tenant
+          image: docker.io/library/language-operator-dashboard-dev:dev
+          imagePullPolicy: Never
+          command:
+            - node
+            - /app/node_modules/.bin/tsx
+            - src/scripts/initialize-tenant.ts
+          workingDir: /app
+          envFrom:
+            - secretRef:
+                name: dashboard-dev-config
+          volumeMounts:
+            - name: source
+              mountPath: /app
+            - name: node-modules
+              mountPath: /app/node_modules
+
+      containers:
+        - name: dashboard
+          image: docker.io/library/language-operator-dashboard-dev:dev
+          imagePullPolicy: Never
+          command:
+            - node
+            - /app/node_modules/.bin/next
+            - dev
+          workingDir: /app
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+          envFrom:
+            - secretRef:
+                name: dashboard-dev-config
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 5
+            failureThreshold: 12
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 60
+            periodSeconds: 15
+          volumeMounts:
+            - name: source
+              mountPath: /app
+            - name: node-modules
+              mountPath: /app/node_modules
+            - name: next-cache
+              mountPath: /app/.next
+
+      volumes:
+        # Source code from the host filesystem — changes trigger Next.js hot reload
+        - name: source
+          hostPath:
+            path: SRC_PATH_PLACEHOLDER
+            type: Directory
+        # node_modules from the dev image (populated by install-deps init container)
+        - name: node-modules
+          emptyDir: {}
+        # Next.js build cache — isolated from the host
+        - name: next-cache
+          emptyDir: {}

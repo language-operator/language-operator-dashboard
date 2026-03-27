@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/user-context'
 import { k8sClient } from '@/lib/k8s-client'
-import { db } from '@/lib/db'
-import { getUserOrganization } from '@/lib/organization-context'
 import { z } from 'zod'
 
 const updateClusterSchema = z.object({
@@ -54,6 +51,9 @@ const updateClusterSchema = z.object({
 })
 
 // GET /api/clusters/[name] - Get a specific cluster
+const NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
+
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ name: string }> }
@@ -61,10 +61,8 @@ export async function GET(
   try {
     const { name } = await params
     
-    // Get user's selected organization (replaces broken memberships[0] pattern)
-    const { user, organization, userRole } = await getUserOrganization(request)
-    const namespace = organization.namespace
-    const cluster = await k8sClient.getLanguageCluster(namespace, name)
+    const { email } = await getAuthenticatedUser(request)
+    const cluster = await k8sClient.getLanguageCluster(NAMESPACE, name)
     
     if (!cluster) {
       return NextResponse.json({ error: 'Cluster not found' }, { status: 404 })
@@ -87,32 +85,24 @@ export async function PATCH(
 ) {
   try {
     const { name } = await params
-    const session = await getServerSession(authOptions)
-    
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    // Get user's selected organization (replaces broken memberships[0] pattern)
-    const { user, organization, userRole } = await getUserOrganization(request)
+    const { email } = await getAuthenticatedUser(request)
     const body = await request.json()
     const validatedData = updateClusterSchema.parse(body)
-    const namespace = organization.namespace
 
     // Get existing cluster
-    const existingCluster = await k8sClient.getLanguageCluster(namespace, name)
+    const existingCluster = await k8sClient.getLanguageCluster(NAMESPACE, name)
     if (!existingCluster) {
       return NextResponse.json({ error: 'Cluster not found' }, { status: 404 })
     }
 
     // Update the cluster
-    const updatedCluster = await k8sClient.updateLanguageCluster(namespace, name, {
+    const updatedCluster = await k8sClient.updateLanguageCluster(NAMESPACE, name, {
       metadata: {
         ...existingCluster.metadata,
         annotations: {
           ...existingCluster.metadata.annotations,
           'langop.io/updated-at': new Date().toISOString(),
-          'langop.io/updated-by': session.user.email || 'unknown'
+          'langop.io/updated-by': email
         }
       },
       spec: {
@@ -122,8 +112,7 @@ export async function PATCH(
       }
     })
 
-    // Log the update for audit trail
-    console.log(`Cluster updated: ${name} by ${session.user.email} in ${namespace}`)
+    console.log(`Cluster updated: ${name} by ${email} in ${NAMESPACE}`)
 
     return NextResponse.json({ cluster: updatedCluster })
   } catch (error) {
@@ -150,27 +139,18 @@ export async function DELETE(
 ) {
   try {
     const { name } = await params
-    const session = await getServerSession(authOptions)
-    
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    // Get user's selected organization (replaces broken memberships[0] pattern)
-    const { user, organization, userRole } = await getUserOrganization(request)
-    const namespace = organization.namespace
+    const { email } = await getAuthenticatedUser(request)
 
     // Check if cluster exists
-    const existingCluster = await k8sClient.getLanguageCluster(namespace, name)
+    const existingCluster = await k8sClient.getLanguageCluster(NAMESPACE, name)
     if (!existingCluster) {
       return NextResponse.json({ error: 'Cluster not found' }, { status: 404 })
     }
 
     // Delete the cluster
-    await k8sClient.deleteLanguageCluster(namespace, name)
+    await k8sClient.deleteLanguageCluster(NAMESPACE, name)
 
-    // Log the deletion for audit trail
-    console.log(`Cluster deleted: ${name} by ${session.user.email} in ${namespace}`)
+    console.log(`Cluster deleted: ${name} by ${email} in ${NAMESPACE}`)
 
     return NextResponse.json({ success: true })
   } catch (error) {

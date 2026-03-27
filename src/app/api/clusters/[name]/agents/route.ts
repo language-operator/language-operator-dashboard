@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import { k8sClient } from '@/lib/k8s-client'
-import { db } from '@/lib/db'
-import { requirePermission } from '@/lib/permissions'
-import { getUserOrganization } from '@/lib/organization-context'
+import { getAuthenticatedUser } from '@/lib/user-context'
 import { filterByClusterRef } from '@/lib/cluster-utils'
 import { validateClusterForResourceCreation, validateClusterExists, validateResourceBelongsToCluster } from '@/lib/cluster-validation'
-import { createErrorResponse, createSuccessResponse, handleKubernetesOperation, validateClusterNameFormat, ApiError, createAuthenticationRequiredError, createPermissionDeniedError } from '@/lib/api-error-handler'
+import { createErrorResponse, createSuccessResponse, handleKubernetesOperation, validateClusterNameFormat, ApiError, createAuthenticationRequiredError } from '@/lib/api-error-handler'
 import { validateClusterName, safeValidateLanguageAgent } from '@/lib/validation'
 import { LanguageAgent, LanguageAgentListParams } from '@/types/agent'
+
+const NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
 
 // GET /api/clusters/[name]/agents - List all agents for specific cluster
 export async function GET(
@@ -17,25 +15,16 @@ export async function GET(
   { params }: { params: Promise<{ name: string }> }
 ) {
   try {
-    // Get user's selected organization
-    const { user, organization, userRole } = await getUserOrganization(request)
-    
-    if (!user?.id) {
-      throw createAuthenticationRequiredError()
-    }
-
-    const hasPermission = await requirePermission(user.id, organization.id, 'view')
-    if (!hasPermission) {
-      throw createPermissionDeniedError('view agents', 'cluster-scoped agents', userRole)
-    }
+    const { email } = await getAuthenticatedUser(request)
+    const client = k8sClient.forUser(email)
 
     const { name: clusterName } = await params
-    
+
     // Validate cluster name format
     validateClusterNameFormat(clusterName)
-    
-    // Validate cluster exists and user has access
-    await validateClusterExists(organization.namespace, clusterName, { validateAccess: true })
+
+    // Validate cluster exists
+    await validateClusterExists(NAMESPACE, clusterName, { validateAccess: true })
 
     const url = new URL(request.url)
     const queryParams: LanguageAgentListParams = {
@@ -48,24 +37,23 @@ export async function GET(
       executionMode: url.searchParams.getAll('executionMode') || undefined,
     }
 
-    // Fetch all agents from organization namespace with proper error handling
+    // Fetch all agents from namespace with proper error handling
     const response = await handleKubernetesOperation(
       'list agents',
-      k8sClient.listLanguageAgents(organization.namespace)
+      k8sClient.listLanguageAgents(NAMESPACE)
     )
-    
+
     // Handle different response structures from k8s client
     const allAgents = (response as any)?.items || (response.data as any)?.items || (response.body as any)?.items || []
 
     // Filter agents to only show those that belong to this specific cluster
-    // Uses validation to handle orphaned resources gracefully
     const clusterAgents = validateResourceBelongsToCluster(
-      allAgents, 
-      clusterName, 
+      allAgents,
+      clusterName,
       { allowOrphanedResources: true }
     ) as LanguageAgent[]
 
-    // Apply search filtering 
+    // Apply search filtering
     let filteredAgents = clusterAgents.filter((agent: LanguageAgent) => {
       if (queryParams.search) {
         const searchLower = queryParams.search.toLowerCase()
@@ -74,22 +62,22 @@ export async function GET(
         const execModeMatch = agent.spec.executionMode?.toLowerCase().includes(searchLower)
         if (!nameMatch && !instructionsMatch && !execModeMatch) return false
       }
-      
+
       if (queryParams.phase && queryParams.phase.length > 0) {
         if (!queryParams.phase.includes(agent.status?.phase || '')) return false
       }
-      
+
       if (queryParams.executionMode && queryParams.executionMode.length > 0) {
         if (!queryParams.executionMode.includes(agent.spec.executionMode || '')) return false
       }
-      
+
       return true
     })
 
     // Apply sorting
     filteredAgents.sort((a: LanguageAgent, b: LanguageAgent) => {
       const order = queryParams.sortOrder === 'desc' ? -1 : 1
-      
+
       switch (queryParams.sortBy) {
         case 'name':
           return (a.metadata.name || '').localeCompare(b.metadata.name || '') * order
@@ -106,7 +94,7 @@ export async function GET(
         case 'age':
           const aTime = a.metadata.creationTimestamp ? new Date(a.metadata.creationTimestamp).getTime() : 0
           const bTime = b.metadata.creationTimestamp ? new Date(b.metadata.creationTimestamp).getTime() : 0
-          return (bTime - aTime) * order // Default newest first, reverse for oldest first
+          return (bTime - aTime) * order
         default:
           return 0
       }
@@ -136,45 +124,34 @@ export async function POST(
   { params }: { params: Promise<{ name: string }> }
 ) {
   try {
-    // Get user's selected organization
-    const { user, organization, userRole } = await getUserOrganization(request)
-    
-    if (!user?.id) {
-      throw createAuthenticationRequiredError()
-    }
-
-    const hasPermission = await requirePermission(user.id, organization.id, 'create')
-    if (!hasPermission) {
-      throw createPermissionDeniedError('create agents', 'cluster-scoped agents', userRole)
-    }
+    const { email } = await getAuthenticatedUser(request)
+    const client = k8sClient.forUser(email)
 
     const { name: clusterName } = await params
-    
+
     // Validate cluster name format and existence
     validateClusterNameFormat(clusterName)
-    await validateClusterForResourceCreation(organization.namespace, clusterName, organization.id, 'LanguageAgent')
+    await validateClusterForResourceCreation(NAMESPACE, clusterName, 'LanguageAgent')
 
     const agentData = await request.json()
-    
+
     // Transform LanguageAgentFormData to LanguageAgent CRD format
     const agentCrd: LanguageAgent = {
       apiVersion: 'langop.io/v1alpha1',
       kind: 'LanguageAgent',
       metadata: {
         name: agentData.name,
-        namespace: organization.namespace,
-        labels: {
-          'langop.io/organization-id': organization.id,
-        },
+        namespace: NAMESPACE,
+        labels: {},
         annotations: {
-          'langop.io/created-by-email': user.email,
+          'langop.io/created-by-email': email,
         },
       },
       spec: {
         instructions: agentData.instructions,
         executionMode: agentData.executionMode || 'autonomous',
         replicas: agentData.replicas || 1,
-        
+
         // Required fields based on existing agent structure
         image: 'ghcr.io/language-operator/agent:latest',
         imagePullPolicy: 'Always',
@@ -183,30 +160,30 @@ export async function POST(
         maxIterations: 50,
         timeout: '10m',
         restartPolicy: 'OnFailure',
-        
+
         // Model references with namespace and role
-        modelRefs: agentData.selectedModels?.map((name: string) => ({ 
+        modelRefs: agentData.selectedModels?.map((name: string) => ({
           name,
-          namespace: organization.namespace,
+          namespace: NAMESPACE,
           role: 'primary' as const
         })) || [],
-        
+
         // Tool references with namespace
         ...(agentData.selectedTools?.length > 0 && {
-          toolRefs: agentData.selectedTools.map((name: string) => ({ 
+          toolRefs: agentData.selectedTools.map((name: string) => ({
             name,
-            namespace: organization.namespace 
+            namespace: NAMESPACE
           })),
         }),
-        
-        // Persona references with namespace  
+
+        // Persona references with namespace
         ...(agentData.selectedPersona && agentData.selectedPersona !== 'none' && {
-          personaRefs: [{ 
+          personaRefs: [{
             name: agentData.selectedPersona,
-            namespace: organization.namespace 
+            namespace: NAMESPACE
           }],
         }),
-        
+
         // Default workspace configuration
         workspace: {
           enabled: true,
@@ -214,16 +191,9 @@ export async function POST(
           accessMode: 'ReadWriteOnce',
           mountPath: '/workspace',
         },
-        
+
         // Empty resources (let defaults apply)
         resources: {},
-        
-        // Agent version reference (auto-generated name)
-        agentVersionRef: {
-          name: `${agentData.name}-v1`,
-          namespace: organization.namespace,
-          lock: false,
-        },
       },
     }
 
@@ -242,7 +212,7 @@ export async function POST(
     // Create the agent using k8s client with proper error handling
     const result = await handleKubernetesOperation(
       'create agent',
-      k8sClient.createLanguageAgent(organization.namespace, agentCrd)
+      k8sClient.createLanguageAgent(NAMESPACE, agentCrd)
     )
 
     return createSuccessResponse(

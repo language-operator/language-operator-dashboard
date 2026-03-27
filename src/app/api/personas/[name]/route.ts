@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/user-context'
 import { k8sClient } from '@/lib/k8s-client'
-import { db } from '@/lib/db'
-import { requirePermission } from '@/lib/permissions'
-import { getUserOrganization } from '@/lib/organization-context'
 import { z } from 'zod'
 
 const updatePersonaSchema = z.object({
@@ -38,15 +34,17 @@ const updatePersonaSchema = z.object({
 })
 
 // GET /api/personas/[name] - Get a specific persona
+const NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
+
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ name: string }> }
 ) {
   try {
     const { name } = await params
-    // Get user's selected organization (replaces broken memberships[0] pattern)
-    const { user, organization, userRole } = await getUserOrganization(request)
-    const namespace = organization.namespace
+    const { email } = await getAuthenticatedUser(request)
+    const namespace = NAMESPACE
     const persona = await k8sClient.getLanguagePersona(namespace, name)
     
     if (!persona) {
@@ -70,9 +68,8 @@ export async function PATCH(
 ) {
   try {
     const { name } = await params
-    // Get user's selected organization (replaces broken memberships[0] pattern)
-    const { user, organization, userRole } = await getUserOrganization(request)
-    const namespace = organization.namespace
+    const { email } = await getAuthenticatedUser(request)
+    const namespace = NAMESPACE
 
     // Parse and validate request body
     const body = await request.json()
@@ -93,7 +90,7 @@ export async function PATCH(
         annotations: {
           ...existingPersona.metadata.annotations,
           'langop.io/updated-at': new Date().toISOString(),
-          'langop.io/updated-by': user.email || 'unknown'
+          'langop.io/updated-by': email || 'unknown'
         }
       },
       spec: {
@@ -107,7 +104,7 @@ export async function PATCH(
     const updatedPersona = await k8sClient.updateLanguagePersona(namespace, name, updatePayload)
 
     // Log the update for audit trail
-    console.log(`Persona updated: ${name} by ${user.email} in ${namespace}`)
+    console.log(`Persona updated: ${name} by ${email} in ${namespace}`)
 
     return NextResponse.json({ persona: updatedPersona })
   } catch (error) {
@@ -134,9 +131,8 @@ export async function DELETE(
 ) {
   try {
     const { name } = await params
-    // Get user's selected organization (replaces broken memberships[0] pattern)
-    const { user, organization, userRole } = await getUserOrganization(request)
-    const namespace = organization.namespace
+    const { email } = await getAuthenticatedUser(request)
+    const namespace = NAMESPACE
 
     // Check if persona exists
     const existingPersona = await k8sClient.getLanguagePersona(namespace, name)
@@ -148,7 +144,7 @@ export async function DELETE(
     await k8sClient.deleteLanguagePersona(namespace, name)
 
     // Log the deletion for audit trail
-    console.log(`Persona deleted: ${name} by ${user.email} in ${namespace}`)
+    console.log(`Persona deleted: ${name} by ${email} in ${namespace}`)
 
     return NextResponse.json({ success: true })
   } catch (error) {

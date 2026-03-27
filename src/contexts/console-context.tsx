@@ -3,7 +3,6 @@
 import React, { createContext, useContext, useState, useCallback } from 'react'
 import { ChatMessage } from '@/types/chat'
 import { saveLastConversation, clearLastConversation } from '@/lib/conversation-storage'
-import { fetchWithOrganization } from '@/lib/api-client'
 
 interface ConversationState {
   agentName: string
@@ -259,7 +258,7 @@ export function ConsoleProvider({
     async (conversationId: string, agentName: string, clusterName: string) => {
       try {
         // First, validate that the agent still exists
-        const agentResponse = await fetchWithOrganization(`/api/clusters/${clusterName}/agents/${agentName}`)
+        const agentResponse = await fetch(`/api/clusters/${clusterName}/agents/${agentName}`)
         if (!agentResponse.ok) {
           throw new Error(`Agent "${agentName}" no longer exists in cluster "${clusterName}"`)
         }

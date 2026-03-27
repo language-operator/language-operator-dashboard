@@ -1,4 +1,5 @@
 import * as k8s from '@kubernetes/client-node'
+import { existsSync } from 'fs'
 
 interface RequestOptions {
   timeout?: number
@@ -11,7 +12,7 @@ class KubernetesClient {
   private coreV1Api: k8s.CoreV1Api | null
   private customObjectsApi: k8s.CustomObjectsApi | null
   private batchV1Api: k8s.BatchV1Api | null
-  private readonly DEFAULT_TIMEOUT = 10000 // 10 seconds
+  private DEFAULT_TIMEOUT = 10000 // 10 seconds
 
   private constructor() {
     this.kc = new k8s.KubeConfig()
@@ -65,8 +66,9 @@ class KubernetesClient {
           contexts: [context],
           currentContext: context.name,
         })
-      } else if (process.env.NODE_ENV === 'development') {
-        // Local development: use ~/.kube/config if available
+      } else if (process.env.NODE_ENV === 'development' &&
+                 !existsSync('/var/run/secrets/kubernetes.io/serviceaccount/token')) {
+        // Local development: use ~/.kube/config (only when not running in a pod)
         this.kc.loadFromDefault()
       } else {
         // Production: use in-cluster service account
@@ -93,6 +95,28 @@ class KubernetesClient {
       KubernetesClient.instance = new KubernetesClient()
     }
     return KubernetesClient.instance
+  }
+
+  /**
+   * Return a new client that impersonates the given user email.
+   * The dashboard SA must have `impersonate` rights on `users`.
+   * K8s RBAC is then evaluated as that user — they only see what they're permitted to see.
+   */
+  public forUser(email: string): KubernetesClient {
+    const impersonated = Object.create(KubernetesClient.prototype) as KubernetesClient
+    const kc = new k8s.KubeConfig()
+    kc.loadFromOptions({
+      clusters: this.kc.getClusters(),
+      users: this.kc.getUsers().map(u => ({ ...u, impersonate: email })),
+      contexts: this.kc.getContexts(),
+      currentContext: this.kc.getCurrentContext(),
+    })
+    impersonated.kc = kc
+    impersonated.coreV1Api = kc.makeApiClient(k8s.CoreV1Api)
+    impersonated.customObjectsApi = kc.makeApiClient(k8s.CustomObjectsApi)
+    impersonated.batchV1Api = kc.makeApiClient(k8s.BatchV1Api)
+    impersonated.DEFAULT_TIMEOUT = this.DEFAULT_TIMEOUT
+    return impersonated
   }
 
   /**
@@ -534,14 +558,14 @@ class KubernetesClient {
         }
       }
 
-      // Count LanguageClusters
+      // Count LanguageClusters (cluster-scoped, filter by org namespace label)
       if (quota['count/languageclusters'] && !used['count/languageclusters']) {
         try {
-          const clustersResponse = await this.customObjectsApi.listNamespacedCustomObject({
+          const clustersResponse = await this.customObjectsApi.listClusterCustomObject({
             group: 'langop.io',
             version: 'v1alpha1',
-            namespace,
             plural: 'languageclusters',
+            labelSelector: `langop.io/namespace=${namespace}`,
           })
           used['count/languageclusters'] = ((clustersResponse as any).items?.length || 0).toString()
         } catch (error) {
@@ -987,6 +1011,9 @@ class KubernetesClient {
 
   // LanguageCluster methods
 
+  // LanguageCluster is cluster-scoped (not namespaced) — use cluster-level API methods.
+  // The namespace parameter is kept for API compatibility but used only as a label filter.
+
   async listLanguageClusters(namespace: string, options?: {
     labelSelector?: string
     fieldSelector?: string
@@ -996,11 +1023,10 @@ class KubernetesClient {
     if (!this.customObjectsApi) {
       throw new Error('Kubernetes API not available')
     }
-    
-    return await this.customObjectsApi.listNamespacedCustomObject({
+
+    return await this.customObjectsApi.listClusterCustomObject({
       group: 'langop.io',
       version: 'v1alpha1',
-      namespace,
       plural: 'languageclusters',
       ...options,
     })
@@ -1011,10 +1037,9 @@ class KubernetesClient {
       throw new Error('Kubernetes API not available')
     }
     return await this.withTimeout(
-      () => this.customObjectsApi!.getNamespacedCustomObject({
+      () => this.customObjectsApi!.getClusterCustomObject({
         group: 'langop.io',
         version: 'v1alpha1',
-        namespace,
         plural: 'languageclusters',
         name,
       }),
@@ -1026,10 +1051,9 @@ class KubernetesClient {
     if (!this.customObjectsApi) {
       throw new Error('Kubernetes API not available')
     }
-    return await this.customObjectsApi.createNamespacedCustomObject({
+    return await this.customObjectsApi.createClusterCustomObject({
       group: 'langop.io',
       version: 'v1alpha1',
-      namespace,
       plural: 'languageclusters',
       body: spec,
     })
@@ -1039,19 +1063,16 @@ class KubernetesClient {
     if (!this.customObjectsApi) {
       throw new Error('Kubernetes API not available')
     }
-    
-    // Ensure the resource has required Kubernetes fields
+
     const body = {
       apiVersion: 'langop.io/v1alpha1',
       kind: 'LanguageCluster',
       ...updatedResource
     }
-    
-    // Use replaceNamespacedCustomObject instead of patch to avoid patch format issues
-    return await this.customObjectsApi.replaceNamespacedCustomObject({
+
+    return await this.customObjectsApi.replaceClusterCustomObject({
       group: 'langop.io',
       version: 'v1alpha1',
-      namespace,
       plural: 'languageclusters',
       name,
       body,
@@ -1062,10 +1083,9 @@ class KubernetesClient {
     if (!this.customObjectsApi) {
       throw new Error('Kubernetes API not available')
     }
-    return await this.customObjectsApi.deleteNamespacedCustomObject({
+    return await this.customObjectsApi.deleteClusterCustomObject({
       group: 'langop.io',
       version: 'v1alpha1',
-      namespace,
       plural: 'languageclusters',
       name,
     })

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getAuthenticatedUser } from '@/lib/user-context'
 import { k8sClient } from '@/lib/k8s-client'
-import { requirePermission } from '@/lib/permissions'
-import { getUserOrganization } from '@/lib/organization-context'
 import type { V1Pod } from '@kubernetes/client-node'
 
 interface RouteParams {
@@ -13,21 +12,17 @@ interface RouteParams {
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
-    // Get user's selected organization
-    const { user, organization } = await getUserOrganization(request)
+    const { email } = await getAuthenticatedUser(request)
     
-    const hasPermission = await requirePermission(user.id, organization.id, 'view')
-    if (!hasPermission) {
-      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
-    }
 
     const { name: clusterName, modelName } = await params
 
-    console.log(`Fetching pods for model ${modelName} in cluster ${clusterName}, namespace ${organization.namespace}`)
+    console.log(`Fetching proxy pods for cluster ${clusterName} (model ${modelName})`)
 
-    // Find the pods for this model
-    const pods = await k8sClient.listPods(organization.namespace, {
-      labelSelector: `app.kubernetes.io/name=${modelName}`
+    // Models no longer have their own pods. Find the shared proxy pod in the cluster's namespace.
+    // The operator creates a namespace named after the cluster and deploys 'proxy' there.
+    const pods = await k8sClient.listPods(clusterName, {
+      labelSelector: `langop.io/kind=proxy,langop.io/cluster=${clusterName}`
     })
 
     // Handle different response structures from k8s client
@@ -42,7 +37,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       podList = (pods as any).items
     }
 
-    console.log(`Found ${podList.length} pods for model ${modelName}`)
+    console.log(`Found ${podList.length} proxy pod(s) for cluster ${clusterName}`)
 
     // Transform pods into the expected format
     const transformedPods = podList.map(pod => ({
@@ -81,7 +76,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       recommendedPod,
       recommendedContainer: null, // Models typically don't have multiple containers
       deploymentMode: 'service',
-      podType: 'model'
+      podType: 'proxy'
     })
 
   } catch (error) {

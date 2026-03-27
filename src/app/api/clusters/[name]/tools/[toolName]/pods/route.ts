@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import { k8sClient } from '@/lib/k8s-client'
-import { db } from '@/lib/db'
-import { requirePermission } from '@/lib/permissions'
+import { getAuthenticatedUser } from '@/lib/user-context'
 
 interface RouteParams {
   params: Promise<{
@@ -11,36 +8,19 @@ interface RouteParams {
     toolName: string
   }>
 }
+const NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
+
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const user = await db.user.findUnique({
-      where: { email: session.user.email },
-      include: { memberships: { include: { organization: true } } },
-    })
-
-    if (!user || user.memberships.length === 0) {
-      return NextResponse.json({ error: 'No organization found' }, { status: 404 })
-    }
-
-    const organization = user.memberships[0].organization
-    
-    const hasPermission = await requirePermission(user.id, organization.id, 'view')
-    if (!hasPermission) {
-      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
-    }
+    const { email } = await getAuthenticatedUser(request)
 
     const { name: clusterName, toolName } = await params
 
-    console.log(`Fetching pods for tool ${toolName} in cluster ${clusterName}, namespace ${organization.namespace}`)
+    console.log(`Fetching pods for tool ${toolName} in cluster ${clusterName}, namespace ${NAMESPACE}`)
 
     // First, get the tool to understand its deployment mode
-    const toolResource = await k8sClient.getLanguageTool(organization.namespace, toolName)
+    const toolResource = await k8sClient.getLanguageTool(NAMESPACE, toolName)
     
     let toolData: any
     if ((toolResource as any)?.body) {
@@ -74,7 +54,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     // Find all relevant pods
-    const podsResponse = await k8sClient.listPods(organization.namespace, {
+    const podsResponse = await k8sClient.listPods(NAMESPACE, {
       labelSelector
     })
 

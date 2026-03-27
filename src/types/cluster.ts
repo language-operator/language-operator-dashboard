@@ -21,12 +21,24 @@ export interface LanguageClusterList {
 export interface LanguageClusterSpec {
   // Domain configuration
   domain?: string
-  
+
   // Ingress/Gateway configuration
   ingressConfig?: IngressConfig
-  
+
   // Network policy configuration
   networkPolicies?: NetworkRule[]
+
+  // Shared proxy configuration
+  proxy?: ProxyConfig
+}
+
+export interface ProxyConfig {
+  ingressEnabled?: boolean
+  replicas?: number
+  resources?: {
+    requests?: { cpu?: string; memory?: string }
+    limits?: { cpu?: string; memory?: string }
+  }
 }
 
 // Network rule types for cluster-level policies
@@ -84,6 +96,8 @@ export interface IssuerReference {
 export interface LanguageClusterStatus {
   phase?: 'Pending' | 'Ready' | 'Failed' | 'Unknown'
   conditions?: V1Condition[]
+  proxyEndpoint?: string
+  proxyReady?: boolean
   ingress?: {
     ready?: boolean
     dnsRecords?: any[]

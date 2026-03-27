@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
-import { db } from '@/lib/db'
-import { requirePermission } from '@/lib/permissions'
-import { getUserOrganization } from '@/lib/organization-context'
+import { getAuthenticatedUser } from '@/lib/user-context'
 import { workspaceClient } from '@/lib/workspace-client'
 import { WorkspaceError } from '@/types/workspace'
+
+const NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
 
 // GET /api/clusters/[name]/agents/[agentName]/workspace/files?path=/ - List directory contents
 export async function GET(
@@ -13,13 +11,7 @@ export async function GET(
   { params }: { params: Promise<{ name: string; agentName: string }> }
 ) {
   try {
-    // Get user's selected organization (replaces broken memberships[0] pattern)
-    const { user, organization, userRole } = await getUserOrganization(request)
-    
-    const hasPermission = await requirePermission(user.id, organization.id, 'view')
-    if (!hasPermission) {
-      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
-    }
+    const { email } = await getAuthenticatedUser(request)
 
     const { name: clusterName, agentName } = await params
     const { searchParams } = new URL(request.url)
@@ -27,8 +19,8 @@ export async function GET(
 
     try {
       const result = await workspaceClient.listFiles(
-        organization.namespace, 
-        agentName, 
+        NAMESPACE,
+        agentName,
         path
       )
       
@@ -58,21 +50,15 @@ export async function POST(
   { params }: { params: Promise<{ name: string; agentName: string }> }
 ) {
   try {
-    // Get user's selected organization (replaces broken memberships[0] pattern)
-    const { user, organization, userRole } = await getUserOrganization(request)
-    
-    const hasPermission = await requirePermission(user.id, organization.id, 'edit')
-    if (!hasPermission) {
-      return NextResponse.json({ error: 'Insufficient permissions for file upload' }, { status: 403 })
-    }
+    const { email } = await getAuthenticatedUser(request)
 
     const { name: clusterName, agentName } = await params
-    
+
     try {
       const formData = await request.formData()
       const file = formData.get('file') as File
       const path = formData.get('path') as string || '/'
-      
+
       if (!file) {
         return NextResponse.json({ error: 'No file provided' }, { status: 400 })
       }
@@ -81,7 +67,7 @@ export async function POST(
       const filePath = path.endsWith('/') ? `${path}${file.name}` : `${path}/${file.name}`
 
       await workspaceClient.uploadFile(
-        organization.namespace,
+        NAMESPACE,
         agentName,
         path,
         fileBuffer,
@@ -119,13 +105,7 @@ export async function DELETE(
   { params }: { params: Promise<{ name: string; agentName: string }> }
 ) {
   try {
-    // Get user's selected organization (replaces broken memberships[0] pattern)
-    const { user, organization, userRole } = await getUserOrganization(request)
-    
-    const hasPermission = await requirePermission(user.id, organization.id, 'edit')
-    if (!hasPermission) {
-      return NextResponse.json({ error: 'Insufficient permissions for file deletion' }, { status: 403 })
-    }
+    const { email } = await getAuthenticatedUser(request)
 
     const { name: clusterName, agentName } = await params
     const { searchParams } = new URL(request.url)
@@ -137,7 +117,7 @@ export async function DELETE(
 
     try {
       await workspaceClient.deleteFile(
-        organization.namespace,
+        NAMESPACE,
         agentName,
         path
       )

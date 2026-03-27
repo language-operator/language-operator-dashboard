@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import { k8sClient } from '@/lib/k8s-client'
-import { db } from '@/lib/db'
-import { requirePermission } from '@/lib/permissions'
-import { getUserOrganization } from '@/lib/organization-context'
+import { getAuthenticatedUser } from '@/lib/user-context'
+
+const NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
 
 interface RouteParams {
   params: Promise<{
@@ -15,20 +13,14 @@ interface RouteParams {
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
-    // Get user's selected organization (replaces broken memberships[0] pattern)
-    const { user, organization, userRole } = await getUserOrganization(request)
-    
-    const hasPermission = await requirePermission(user.id, organization.id, 'view')
-    if (!hasPermission) {
-      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
-    }
+    const { email } = await getAuthenticatedUser(request)
 
     const { name: clusterName, agentName } = await params
 
-    console.log(`Fetching pods for agent ${agentName} in cluster ${clusterName}, namespace ${organization.namespace}`)
+    console.log(`Fetching pods for agent ${agentName} in cluster ${clusterName}, namespace ${NAMESPACE}`)
 
     // Find all pods for this agent (only agent pods, not trigger pods)
-    const pods = await k8sClient.listPods(organization.namespace, {
+    const pods = await k8sClient.listPods(NAMESPACE, {
       labelSelector: `app.kubernetes.io/name=${agentName},langop.io/component=agent`
     })
 
