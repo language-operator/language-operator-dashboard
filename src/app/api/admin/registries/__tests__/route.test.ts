@@ -1,170 +1,224 @@
+/**
+ * @jest-environment node
+ *
+ * API route tests must use the node environment (not jsdom) because
+ * Next.js server internals depend on Node globals (Request, Response, etc.).
+ * Add this docblock to every __tests__ file under src/app/api/.
+ *
+ * Tests for /api/admin/registries
+ *
+ * Pattern for API route tests in this codebase:
+ *
+ * 1. Auth: mock `next-auth`'s getServerSession to return a user with { id, email }.
+ *    getAuthenticatedUser() reads from getServerSession — no db mock needed.
+ *
+ * 2. K8s: mock `@/lib/k8s-client` so k8sClient.forUser() returns a plain object
+ *    of jest.fn()s. The route calls forUser(email) then uses the returned client,
+ *    so the mock must be at the forUser level, not on k8sClient directly.
+ *
+ * 3. Requests: build minimal NextRequest-shaped objects with a json() mock.
+ *    For routes that don't read the body (GET), pass a bare object.
+ *
+ * 4. Access control: this route has no application-level permission check —
+ *    K8s RBAC enforces it. A 403 from K8s surfaces as a 500 here because
+ *    the route catches all non-404 k8s errors as internal errors.
+ */
+
 import { GET, POST } from '../route'
 import { getServerSession } from 'next-auth'
-import { db } from '@/lib/db'
+import { NextRequest } from 'next/server'
 
-// Mock dependencies
-jest.mock('next-auth')
-jest.mock('@/lib/db')
-jest.mock('@/lib/k8s-client', () => ({
-  k8sClient: {
-    readConfigMap: jest.fn(),
-    replaceConfigMap: jest.fn(),
-    createConfigMap: jest.fn(),
+// ── Mocks ──────────────────────────────────────────────────────────────────
+
+// NextResponse doesn't initialise cleanly in Jest's Node environment because
+// it depends on Web API globals (Response, Headers) that aren't provided by
+// the Node test runner. Mock it to a minimal shape that mirrors the real API.
+// All API route test files under src/app/api/ should include this mock.
+jest.mock('next/server', () => ({
+  NextResponse: {
+    json: jest.fn((body: unknown, init?: { status?: number }) => ({
+      status: init?.status ?? 200,
+      json: () => Promise.resolve(body),
+    })),
   },
 }))
 
-const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>
-const mockDb = db as jest.Mocked<typeof db>
+jest.mock('next-auth')
 
-// Import after mocking to get the mocked instance
-import { k8sClient } from '@/lib/k8s-client'
-const mockK8sClient = k8sClient as any
+// k8s methods returned by forUser() — reset in beforeEach
+const mockK8s = {
+  readConfigMap: jest.fn(),
+  replaceConfigMap: jest.fn(),
+  createConfigMap: jest.fn(),
+}
 
-describe('/api/admin/registries', () => {
+jest.mock('@/lib/k8s-client', () => ({
+  k8sClient: { forUser: jest.fn(() => mockK8s) },
+}))
+
+const mockSession = getServerSession as jest.MockedFunction<typeof getServerSession>
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+
+function makeRequest(body?: unknown): NextRequest {
+  return { json: jest.fn().mockResolvedValue(body) } as unknown as NextRequest
+}
+
+const AUTHED_SESSION = { user: { id: 'user-1', email: 'admin@example.com' } }
+
+// ── Tests ──────────────────────────────────────────────────────────────────
+
+describe('GET /api/admin/registries', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    mockSession.mockResolvedValue(AUTHED_SESSION as any)
   })
 
-  describe('GET', () => {
-    it('should fetch registries from ConfigMap successfully', async () => {
-      // Mock admin session
-      mockGetServerSession.mockResolvedValue({
-        user: { id: 'user-1' }
-      })
-      
-      // Mock admin membership
-      mockDb.organizationMember.findFirst.mockResolvedValue({
-        id: 'member-1',
-        userId: 'user-1',
-        role: 'admin'
-      } as any)
-
-      // Mock ConfigMap response with actual structure
-      mockK8sClient.readConfigMap.mockResolvedValue({
-        data: {
-          'allowed-registries': 'docker.io\ngcr.io\n*.gcr.io\nquay.io'
-        }
-      })
-
-      const response = await GET()
-      const data = await response.json()
-
-      expect(response.status).toBe(200)
-      expect(data.registries).toHaveLength(4)
-      expect(data.registries[0]).toEqual({
-        id: 'registry-0',
-        pattern: 'docker.io'
-      })
-      expect(data.registries[1]).toEqual({
-        id: 'registry-1', 
-        pattern: 'gcr.io'
-      })
+  it('returns parsed registries from ConfigMap', async () => {
+    mockK8s.readConfigMap.mockResolvedValue({
+      data: { 'allowed-registries': 'docker.io\ngcr.io\n*.gcr.io\nquay.io' },
     })
 
-    it('should return 403 for non-admin users', async () => {
-      mockGetServerSession.mockResolvedValue({
-        user: { id: 'user-1' }
-      })
-      
-      // Mock non-admin membership
-      mockDb.organizationMember.findFirst.mockResolvedValue(null)
+    const res = await GET(makeRequest())
+    const body = await res.json()
 
-      const response = await GET()
-      
-      expect(response.status).toBe(403)
-    })
-
-    it('should handle ConfigMap not found', async () => {
-      mockGetServerSession.mockResolvedValue({
-        user: { id: 'user-1' }
-      })
-      
-      mockDb.organizationMember.findFirst.mockResolvedValue({
-        id: 'member-1',
-        userId: 'user-1', 
-        role: 'admin'
-      } as any)
-
-      // Mock 404 error
-      const error = new Error('Not found')
-      ;(error as any).statusCode = 404
-      mockK8sClient.readConfigMap.mockRejectedValue(error)
-
-      const response = await GET()
-      const data = await response.json()
-
-      expect(response.status).toBe(200)
-      expect(data.registries).toEqual([])
-    })
+    expect(res.status).toBe(200)
+    expect(body.registries).toEqual([
+      { id: 'registry-0', pattern: 'docker.io' },
+      { id: 'registry-1', pattern: 'gcr.io' },
+      { id: 'registry-2', pattern: '*.gcr.io' },
+      { id: 'registry-3', pattern: 'quay.io' },
+    ])
   })
 
-  describe('POST', () => {
-    it('should update registries in ConfigMap successfully', async () => {
-      // Mock admin session
-      mockGetServerSession.mockResolvedValue({
-        user: { id: 'user-1' }
-      })
-      
-      // Mock admin membership
-      mockDb.organizationMember.findFirst.mockResolvedValue({
-        id: 'member-1',
-        userId: 'user-1',
-        role: 'admin'
-      } as any)
+  it('returns empty array when ConfigMap does not exist (404)', async () => {
+    const err = Object.assign(new Error('Not found'), { statusCode: 404 })
+    mockK8s.readConfigMap.mockRejectedValue(err)
 
-      // Mock existing ConfigMap
-      mockK8sClient.readConfigMap.mockResolvedValue({
-        metadata: { name: 'language-operator-config' },
-        data: { 'allowed-registries': 'docker.io' }
-      })
+    const res = await GET(makeRequest())
+    const body = await res.json()
 
-      // Mock ConfigMap update
-      mockK8sClient.replaceConfigMap.mockResolvedValue({})
+    expect(res.status).toBe(200)
+    expect(body.registries).toEqual([])
+  })
 
-      const mockRequest = {
-        json: jest.fn().mockResolvedValue({
-          registries: ['gcr.io', 'docker.io', '*.example.com']
-        })
-      } as any
+  it('returns empty array when ConfigMap has no registry key', async () => {
+    mockK8s.readConfigMap.mockResolvedValue({ data: {} })
 
-      const response = await POST(mockRequest)
-      const data = await response.json()
+    const res = await GET(makeRequest())
+    const body = await res.json()
 
-      expect(response.status).toBe(200)
-      expect(data.success).toBe(true)
-      expect(mockK8sClient.replaceConfigMap).toHaveBeenCalledWith(
-        'language-operator',
-        'language-operator-config',
-        expect.objectContaining({
-          data: {
-            'allowed-registries': '*.example.com\ndocker.io\ngcr.io'
-          }
-        })
-      )
+    expect(res.status).toBe(200)
+    expect(body.registries).toEqual([])
+  })
+
+  it('filters blank lines from registry data', async () => {
+    mockK8s.readConfigMap.mockResolvedValue({
+      data: { 'allowed-registries': 'docker.io\n\n  \ngcr.io\n' },
     })
 
-    it('should return 400 for invalid registry patterns', async () => {
-      // Mock admin session
-      mockGetServerSession.mockResolvedValue({
-        user: { id: 'user-1' }
-      })
-      
-      // Mock admin membership
-      mockDb.organizationMember.findFirst.mockResolvedValue({
-        id: 'member-1',
-        userId: 'user-1',
-        role: 'admin'
-      } as any)
+    const res = await GET(makeRequest())
+    const body = await res.json()
 
-      const mockRequest = {
-        json: jest.fn().mockResolvedValue({
-          registries: ['invalid..pattern', 'docker.io']
-        })
-      } as any
+    expect(body.registries).toHaveLength(2)
+    expect(body.registries.map((r: any) => r.pattern)).toEqual(['docker.io', 'gcr.io'])
+  })
 
-      const response = await POST(mockRequest)
-      
-      expect(response.status).toBe(400)
+  it('returns 500 for non-404 k8s errors', async () => {
+    mockK8s.readConfigMap.mockRejectedValue(new Error('connection refused'))
+
+    const res = await GET(makeRequest())
+
+    expect(res.status).toBe(500)
+  })
+
+  it('returns 500 when unauthenticated', async () => {
+    mockSession.mockResolvedValue(null)
+
+    const res = await GET(makeRequest())
+
+    expect(res.status).toBe(500)
+  })
+})
+
+describe('POST /api/admin/registries', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+    mockSession.mockResolvedValue(AUTHED_SESSION as any)
+  })
+
+  it('updates existing ConfigMap with sorted, deduplicated registries', async () => {
+    mockK8s.readConfigMap.mockResolvedValue({
+      metadata: { name: 'language-operator-config' },
+      data: { 'allowed-registries': 'docker.io' },
     })
+    mockK8s.replaceConfigMap.mockResolvedValue({})
+
+    const res = await POST(makeRequest({ registries: ['gcr.io', 'docker.io', '*.example.com'] }))
+    const body = await res.json()
+
+    expect(res.status).toBe(200)
+    expect(body.success).toBe(true)
+    expect(mockK8s.replaceConfigMap).toHaveBeenCalledWith(
+      'language-operator',
+      'language-operator-config',
+      expect.objectContaining({
+        data: { 'allowed-registries': '*.example.com\ndocker.io\ngcr.io' },
+      })
+    )
+    expect(mockK8s.createConfigMap).not.toHaveBeenCalled()
+  })
+
+  it('creates a new ConfigMap when one does not exist', async () => {
+    const notFound = Object.assign(new Error('Not found'), { statusCode: 404 })
+    mockK8s.readConfigMap.mockRejectedValue(notFound)
+    mockK8s.createConfigMap.mockResolvedValue({})
+
+    const res = await POST(makeRequest({ registries: ['docker.io', 'gcr.io'] }))
+    const body = await res.json()
+
+    expect(res.status).toBe(200)
+    expect(body.success).toBe(true)
+    expect(mockK8s.createConfigMap).toHaveBeenCalledWith(
+      'language-operator',
+      expect.objectContaining({
+        kind: 'ConfigMap',
+        data: { 'allowed-registries': 'docker.io\ngcr.io' },
+      })
+    )
+    expect(mockK8s.replaceConfigMap).not.toHaveBeenCalled()
+  })
+
+  it('returns 400 for invalid registry patterns', async () => {
+    const res = await POST(makeRequest({ registries: ['invalid..pattern', 'docker.io'] }))
+
+    expect(res.status).toBe(400)
+    expect(mockK8s.replaceConfigMap).not.toHaveBeenCalled()
+  })
+
+  it('returns 400 when registries is not an array', async () => {
+    const res = await POST(makeRequest({ registries: 'docker.io' }))
+
+    expect(res.status).toBe(400)
+  })
+
+  it('returns 500 for k8s errors during write', async () => {
+    mockK8s.readConfigMap.mockResolvedValue({
+      metadata: { name: 'language-operator-config' },
+      data: {},
+    })
+    mockK8s.replaceConfigMap.mockRejectedValue(new Error('k8s unavailable'))
+
+    const res = await POST(makeRequest({ registries: ['docker.io'] }))
+
+    expect(res.status).toBe(500)
+  })
+
+  it('returns 500 when unauthenticated', async () => {
+    mockSession.mockResolvedValue(null)
+
+    const res = await POST(makeRequest({ registries: ['docker.io'] }))
+
+    expect(res.status).toBe(500)
   })
 })
