@@ -41,7 +41,7 @@ async function createClusterRoleBinding(email: string): Promise<void> {
   }
 
   try {
-    await rbacApi.createClusterRoleBinding(binding)
+    await rbacApi.createClusterRoleBinding({ body: binding })
     console.log(`🔐 [TENANT-INIT] Created ClusterRoleBinding: ${bindingName}`)
   } catch (err: any) {
     if (err?.response?.statusCode === 409) {
