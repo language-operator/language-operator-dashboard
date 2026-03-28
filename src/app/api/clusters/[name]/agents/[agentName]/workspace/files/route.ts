@@ -3,7 +3,6 @@ import { getAuthenticatedUser } from '@/lib/user-context'
 import { workspaceClient } from '@/lib/workspace-client'
 import { WorkspaceError } from '@/types/workspace'
 
-const NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
 
 // GET /api/clusters/[name]/agents/[agentName]/workspace/files?path=/ - List directory contents
 export async function GET(
@@ -19,7 +18,7 @@ export async function GET(
 
     try {
       const result = await workspaceClient.listFiles(
-        NAMESPACE,
+        clusterName,
         agentName,
         path
       )
@@ -67,7 +66,7 @@ export async function POST(
       const filePath = path.endsWith('/') ? `${path}${file.name}` : `${path}/${file.name}`
 
       await workspaceClient.uploadFile(
-        NAMESPACE,
+        clusterName,
         agentName,
         path,
         fileBuffer,
@@ -117,7 +116,7 @@ export async function DELETE(
 
     try {
       await workspaceClient.deleteFile(
-        NAMESPACE,
+        clusterName,
         agentName,
         path
       )

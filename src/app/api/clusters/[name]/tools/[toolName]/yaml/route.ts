@@ -4,7 +4,6 @@ import { k8sClient } from '@/lib/k8s-client'
 import yaml from 'js-yaml'
 
 // GET /api/clusters/[name]/tools/[toolName]/yaml - Get tool YAML
-const NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
 
 
 export async function GET(
@@ -24,7 +23,7 @@ export async function GET(
     let tool: any = null
     
     try {
-      const response = await k8sClient.getLanguageTool(NAMESPACE, toolName)
+      const response = await k8sClient.getLanguageTool(clusterName, toolName)
       
       // Handle different response structures from k8s client
       if ((response as any)?.body) {

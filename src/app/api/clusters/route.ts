@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     
     try {
       console.log(`Fetching clusters from namespace: ${NAMESPACE}`)
-      const response = await k8sClient.listByOrganization('clusters', NAMESPACE, '')
+      const response = await k8sClient.listLanguageClusters(NAMESPACE)
       
       // Handle different response structures from k8s client
       // Live K8s mode: { body: { items: [...] } }
@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
     let agentCountsByCluster: Record<string, number> = {}
     
     try {
-      const agentsResponse = await k8sClient.listByOrganization('agents', NAMESPACE, '')
+      const agentsResponse = await k8sClient.listLanguageAgents('')
       
       // Handle different response structures from k8s client
       const allAgents = (agentsResponse as any)?.body?.items || 

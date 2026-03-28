@@ -27,7 +27,7 @@ export async function GET(
     // Get the specific tool
     const response = await handleKubernetesOperation(
       'get tool',
-      k8sClient.getLanguageTool(NAMESPACE, toolName)
+      k8sClient.getLanguageTool(clusterName, toolName)
     )
     
     if (!response) {
@@ -70,7 +70,7 @@ export async function PUT(
     // Get existing tool to validate it exists and belongs to the cluster
     const existingTool = await handleKubernetesOperation(
       'get existing tool',
-      k8sClient.getLanguageTool(NAMESPACE, toolName)
+      k8sClient.getLanguageTool(clusterName, toolName)
     )
     
     if (!existingTool) {
@@ -150,11 +150,11 @@ export async function PUT(
     // Update the tool via Kubernetes API using replace (not patch)
     const updatedResult = await handleKubernetesOperation(
       'update tool',
-      k8sClient.replaceLanguageTool(NAMESPACE, toolName, updatedTool)
+      k8sClient.replaceLanguageTool(clusterName, toolName, updatedTool)
     )
 
     // Log the update for audit trail
-    console.log(`Tool updated: ${toolName} in cluster ${clusterName} by ${email} in namespace ${NAMESPACE}`)
+    console.log(`Tool updated: ${toolName} in cluster ${clusterName} by ${email}`)
 
     return createSuccessResponse(updatedResult, undefined, { cluster: clusterName })
     
@@ -184,9 +184,9 @@ export async function DELETE(
     // Check if tool exists
     const existingTool = await handleKubernetesOperation(
       'get existing tool',
-      k8sClient.getLanguageTool(NAMESPACE, toolName)
+      k8sClient.getLanguageTool(clusterName, toolName)
     )
-    
+
     if (!existingTool) {
       return NextResponse.json({ error: 'Tool not found' }, { status: 404 })
     }
@@ -194,11 +194,11 @@ export async function DELETE(
     // Delete the tool
     await handleKubernetesOperation(
       'delete tool',
-      k8sClient.deleteLanguageTool(NAMESPACE, toolName)
+      k8sClient.deleteLanguageTool(clusterName, toolName)
     )
 
     // Log the deletion for audit trail
-    console.log(`Tool deleted: ${toolName} in cluster ${clusterName} by ${email} in namespace ${NAMESPACE}`)
+    console.log(`Tool deleted: ${toolName} in cluster ${clusterName} by ${email}`)
 
     return createSuccessResponse(null, undefined, { cluster: clusterName })
     

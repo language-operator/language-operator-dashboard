@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { k8sClient } from '@/lib/k8s-client'
 import { getAuthenticatedUser } from '@/lib/user-context'
 
-const NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
 
 interface RouteParams {
   params: Promise<{
@@ -17,10 +16,10 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     const { name: clusterName, agentName } = await params
 
-    console.log(`Manual execution requested for agent ${agentName} in cluster ${clusterName}, namespace ${NAMESPACE}`)
+    console.log(`Manual execution requested for agent ${agentName} in cluster ${clusterName}, namespace ${clusterName}`)
 
     // Get the agent to validate it exists and is scheduled
-    const agent = await k8sClient.getLanguageAgent(NAMESPACE, agentName)
+    const agent = await k8sClient.getLanguageAgent(clusterName, agentName)
 
     // Handle different response structures from k8s client
     let agentData: any = null
@@ -35,7 +34,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     if (!agentData) {
       return NextResponse.json({
         error: `Agent "${agentName}" not found`,
-        message: `Agent "${agentName}" not found in namespace ${NAMESPACE}`
+        message: `Agent "${agentName}" not found in namespace ${clusterName}`
       }, { status: 404 })
     }
 
@@ -52,7 +51,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const jobName = `${agentName}-manual-${timestamp}`
 
     // Create manual execution Job from the agent's CronJob
-    const createdJob = await k8sClient.createJobFromCronJob(NAMESPACE, agentName, jobName)
+    const createdJob = await k8sClient.createJobFromCronJob(clusterName, agentName, jobName)
 
     console.log(`Manual execution Job created: ${jobName}`)
 
@@ -61,11 +60,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       success: true,
       jobName,
       agentName,
-      namespace: NAMESPACE,
+      namespace: clusterName,
       message: `Manual execution started for agent "${agentName}"`,
       job: {
         name: jobName,
-        namespace: NAMESPACE,
+        namespace: clusterName,
         createdAt: new Date().toISOString()
       }
     })

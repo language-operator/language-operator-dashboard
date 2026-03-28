@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { k8sClient } from '@/lib/k8s-client'
 import { getAuthenticatedUser } from '@/lib/user-context'
 
-const NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
 
 interface RouteParams {
   params: Promise<{
@@ -17,10 +16,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     const { name: clusterName, agentName } = await params
 
-    console.log(`Fetching pods for agent ${agentName} in cluster ${clusterName}, namespace ${NAMESPACE}`)
+    console.log(`Fetching pods for agent ${agentName} in cluster ${clusterName}, namespace ${clusterName}`)
 
     // Find all pods for this agent (only agent pods, not trigger pods)
-    const pods = await k8sClient.listPods(NAMESPACE, {
+    const pods = await k8sClient.listPods(clusterName, {
       labelSelector: `app.kubernetes.io/name=${agentName},langop.io/component=agent`
     })
 

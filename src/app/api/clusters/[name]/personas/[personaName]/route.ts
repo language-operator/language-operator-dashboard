@@ -33,12 +33,10 @@ export async function GET(
     // Validate cluster exists and user has access
     await validateClusterExists(NAMESPACE, clusterName, { validateAccess: true })
 
-    console.log(`Fetching persona ${personaName} for cluster ${clusterName} from namespace:`, NAMESPACE)
-
     // Fetch the specific persona from Kubernetes
     const response = await handleKubernetesOperation(
       'get persona',
-      k8sClient.getLanguagePersona(NAMESPACE, personaName)
+      k8sClient.getLanguagePersona(clusterName, personaName)
     )
 
     // Extract persona data from response
@@ -99,12 +97,10 @@ export async function PATCH(
 
     const body = await request.json()
 
-    console.log(`Updating persona ${personaName} for cluster ${clusterName} in namespace:`, NAMESPACE)
-
     // First, get the existing persona to merge with updates
     const existingResponse = await handleKubernetesOperation(
       'get persona for update',
-      k8sClient.getLanguagePersona(NAMESPACE, personaName)
+      k8sClient.getLanguagePersona(clusterName, personaName)
     )
 
     let existingPersona = null
@@ -150,7 +146,7 @@ export async function PATCH(
     // Update the persona in Kubernetes
     const response = await handleKubernetesOperation(
       'update persona',
-      k8sClient.updateLanguagePersona(NAMESPACE, personaName, updatedPersona)
+      k8sClient.updateLanguagePersona(clusterName, personaName, updatedPersona)
     )
 
     console.log(`Successfully updated persona ${personaName} for cluster ${clusterName}`)
@@ -182,12 +178,10 @@ export async function DELETE(
     // Validate cluster exists and user has access
     await validateClusterExists(NAMESPACE, clusterName, { validateAccess: true })
 
-    console.log(`Deleting persona ${personaName} for cluster ${clusterName} from namespace:`, NAMESPACE)
-
     // First verify the persona belongs to this cluster
     const existingResponse = await handleKubernetesOperation(
       'get persona for deletion',
-      k8sClient.getLanguagePersona(NAMESPACE, personaName)
+      k8sClient.getLanguagePersona(clusterName, personaName)
     )
 
     let existingPersona = null
@@ -217,7 +211,7 @@ export async function DELETE(
     // Delete the persona from Kubernetes
     const response = await handleKubernetesOperation(
       'delete persona',
-      k8sClient.deleteLanguagePersona(NAMESPACE, personaName)
+      k8sClient.deleteLanguagePersona(clusterName, personaName)
     )
 
     console.log(`Successfully deleted persona ${personaName} for cluster ${clusterName}`)

@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { k8sClient } from '@/lib/k8s-client'
 import { getAuthenticatedUser } from '@/lib/user-context'
 
-const NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
 
 interface RouteParams {
   params: Promise<{
@@ -19,10 +18,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const searchParams = new URL(request.url).searchParams
     const podName = searchParams.get('podName')
 
-    console.log(`Fetching logs for agent ${agentName} in cluster ${clusterName}, namespace ${NAMESPACE}${podName ? `, pod ${podName}` : ''}`)
+    console.log(`Fetching logs for agent ${agentName} in cluster ${clusterName}, namespace ${clusterName}${podName ? `, pod ${podName}` : ''}`)
 
     // Find the pod for this agent
-    const pods = await k8sClient.listPods(NAMESPACE, {
+    const pods = await k8sClient.listPods(clusterName, {
       labelSelector: `app.kubernetes.io/name=${agentName}`
     })
 
@@ -76,7 +75,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     console.log(`Getting logs from pod: ${pod.metadata.name}`)
 
     // Fetch logs from the pod
-    const logs = await k8sClient.getPodLogs(NAMESPACE, pod.metadata.name, {
+    const logs = await k8sClient.getPodLogs(clusterName, pod.metadata.name, {
       tailLines: 500,
       timestamps: true
     })

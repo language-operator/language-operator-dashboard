@@ -39,10 +39,10 @@ export async function GET(
       phase: url.searchParams.getAll('phase') || undefined,
     }
 
-    // Fetch all personas from organization namespace with proper error handling
+    // Fetch all personas from cluster namespace with proper error handling
     const response = await handleKubernetesOperation(
       'list personas',
-      k8sClient.listLanguagePersonas(NAMESPACE)
+      k8sClient.listLanguagePersonas(clusterName)
     )
     
     // Handle different response structures from k8s client
@@ -141,7 +141,7 @@ export async function POST(
       kind: 'LanguagePersona',
       metadata: {
         name: formData.name,
-        namespace: NAMESPACE,
+        namespace: clusterName,
         labels: {
           'langop.io/cluster': clusterName,
         },
@@ -187,7 +187,7 @@ export async function POST(
     // Create the persona using k8s client with proper error handling
     const result = await handleKubernetesOperation(
       'create persona',
-      k8sClient.createLanguagePersona(NAMESPACE, persona)
+      k8sClient.createLanguagePersona(clusterName, persona)
     )
 
     return createSuccessResponse(

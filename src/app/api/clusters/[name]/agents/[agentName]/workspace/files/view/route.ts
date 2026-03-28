@@ -3,7 +3,6 @@ import { getAuthenticatedUser } from '@/lib/user-context'
 import { workspaceClient } from '@/lib/workspace-client'
 import { WorkspaceError, VIEWABLE_FILE_EXTENSIONS } from '@/types/workspace'
 
-const NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
 
 // GET /api/clusters/[name]/agents/[agentName]/workspace/files/view?path=/file.txt - Get file content for viewing
 export async function GET(
@@ -38,7 +37,7 @@ export async function GET(
 
     try {
       const content = await workspaceClient.viewFile(
-        NAMESPACE,
+        clusterName,
         agentName,
         path
       )

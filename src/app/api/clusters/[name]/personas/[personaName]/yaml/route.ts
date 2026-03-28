@@ -29,10 +29,10 @@ export async function GET(
     // Validate cluster exists and user has access
     await validateClusterExists(NAMESPACE, clusterName, { validateAccess: true })
 
-    // Fetch specific persona from organization namespace
+    // Fetch specific persona from cluster namespace
     const response = await handleKubernetesOperation(
       'get persona for YAML',
-      k8sClient.getLanguagePersona(NAMESPACE, personaName)
+      k8sClient.getLanguagePersona(clusterName, personaName)
     )
 
     // Handle different response structures from k8s client

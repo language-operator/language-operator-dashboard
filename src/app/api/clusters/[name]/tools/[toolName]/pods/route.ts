@@ -8,7 +8,6 @@ interface RouteParams {
     toolName: string
   }>
 }
-const NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
 
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
@@ -17,10 +16,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     const { name: clusterName, toolName } = await params
 
-    console.log(`Fetching pods for tool ${toolName} in cluster ${clusterName}, namespace ${NAMESPACE}`)
+    console.log(`Fetching pods for tool ${toolName} in cluster ${clusterName}, namespace ${clusterName}`)
 
     // First, get the tool to understand its deployment mode
-    const toolResource = await k8sClient.getLanguageTool(NAMESPACE, toolName)
+    const toolResource = await k8sClient.getLanguageTool(clusterName, toolName)
     
     let toolData: any
     if ((toolResource as any)?.body) {
@@ -54,7 +53,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     // Find all relevant pods
-    const podsResponse = await k8sClient.listPods(NAMESPACE, {
+    const podsResponse = await k8sClient.listPods(clusterName, {
       labelSelector
     })
 

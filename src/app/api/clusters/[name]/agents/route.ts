@@ -40,7 +40,7 @@ export async function GET(
     // Fetch all agents from namespace with proper error handling
     const response = await handleKubernetesOperation(
       'list agents',
-      k8sClient.listLanguageAgents(NAMESPACE)
+      k8sClient.listLanguageAgents(clusterName)
     )
 
     // Handle different response structures from k8s client
@@ -141,7 +141,7 @@ export async function POST(
       kind: 'LanguageAgent',
       metadata: {
         name: agentData.name,
-        namespace: NAMESPACE,
+        namespace: clusterName,
         labels: {},
         annotations: {
           'langop.io/created-by-email': email,
@@ -164,7 +164,7 @@ export async function POST(
         // Model references with namespace and role
         modelRefs: agentData.selectedModels?.map((name: string) => ({
           name,
-          namespace: NAMESPACE,
+          namespace: clusterName,
           role: 'primary' as const
         })) || [],
 
@@ -172,7 +172,7 @@ export async function POST(
         ...(agentData.selectedTools?.length > 0 && {
           toolRefs: agentData.selectedTools.map((name: string) => ({
             name,
-            namespace: NAMESPACE
+            namespace: clusterName
           })),
         }),
 
@@ -180,7 +180,7 @@ export async function POST(
         ...(agentData.selectedPersona && agentData.selectedPersona !== 'none' && {
           personaRefs: [{
             name: agentData.selectedPersona,
-            namespace: NAMESPACE
+            namespace: clusterName
           }],
         }),
 
@@ -212,7 +212,7 @@ export async function POST(
     // Create the agent using k8s client with proper error handling
     const result = await handleKubernetesOperation(
       'create agent',
-      k8sClient.createLanguageAgent(NAMESPACE, agentCrd)
+      k8sClient.createLanguageAgent(clusterName, agentCrd)
     )
 
     return createSuccessResponse(

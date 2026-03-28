@@ -228,7 +228,7 @@ export async function getClusterResourceCounts(
     // Count agents for this cluster
     const agentsResponse = await handleKubernetesOperation(
       'list agents',
-      k8sClient.listLanguageAgents(namespace)
+      k8sClient.listLanguageAgents(clusterName)
     )
     
     let agents = []
@@ -254,7 +254,7 @@ export async function getClusterResourceCounts(
     // Count models for this cluster
     const modelsResponse = await handleKubernetesOperation(
       'list models',
-      k8sClient.listLanguageModels(namespace)
+      k8sClient.listLanguageModels(clusterName)
     )
     
     let models = []
@@ -280,7 +280,7 @@ export async function getClusterResourceCounts(
     // Count tools for this cluster
     const toolsResponse = await handleKubernetesOperation(
       'list tools',
-      k8sClient.listLanguageTools(namespace)
+      k8sClient.listLanguageTools(clusterName)
     )
     
     let tools = []
@@ -306,7 +306,7 @@ export async function getClusterResourceCounts(
     // Count personas for this cluster
     const personasResponse = await handleKubernetesOperation(
       'list personas',
-      k8sClient.listLanguagePersonas(namespace)
+      k8sClient.listLanguagePersonas(clusterName)
     )
     
     let personas = []

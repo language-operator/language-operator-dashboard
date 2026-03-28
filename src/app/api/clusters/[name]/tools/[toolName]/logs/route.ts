@@ -8,7 +8,6 @@ interface RouteParams {
     toolName: string
   }>
 }
-const NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
 
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
@@ -21,10 +20,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const podName = searchParams.get('podName')
     const containerName = searchParams.get('containerName')
 
-    console.log(`Fetching logs for tool ${toolName} in cluster ${clusterName}, namespace ${NAMESPACE}${podName ? `, pod ${podName}` : ''}${containerName ? `, container ${containerName}` : ''}`)
+    console.log(`Fetching logs for tool ${toolName} in cluster ${clusterName}, namespace ${clusterName}${podName ? `, pod ${podName}` : ''}${containerName ? `, container ${containerName}` : ''}`)
 
     // First, get the tool to understand its deployment mode
-    const toolResource = await k8sClient.getLanguageTool(NAMESPACE, toolName)
+    const toolResource = await k8sClient.getLanguageTool(clusterName, toolName)
     
     let toolData: any
     if ((toolResource as any)?.body) {
@@ -51,7 +50,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       labelSelector = `app.kubernetes.io/name=${toolName}`
     }
 
-    const pods = await k8sClient.listPods(NAMESPACE, {
+    const pods = await k8sClient.listPods(clusterName, {
       labelSelector
     })
 
@@ -172,7 +171,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       }
     }
 
-    const logs = await k8sClient.getPodLogs(NAMESPACE, pod.metadata.name, logOptions)
+    const logs = await k8sClient.getPodLogs(clusterName, pod.metadata.name, logOptions)
 
     // Handle different response structures from k8s client
     let logContent = ''

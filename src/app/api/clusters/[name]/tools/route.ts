@@ -38,10 +38,10 @@ export async function GET(
       phase: url.searchParams.getAll('phase') || undefined,
     }
 
-    // Fetch all tools from organization namespace with proper error handling
+    // Fetch all tools from cluster namespace with proper error handling
     const response = await handleKubernetesOperation(
       'list tools',
-      k8sClient.listLanguageTools(NAMESPACE)
+      k8sClient.listLanguageTools(clusterName)
     )
     
     // Handle different response structures from k8s client
@@ -138,7 +138,7 @@ export async function POST(
       kind: 'LanguageTool',
       metadata: {
         name: formData.name,
-        namespace: NAMESPACE,
+        namespace: clusterName,
         labels: {
           'langop.io/cluster': clusterName,
         },
@@ -217,7 +217,7 @@ export async function POST(
     // Create the tool using k8s client with proper error handling
     const result = await handleKubernetesOperation(
       'create tool',
-      k8sClient.createLanguageTool(NAMESPACE, tool)
+      k8sClient.createLanguageTool(clusterName, tool)
     )
 
     return createSuccessResponse(

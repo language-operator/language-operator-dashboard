@@ -3,7 +3,6 @@ import { k8sClient } from '@/lib/k8s-client'
 import { getAuthenticatedUser } from '@/lib/user-context'
 import { LanguageAgent, LanguageAgentFormData } from '@/types/agent'
 
-const NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
 
 // GET /api/clusters/[name]/agents/[agentName] - Get specific agent details
 export async function GET(
@@ -22,7 +21,7 @@ export async function GET(
     let agent: LanguageAgent | null = null
 
     try {
-      const response = await k8sClient.getLanguageAgent(NAMESPACE, agentName)
+      const response = await k8sClient.getLanguageAgent(clusterName, agentName)
 
       // Handle different response structures from k8s client
       if ((response as any)?.body) {
@@ -84,7 +83,7 @@ export async function PATCH(
     // First, get the current agent to ensure it exists and get its current state
     let currentAgent: LanguageAgent | null = null
     try {
-      const response = await k8sClient.getLanguageAgent(NAMESPACE, agentName)
+      const response = await k8sClient.getLanguageAgent(clusterName, agentName)
 
       if ((response as any)?.body) {
         currentAgent = (response as any).body
@@ -178,7 +177,7 @@ export async function PATCH(
 
     // Update agent in Kubernetes
     try {
-      const response = await k8sClient.updateLanguageAgent(NAMESPACE, agentName, updatedAgent)
+      const response = await k8sClient.updateLanguageAgent(clusterName, agentName, updatedAgent)
 
       console.log(`User ${email} updated LanguageAgent ${agentName} in cluster ${clusterName}`)
 
@@ -217,7 +216,7 @@ export async function DELETE(
 
     // Delete agent from namespace
     try {
-      await k8sClient.deleteLanguageAgent(NAMESPACE, agentName)
+      await k8sClient.deleteLanguageAgent(clusterName, agentName)
 
       console.log(`User ${email} deleted LanguageAgent ${agentName} from cluster ${clusterName}`)
 

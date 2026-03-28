@@ -2,7 +2,6 @@ import { NextRequest } from 'next/server'
 import { k8sClient } from '@/lib/k8s-client'
 import { getAuthenticatedUser } from '@/lib/user-context'
 
-const NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
 
 interface RouteParams {
   params: Promise<{
@@ -22,7 +21,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     console.log(`Starting log stream for agent ${agentName} in cluster ${clusterName}${podName ? `, pod ${podName}` : ''}`)
 
     // Find the pod for this agent
-    const pods = await k8sClient.listPods(NAMESPACE, {
+    const pods = await k8sClient.listPods(clusterName, {
       labelSelector: `app.kubernetes.io/name=${agentName}`
     })
 
@@ -73,7 +72,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
         const streamLogs = async () => {
           try {
-            const logStream = await k8sClient.streamPodLogs(NAMESPACE, pod.metadata.name, {
+            const logStream = await k8sClient.streamPodLogs(clusterName, pod.metadata.name, {
               follow: true,
               timestamps: true,
               tailLines: 10
@@ -91,7 +90,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
             } else {
               const pollLogs = async () => {
                 try {
-                  const logs = await k8sClient.getPodLogs(NAMESPACE, pod.metadata.name, {
+                  const logs = await k8sClient.getPodLogs(clusterName, pod.metadata.name, {
                     tailLines: 1,
                     timestamps: true,
                     sinceSeconds: 1

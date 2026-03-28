@@ -3,7 +3,6 @@ import { k8sClient } from '@/lib/k8s-client'
 import { getAuthenticatedUser } from '@/lib/user-context'
 import yaml from 'js-yaml'
 
-const NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
 
 // GET /api/clusters/[name]/agents/[agentName]/yaml - Get agent YAML
 export async function GET(
@@ -22,7 +21,7 @@ export async function GET(
     let agent: any = null
 
     try {
-      const response = await k8sClient.getLanguageAgent(NAMESPACE, agentName)
+      const response = await k8sClient.getLanguageAgent(clusterName, agentName)
 
       // Handle different response structures from k8s client
       if ((response as any)?.body) {

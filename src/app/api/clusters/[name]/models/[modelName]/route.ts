@@ -113,12 +113,10 @@ export async function GET(
     // Validate cluster exists and user has access
     await validateClusterExists(NAMESPACE, clusterName, { validateAccess: true })
 
-    console.log(`Fetching model ${modelName} for cluster ${clusterName} from namespace:`, NAMESPACE)
-    
     // Fetch the specific model from Kubernetes
     const response = await handleKubernetesOperation(
       'get model',
-      k8sClient.getLanguageModel(NAMESPACE, modelName)
+      k8sClient.getLanguageModel(clusterName, modelName)
     )
     
     // Extract model data from response
@@ -180,12 +178,10 @@ export async function PUT(
     const body = await request.json()
     const validatedData = updateModelSchema.parse(body)
 
-    console.log(`Updating model ${modelName} for cluster ${clusterName} in namespace:`, NAMESPACE)
-    
     // First, get the existing model to merge with updates
     const existingResponse = await handleKubernetesOperation(
       'get model for update',
-      k8sClient.getLanguageModel(NAMESPACE, modelName)
+      k8sClient.getLanguageModel(clusterName, modelName)
     )
     
     let existingModel = null
@@ -232,9 +228,9 @@ export async function PUT(
     // Update the model in Kubernetes using replace (patch format issues with CRDs)
     const response = await handleKubernetesOperation(
       'update model',
-      k8sClient.replaceLanguageModel(NAMESPACE, modelName, updatedModel)
+      k8sClient.replaceLanguageModel(clusterName, modelName, updatedModel)
     )
-    
+
     console.log(`Successfully updated model ${modelName} for cluster ${clusterName}`)
 
     return createSuccessResponse(response, 'Model updated successfully')
@@ -264,12 +260,10 @@ export async function DELETE(
     // Validate cluster exists and user has access
     await validateClusterExists(NAMESPACE, clusterName, { validateAccess: true })
 
-    console.log(`Deleting model ${modelName} for cluster ${clusterName} from namespace:`, NAMESPACE)
-    
     // First verify the model belongs to this cluster
     const existingResponse = await handleKubernetesOperation(
       'get model for deletion',
-      k8sClient.getLanguageModel(NAMESPACE, modelName)
+      k8sClient.getLanguageModel(clusterName, modelName)
     )
     
     let existingModel = null
@@ -299,9 +293,9 @@ export async function DELETE(
     // Delete the model from Kubernetes
     const response = await handleKubernetesOperation(
       'delete model',
-      k8sClient.deleteLanguageModel(NAMESPACE, modelName)
+      k8sClient.deleteLanguageModel(clusterName, modelName)
     )
-    
+
     console.log(`Successfully deleted model ${modelName} for cluster ${clusterName}`)
 
     return createSuccessResponse(response, 'Model deleted successfully')

@@ -4,7 +4,6 @@ import { k8sClient } from '@/lib/k8s-client'
 import yaml from 'js-yaml'
 
 // GET /api/clusters/[name]/models/[modelName]/yaml - Get model YAML
-const NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
 
 
 export async function GET(
@@ -24,7 +23,7 @@ export async function GET(
     let model: any = null
     
     try {
-      const response = await k8sClient.getLanguageModel(NAMESPACE, modelName)
+      const response = await k8sClient.getLanguageModel(clusterName, modelName)
       
       // Handle different response structures from k8s client
       if ((response as any)?.body) {

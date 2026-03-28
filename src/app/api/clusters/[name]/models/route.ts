@@ -31,7 +31,7 @@ export async function GET(
     // Parse query parameters
     const url = new URL(request.url)
     const listParams: LanguageModelListParams = {
-      namespace: NAMESPACE,
+      namespace: clusterName,
       page: parseInt(url.searchParams.get('page') || '1'),
       limit: parseInt(url.searchParams.get('limit') || '50'),
       sortBy: (url.searchParams.get('sortBy') as any) || 'name',
@@ -43,11 +43,11 @@ export async function GET(
     }
 
     // Fetch models from Kubernetes namespace with proper error handling
-    console.log(`Fetching models for cluster ${clusterName} from namespace:`, NAMESPACE)
-    
+    console.log(`Fetching models for cluster ${clusterName} from namespace:`, clusterName)
+
     const response = await handleKubernetesOperation(
       'list models',
-      k8sClient.listLanguageModels(NAMESPACE)
+      k8sClient.listLanguageModels(clusterName)
     )
     
     // Handle different response structures
@@ -220,7 +220,7 @@ export async function POST(
       kind: 'LanguageModel',
       metadata: {
         name: body.name,
-        namespace: NAMESPACE,
+        namespace: clusterName,
         labels: {
           'langop.io/cluster': clusterName,
           'langop.io/managed-by': 'language-operator-dashboard'
@@ -241,13 +241,13 @@ export async function POST(
       }
     }
 
-    console.log(`Creating model ${body.name} for cluster ${clusterName} in namespace:`, NAMESPACE)
+    console.log(`Creating model ${body.name} for cluster ${clusterName} in namespace:`, clusterName)
     console.log('Model spec being sent to Kubernetes:', JSON.stringify(modelSpec, null, 2))
-    
+
     // Create the model in Kubernetes
     const response = await handleKubernetesOperation(
       'create model',
-      k8sClient.createLanguageModel(NAMESPACE, modelSpec)
+      k8sClient.createLanguageModel(clusterName, modelSpec)
     )
     
     console.log(`Model ${body.name} created successfully for cluster ${clusterName}`)
