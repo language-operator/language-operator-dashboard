@@ -18,6 +18,24 @@ export interface LanguageClusterList {
   items: LanguageCluster[]
 }
 
+export interface ClusterCapacitySpec {
+  maxAgents?: number
+  maxModels?: number
+  maxTools?: number
+  maxPersonas?: number
+  maxCPU?: string    // k8s quantity, e.g. "4" or "2500m"
+  maxMemory?: string // k8s quantity, e.g. "8Gi"
+}
+
+export interface ClusterCapacityStatus {
+  agentCount: number
+  modelCount: number
+  toolCount: number
+  personaCount: number
+  totalCPULimits?: string    // k8s quantity
+  totalMemoryLimits?: string // k8s quantity
+}
+
 export interface LanguageClusterSpec {
   // Domain configuration
   domain?: string
@@ -30,6 +48,9 @@ export interface LanguageClusterSpec {
 
   // Shared proxy configuration
   proxy?: ProxyConfig
+
+  // Capacity limits enforced via ResourceQuota
+  capacity?: ClusterCapacitySpec
 }
 
 export interface ProxyConfig {
@@ -105,6 +126,7 @@ export interface LanguageClusterStatus {
   }
   agents?: any[]
   agentCount?: number
+  capacity?: ClusterCapacityStatus
   [key: string]: any
 }
 
