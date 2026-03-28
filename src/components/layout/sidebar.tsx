@@ -24,8 +24,8 @@ import {
 
 const globalNavigation = [
   { name: 'Overview', href: '/', icon: Home },
-  { name: 'Capacity', href: '/capacity', icon: Server },
   { name: 'Clusters', href: '/clusters', icon: Boxes },
+  { name: 'Capacity', href: '/capacity', icon: Server },
 ]
 
 const clusterNavigation = [
