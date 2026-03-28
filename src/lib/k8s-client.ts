@@ -12,6 +12,7 @@ class KubernetesClient {
   private coreV1Api: k8s.CoreV1Api | null
   private customObjectsApi: k8s.CustomObjectsApi | null
   private batchV1Api: k8s.BatchV1Api | null
+  private rbacV1Api: k8s.RbacAuthorizationV1Api | null
   private DEFAULT_TIMEOUT = 10000 // 10 seconds
 
   private constructor() {
@@ -19,6 +20,7 @@ class KubernetesClient {
     this.coreV1Api = null
     this.customObjectsApi = null
     this.batchV1Api = null
+    this.rbacV1Api = null
 
     try {
       // Load config based on environment
@@ -78,6 +80,7 @@ class KubernetesClient {
       this.coreV1Api = this.kc.makeApiClient(k8s.CoreV1Api)
       this.customObjectsApi = this.kc.makeApiClient(k8s.CustomObjectsApi)
       this.batchV1Api = this.kc.makeApiClient(k8s.BatchV1Api)
+      this.rbacV1Api = this.kc.makeApiClient(k8s.RbacAuthorizationV1Api)
     } catch (error) {
       console.error('❌ Failed to configure Kubernetes client:', error instanceof Error ? error.message : String(error))
       console.error('❌ Full error details:', error)
@@ -115,6 +118,7 @@ class KubernetesClient {
     impersonated.coreV1Api = kc.makeApiClient(k8s.CoreV1Api)
     impersonated.customObjectsApi = kc.makeApiClient(k8s.CustomObjectsApi)
     impersonated.batchV1Api = kc.makeApiClient(k8s.BatchV1Api)
+    impersonated.rbacV1Api = kc.makeApiClient(k8s.RbacAuthorizationV1Api)
     impersonated.DEFAULT_TIMEOUT = this.DEFAULT_TIMEOUT
     return impersonated
   }
@@ -808,6 +812,23 @@ class KubernetesClient {
       namespace,
       body: configMap
     })
+  }
+
+  // RBAC methods
+
+  async listRoleBindings(namespace: string) {
+    if (!this.rbacV1Api) throw new Error('RBAC API not available')
+    return this.rbacV1Api.listNamespacedRoleBinding({ namespace })
+  }
+
+  async createRoleBinding(namespace: string, binding: k8s.V1RoleBinding) {
+    if (!this.rbacV1Api) throw new Error('RBAC API not available')
+    return this.rbacV1Api.createNamespacedRoleBinding({ namespace, body: binding })
+  }
+
+  async deleteRoleBinding(namespace: string, name: string) {
+    if (!this.rbacV1Api) throw new Error('RBAC API not available')
+    return this.rbacV1Api.deleteNamespacedRoleBinding({ namespace, name })
   }
 
   // Jobs management

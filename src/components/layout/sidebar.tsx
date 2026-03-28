@@ -19,6 +19,7 @@ import {
   ChevronLeft,
   Gauge,
   Server,
+  Shield,
 } from 'lucide-react'
 
 const globalNavigation = [
@@ -33,6 +34,7 @@ const clusterNavigation = [
   { name: 'Tools', href: '/tools', icon: Wrench },
   { name: 'Personas', href: '/personas', icon: Users },
   { name: 'Models', href: '/models', icon: Cpu },
+  { name: 'Access', href: '/access', icon: Shield },
 ]
 
 export function Sidebar() {
