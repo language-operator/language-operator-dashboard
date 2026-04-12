@@ -696,6 +696,73 @@ class KubernetesClient {
     })
   }
 
+  // LanguageAgentRuntime methods (cluster-scoped)
+
+  async listLanguageAgentRuntimes() {
+    if (!this.customObjectsApi) {
+      throw new Error('Kubernetes API not available')
+    }
+    return await this.customObjectsApi.listClusterCustomObject({
+      group: 'langop.io',
+      version: 'v1alpha1',
+      plural: 'languageagentruntimes',
+    })
+  }
+
+  async getLanguageAgentRuntime(name: string) {
+    if (!this.customObjectsApi) {
+      throw new Error('Kubernetes API not available')
+    }
+    return await this.customObjectsApi.getClusterCustomObject({
+      group: 'langop.io',
+      version: 'v1alpha1',
+      plural: 'languageagentruntimes',
+      name,
+    })
+  }
+
+  async createLanguageAgentRuntime(spec: any) {
+    if (!this.customObjectsApi) {
+      throw new Error('Kubernetes API not available')
+    }
+    return await this.customObjectsApi.createClusterCustomObject({
+      group: 'langop.io',
+      version: 'v1alpha1',
+      plural: 'languageagentruntimes',
+      body: spec,
+    })
+  }
+
+  async updateLanguageAgentRuntime(name: string, updatedResource: any) {
+    if (!this.customObjectsApi) {
+      throw new Error('Kubernetes API not available')
+    }
+    const body = {
+      apiVersion: 'langop.io/v1alpha1',
+      kind: 'LanguageAgentRuntime',
+      ...updatedResource,
+    }
+    return await this.customObjectsApi.replaceClusterCustomObject({
+      group: 'langop.io',
+      version: 'v1alpha1',
+      plural: 'languageagentruntimes',
+      name,
+      body,
+    })
+  }
+
+  async deleteLanguageAgentRuntime(name: string) {
+    if (!this.customObjectsApi) {
+      throw new Error('Kubernetes API not available')
+    }
+    return await this.customObjectsApi.deleteClusterCustomObject({
+      group: 'langop.io',
+      version: 'v1alpha1',
+      plural: 'languageagentruntimes',
+      name,
+    })
+  }
+
   // LanguageAgentVersion methods
 
   async listLanguageAgentVersions(namespace: string) {

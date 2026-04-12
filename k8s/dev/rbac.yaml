@@ -23,6 +23,7 @@ rules:
       - languagetools
       - languagepersonas
       - languageclusters
+      - languageagentruntimes
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 
   # Namespace management for organizations

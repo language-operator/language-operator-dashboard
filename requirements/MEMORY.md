@@ -71,6 +71,13 @@
 - **Tools**: `netstat`, `pgrep`, `lsof` for process debugging
 - **Escalation**: Ask for help with permissions rather than working around
 
+## Dev Environment
+
+### Standalone Dev Postgres
+- **Change**: Helm chart no longer provisions PostgreSQL; `make dev` now deploys its own Postgres pod (`k8s/dev/postgres.yaml`)
+- **Connection**: `postgresql://dashboard:devpassword@dashboard-dev-postgres.language-operator.svc.cluster.local:5432/dashboard`
+- **Makefile**: `dev-postgres` target deploys and waits for rollout; `dev-secrets` uses `DEV_DB_URL` directly
+
 ## Critical Knowledge
 
 ### Real-First Development

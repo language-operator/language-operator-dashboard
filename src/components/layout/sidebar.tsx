@@ -25,6 +25,7 @@ import {
 const globalNavigation = [
   { name: 'Overview', href: '/', icon: Home },
   { name: 'Clusters', href: '/clusters', icon: Boxes },
+  { name: 'Runtimes', href: '/runtimes', icon: Cpu },
   { name: 'Capacity', href: '/capacity', icon: Server },
 ]
 
