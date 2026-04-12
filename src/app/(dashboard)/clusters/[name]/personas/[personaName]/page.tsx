@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
   Users, AlertCircle, CheckCircle, Clock, ArrowLeft,
-  Edit, Trash2, MessageCircle, BookOpen, MoreVertical, FileCode, Copy, Check
+  Edit, Trash2, MoreVertical, FileCode, Copy, Check
 } from 'lucide-react'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { oneLight, oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
@@ -28,7 +28,7 @@ function formatTimeAgo(timestamp?: string | Date) {
   const minutes = Math.floor(diff / 60000)
   const hours = Math.floor(diff / 3600000)
   const days = Math.floor(diff / 86400000)
-  
+
   if (days > 0) return `${days} day${days !== 1 ? 's' : ''} ago`
   if (hours > 0) return `${hours} hour${hours !== 1 ? 's' : ''} ago`
   if (minutes > 0) return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`
@@ -45,7 +45,7 @@ export default function ClusterPersonaDetailPage() {
   const [yamlLoading, setYamlLoading] = useState(false)
   const [copied, setCopied] = useState(false)
   const { theme } = useTheme()
-  
+
   const { data: personaResponse, isLoading, error } = usePersona(personaName, clusterName)
   const deletePersona = useDeletePersona(clusterName)
 
@@ -53,7 +53,7 @@ export default function ClusterPersonaDetailPage() {
 
   const getStatusIcon = (persona: any) => {
     const phase = persona?.status?.phase || 'Unknown'
-    
+
     if (phase === 'Ready' || phase === 'Available') {
       return <CheckCircle className="h-5 w-5 text-green-500" />
     } else if (phase === 'Pending' || phase === 'Validating') {
@@ -67,7 +67,7 @@ export default function ClusterPersonaDetailPage() {
 
   const getStatusColor = (persona: any) => {
     const phase = persona?.status?.phase || 'Unknown'
-    
+
     if (phase === 'Ready' || phase === 'Available') {
       return 'bg-green-100 text-green-800'
     } else if (phase === 'Pending' || phase === 'Validating') {
@@ -81,8 +81,8 @@ export default function ClusterPersonaDetailPage() {
 
   const handleDeletePersona = async () => {
     if (!persona || !persona.metadata.name) return
-    
-    if (confirm(`Are you sure you want to delete persona "${persona.spec.displayName || persona.metadata.name}"?`)) {
+
+    if (confirm(`Are you sure you want to delete persona "${persona.metadata.name}"?`)) {
       try {
         await deletePersona.mutateAsync(persona.metadata.name)
         router.push(`/clusters/${clusterName}/personas`)
@@ -149,7 +149,7 @@ export default function ClusterPersonaDetailPage() {
             <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
             <h3 className="text-lg font-medium mb-2">Persona not found</h3>
             <p className="text-muted-foreground mb-4">
-              The persona "{personaName}" could not be found in cluster "{clusterName}".
+              The persona &quot;{personaName}&quot; could not be found in cluster &quot;{clusterName}&quot;.
             </p>
             <Button variant="outline" onClick={handleBack}>
               <ArrowLeft className="h-4 w-4 mr-2" />
@@ -170,7 +170,7 @@ export default function ClusterPersonaDetailPage() {
           icon={Users}
           title={
             <div className="flex items-center space-x-3">
-              <span>{persona.spec?.displayName || persona.metadata?.name}</span>
+              <span>{persona.metadata?.name}</span>
               <div className="flex items-center space-x-2">
                 {getStatusIcon(persona)}
                 <Badge className={getStatusColor(persona)}>
@@ -182,7 +182,7 @@ export default function ClusterPersonaDetailPage() {
           subtitle="LanguagePersona"
           actions={
             <>
-              <Button 
+              <Button
                 variant="outline"
                 onClick={() => router.push(`/clusters/${clusterName}/personas/${personaName}/edit`)}
               >
@@ -200,7 +200,7 @@ export default function ClusterPersonaDetailPage() {
                     <FileCode className="h-4 w-4 mr-2" />
                     View YAML
                   </DropdownMenuItem>
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
                     onClick={handleDeletePersona}
                     disabled={deletePersona.isPending}
                     className="text-red-600 focus:text-red-600 focus:bg-red-50"
@@ -216,97 +216,66 @@ export default function ClusterPersonaDetailPage() {
 
         {/* Overview */}
         <div className="space-y-6">
-            {/* Basic Information */}
+          {/* Basic Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Overview</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4 md:grid-cols-2">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Name</p>
+                <p className="text-sm">{persona.metadata?.name}</p>
+              </div>
+              {persona.spec?.tone && (
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Tone</p>
+                  <Badge variant="secondary">{persona.spec.tone}</Badge>
+                </div>
+              )}
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Status</p>
+                <Badge variant={persona.status?.phase === 'Ready' ? 'default' : 'secondary'}>
+                  {persona.status?.phase || 'Unknown'}
+                </Badge>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Created</p>
+                <p className="text-sm">{formatTimeAgo(persona.metadata?.creationTimestamp)}</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Personality */}
+          {persona.spec?.personality && (
             <Card>
               <CardHeader>
-                <CardTitle>Overview</CardTitle>
+                <CardTitle>Personality</CardTitle>
               </CardHeader>
-              <CardContent className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Name</p>
-                  <p className="text-sm">{persona.metadata?.name}</p>
-                </div>
-                {persona.spec?.displayName && (
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Display Name</p>
-                    <p className="text-sm">{persona.spec.displayName}</p>
-                  </div>
-                )}
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Status</p>
-                  <Badge variant={persona.status?.phase === 'Ready' ? 'default' : 'secondary'}>
-                    {persona.status?.phase || 'Unknown'}
-                  </Badge>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Created</p>
-                  <p className="text-sm">{formatTimeAgo(persona.metadata?.creationTimestamp)}</p>
+              <CardContent>
+                <div className="bg-stone-50 border border-stone-200 p-4 dark:bg-stone-800/50 dark:border-stone-700">
+                  <pre className="whitespace-pre-wrap text-sm font-mono text-stone-900 dark:text-stone-300">
+                    {persona.spec.personality}
+                  </pre>
                 </div>
               </CardContent>
             </Card>
+          )}
 
-            {/* Communication */}
+          {/* Expertise */}
+          {persona.spec?.expertise && (
             <Card>
               <CardHeader>
-                <CardTitle>Communication</CardTitle>
+                <CardTitle>Expertise</CardTitle>
               </CardHeader>
-              <CardContent className="grid gap-4 md:grid-cols-2">
-                {persona.spec.tone && (
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Tone</p>
-                    <Badge variant="secondary">{persona.spec.tone}</Badge>
-                  </div>
-                )}
-                {persona.spec.language && (
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Language</p>
-                    <Badge variant="outline">{persona.spec.language}</Badge>
-                  </div>
-                )}
+              <CardContent>
+                <div className="bg-stone-50 border border-stone-200 p-4 dark:bg-stone-800/50 dark:border-stone-700">
+                  <pre className="whitespace-pre-wrap text-sm font-mono text-stone-900 dark:text-stone-300">
+                    {persona.spec.expertise}
+                  </pre>
+                </div>
               </CardContent>
             </Card>
-
-            {/* Core Capabilities */}
-            {persona.spec.systemPrompt && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <MessageCircle className="h-5 w-5" />
-                    <span>Core Capabilities</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="bg-stone-50 border border-stone-200 p-4 dark:bg-stone-800/50 dark:border-stone-700">
-                    <pre className="whitespace-pre-wrap text-sm font-mono text-stone-900 dark:text-stone-300">
-                      {persona.spec.systemPrompt}
-                    </pre>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Additional Instructions */}
-            {persona.spec.instructions && Array.isArray(persona.spec.instructions) && persona.spec.instructions.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <BookOpen className="h-5 w-5" />
-                    <span>Additional Instructions ({persona.spec.instructions.length})</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {persona.spec.instructions.map((instruction: any, index: number) => (
-                      <div key={index} className="bg-stone-50 border border-stone-200 p-4 dark:bg-stone-800/50 dark:border-stone-700">
-                        <pre className="whitespace-pre-wrap text-sm font-mono text-stone-900 dark:text-stone-300">
-                          {typeof instruction === 'string' ? instruction : JSON.stringify(instruction, null, 2)}
-                        </pre>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+          )}
         </div>
 
         {/* Persona Events */}
@@ -324,7 +293,7 @@ export default function ClusterPersonaDetailPage() {
           <DialogHeader>
             <DialogTitle>LanguagePersona YAML</DialogTitle>
           </DialogHeader>
-          
+
           <div className="flex-1 min-h-0 flex flex-col">
             {yamlLoading ? (
               <div className="flex items-center justify-center py-8">

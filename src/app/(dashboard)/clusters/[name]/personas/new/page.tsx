@@ -25,16 +25,11 @@ export default function CreateClusterPersonaPage() {
     try {
       const payload = {
         name: formData.name,
-        displayName: formData.displayName,
-        description: formData.description,
-        ...(formData.systemPrompt && { systemPrompt: formData.systemPrompt }),
         ...(formData.tone && { tone: formData.tone }),
-        ...(formData.language && { language: formData.language }),
-        ...(formData.instructions && formData.instructions.length > 0 && { instructions: formData.instructions }),
+        ...(formData.personality && { personality: formData.personality }),
+        ...(formData.expertise && { expertise: formData.expertise }),
       }
-      
-      console.log('Sending payload:', payload)
-      
+
       const response = await fetchWithOrganization(`/api/clusters/${clusterName}/personas`, {
         method: 'POST',
         headers: {
@@ -45,20 +40,15 @@ export default function CreateClusterPersonaPage() {
 
       if (!response.ok) {
         const errorData = await response.json()
-        console.error('API Error Response:', errorData)
-        
+
         if (errorData.details && Array.isArray(errorData.details)) {
           const detailMessages = errorData.details.map((d: any) => `${d.path}: ${d.message}`).join(', ')
           throw new Error(`${errorData.error || 'Validation failed'}: ${detailMessages}`)
         }
-        
+
         throw new Error(errorData.error || 'Failed to create persona')
       }
 
-      const result = await response.json()
-      console.log('Create persona result:', result)
-      
-      // Redirect to cluster personas list page
       router.push(`/clusters/${clusterName}/personas`)
     } catch (err: any) {
       console.error('Error creating persona:', err)
@@ -84,7 +74,7 @@ export default function CreateClusterPersonaPage() {
           backLabel="Back to Personas"
           icon={Users}
           title="Create Persona"
-          subtitle="Define specific personality traits and custom instructions"
+          subtitle="Define specific personality traits and expertise for an AI agent"
           actions={
             <Button
               variant="outline"

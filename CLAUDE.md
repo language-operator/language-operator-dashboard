@@ -48,13 +48,12 @@ npm run initialize-tenant   # Create admin user + K8s ClusterRoleBinding
 # Requires: language-operator Helm chart deployed in k3s
 make dev
 ```
-Builds the dev image, loads into k3s, deploys with hostPath mounts for hot reload, runs migrations, port-forwards to `localhost:3000`.
+Builds the dev image, loads into k3s, deploys a standalone Postgres pod (`dashboard-dev-postgres`), runs migrations, port-forwards to `localhost:3000`.
 
 **Login**: `james@theryans.io` / `password123`
 
 **Common Issues**:
 - Port-forward conflict: `netstat -tulpn | grep :3000`
-- Helm chart not deployed: `make dev-secrets` will fail — deploy chart first: `helm upgrade --install language-operator ../language-operator/chart -n language-operator --values ../language-operator/chart/values.local.yaml`
 - Pod CrashLoop: `kubectl logs -n language-operator -l app=dashboard-dev --previous`
 - Dependency changes: `make dev-rebuild`
 
@@ -64,7 +63,7 @@ Never run `npm run build` or `npm run dev` directly on the host for development.
 
 ### Tech Stack
 - **Framework**: Next.js 16 with App Router
-- **Database**: PostgreSQL with Prisma ORM (User/Account/Session only — no org tables)
+- **Database**: PostgreSQL with Prisma ORM (User/Account/Session only — no org tables; dev uses a standalone in-cluster Postgres pod)
 - **Auth**: NextAuth.js with email/password and OAuth
 - **State Management**: Zustand (`src/store/sidebar-state.ts` only)
 - **UI**: Radix UI + Tailwind CSS (custom Marfa design system — see `DESIGN_SYSTEM.md`)

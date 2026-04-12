@@ -7,8 +7,6 @@ import {
   createSuccessResponse,
   handleKubernetesOperation,
   validateClusterNameFormat,
-  createAuthenticationRequiredError,
-  createPermissionDeniedError
 } from '@/lib/api-error-handler'
 
 // GET /api/clusters/[name]/personas/[personaName] - Get a specific persona in a cluster
@@ -22,24 +20,16 @@ export async function GET(
   try {
     const { email } = await getAuthenticatedUser(request)
 
-
-    // Check permissions
-
     const { name: clusterName, personaName } = await params
 
-    // Validate cluster name format
     validateClusterNameFormat(clusterName)
-
-    // Validate cluster exists and user has access
     await validateClusterExists(NAMESPACE, clusterName, { validateAccess: true })
 
-    // Fetch the specific persona from Kubernetes
     const response = await handleKubernetesOperation(
       'get persona',
       k8sClient.getLanguagePersona(clusterName, personaName)
     )
 
-    // Extract persona data from response
     let persona = null
     if (response.body && typeof response.body === 'object') {
       persona = response.body
@@ -55,16 +45,6 @@ export async function GET(
         'Persona not found'
       )
     }
-
-    // Verify the persona belongs to this cluster (check clusterRef)
-    if (persona.spec?.clusterRef !== clusterName) {
-      return createErrorResponse(
-        new Error(`Persona '${personaName}' does not belong to cluster '${clusterName}'`),
-        'Persona not found in cluster'
-      )
-    }
-
-    console.log(`Successfully fetched persona ${personaName} for cluster ${clusterName}`)
 
     return createSuccessResponse({ persona }, undefined, {
       cluster: clusterName,
@@ -84,20 +64,14 @@ export async function PATCH(
   try {
     const { email } = await getAuthenticatedUser(request)
 
-
-    // Check permissions
-
     const { name: clusterName, personaName } = await params
 
-    // Validate cluster name format
     validateClusterNameFormat(clusterName)
-
-    // Validate cluster exists and user has access
     await validateClusterExists(NAMESPACE, clusterName, { validateAccess: true })
 
     const body = await request.json()
 
-    // First, get the existing persona to merge with updates
+    // Fetch existing persona to merge with updates
     const existingResponse = await handleKubernetesOperation(
       'get persona for update',
       k8sClient.getLanguagePersona(clusterName, personaName)
@@ -119,31 +93,17 @@ export async function PATCH(
       )
     }
 
-    // Verify the persona belongs to this cluster
-    if (existingPersona.spec?.clusterRef !== clusterName) {
-      return createErrorResponse(
-        new Error(`Persona '${personaName}' does not belong to cluster '${clusterName}'`),
-        'Persona not found in cluster'
-      )
-    }
-
-    // Merge the updates with existing persona spec
+    // Merge updates — only CRD spec fields
     const updatedPersona = {
       ...existingPersona,
       spec: {
         ...existingPersona.spec,
-        ...(body.displayName !== undefined && { displayName: body.displayName }),
-        ...(body.description !== undefined && { description: body.description }),
-        ...(body.systemPrompt !== undefined && { systemPrompt: body.systemPrompt }),
         ...(body.tone !== undefined && { tone: body.tone }),
-        ...(body.language !== undefined && { language: body.language }),
-        ...(body.instructions !== undefined && { instructions: body.instructions }),
-        // Ensure clusterRef is preserved
-        clusterRef: clusterName,
-      }
+        ...(body.personality !== undefined && { personality: body.personality }),
+        ...(body.expertise !== undefined && { expertise: body.expertise }),
+      },
     }
 
-    // Update the persona in Kubernetes
     const response = await handleKubernetesOperation(
       'update persona',
       k8sClient.updateLanguagePersona(clusterName, personaName, updatedPersona)
@@ -167,48 +127,11 @@ export async function DELETE(
   try {
     const { email } = await getAuthenticatedUser(request)
 
-
-    // Check permissions
-
     const { name: clusterName, personaName } = await params
 
-    // Validate cluster name format
     validateClusterNameFormat(clusterName)
-
-    // Validate cluster exists and user has access
     await validateClusterExists(NAMESPACE, clusterName, { validateAccess: true })
 
-    // First verify the persona belongs to this cluster
-    const existingResponse = await handleKubernetesOperation(
-      'get persona for deletion',
-      k8sClient.getLanguagePersona(clusterName, personaName)
-    )
-
-    let existingPersona = null
-    if (existingResponse.body && typeof existingResponse.body === 'object') {
-      existingPersona = existingResponse.body
-    } else if (existingResponse.data && typeof existingResponse.data === 'object') {
-      existingPersona = existingResponse.data
-    } else {
-      existingPersona = existingResponse
-    }
-
-    if (!existingPersona) {
-      return createErrorResponse(
-        new Error(`Persona '${personaName}' not found`),
-        'Persona not found'
-      )
-    }
-
-    // Verify the persona belongs to this cluster
-    if (existingPersona.spec?.clusterRef !== clusterName) {
-      return createErrorResponse(
-        new Error(`Persona '${personaName}' does not belong to cluster '${clusterName}'`),
-        'Persona not found in cluster'
-      )
-    }
-
-    // Delete the persona from Kubernetes
     const response = await handleKubernetesOperation(
       'delete persona',
       k8sClient.deleteLanguagePersona(clusterName, personaName)

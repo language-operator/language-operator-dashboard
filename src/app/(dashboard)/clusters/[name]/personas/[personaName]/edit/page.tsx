@@ -4,10 +4,9 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { PersonaFormSimple, PersonaFormData } from '@/components/forms/persona-form-simple'
 import { usePersona, useUpdatePersona } from '@/hooks/use-personas'
-import { Button } from '@/components/ui/button'
-import { ArrowLeft, Users } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ResourceHeader } from '@/components/ui/resource-header'
+import { Users } from 'lucide-react'
 
 export default function EditClusterPersonaPage() {
   const router = useRouter()
@@ -26,12 +25,9 @@ export default function EditClusterPersonaPage() {
     if (persona) {
       setInitialData({
         name: persona.metadata.name,
-        displayName: persona.spec.displayName || '',
-        description: persona.spec.description || '',
-        systemPrompt: persona.spec.systemPrompt || '',
         tone: persona.spec.tone || '',
-        language: persona.spec.language || '',
-        instructions: persona.spec.instructions || [],
+        personality: persona.spec.personality || '',
+        expertise: persona.spec.expertise || '',
       })
     }
   }, [persona])
@@ -41,12 +37,9 @@ export default function EditClusterPersonaPage() {
 
     try {
       const payload = {
-        displayName: formData.displayName,
-        description: formData.description,
-        systemPrompt: formData.systemPrompt,
-        tone: formData.tone,
-        language: formData.language,
-        instructions: formData.instructions,
+        ...(formData.tone !== undefined && { tone: formData.tone }),
+        ...(formData.personality !== undefined && { personality: formData.personality }),
+        ...(formData.expertise !== undefined && { expertise: formData.expertise }),
       }
 
       await updatePersona.mutateAsync({
@@ -54,7 +47,6 @@ export default function EditClusterPersonaPage() {
         data: payload,
       })
 
-      // Redirect to persona detail page
       router.push(`/clusters/${clusterName}/personas/${personaName}`)
     } catch (err: any) {
       console.error('Error updating persona:', err)
@@ -65,7 +57,6 @@ export default function EditClusterPersonaPage() {
   const handleCancel = () => {
     router.push(`/clusters/${clusterName}/personas/${personaName}`)
   }
-
 
   if (isLoadingPersona) {
     return (
@@ -104,7 +95,7 @@ export default function EditClusterPersonaPage() {
         backLabel="Back to Personas"
         icon={Users}
         title="Edit Language Persona"
-        subtitle={`Edit "${persona.spec.displayName || persona.metadata.name}" in the ${clusterName} cluster`}
+        subtitle={`Edit "${persona.metadata.name}" in the ${clusterName} cluster`}
       />
 
       {/* Form */}

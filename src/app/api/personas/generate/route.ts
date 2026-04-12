@@ -43,27 +43,22 @@ export async function POST(request: NextRequest) {
 
     // Generate persona using the cluster model via LiteLLM proxy
     // The model is exposed as a k8s service at: http://{modelName}.{namespace}.svc.cluster.local
-    const systemPrompt = `You are an expert AI persona designer. Your task is to create detailed, well-structured personas for AI agents based on user ideas.
+    const systemPrompt = `You are an expert AI persona designer. Your task is to create well-structured personas for AI agents based on user ideas.
 
 When given an idea, you must respond with ONLY a valid JSON object (no markdown, no explanation) with this exact structure:
 {
-  "displayName": "A clear, descriptive name for this persona",
-  "systemPrompt": "Core behavioral instructions that define how this persona acts - be specific and detailed",
-  "tone": "professional|friendly|casual|formal|empathetic",
-  "language": "The primary language (e.g., English, Spanish, etc.)",
-  "instructions": [
-    "Specific instruction 1",
-    "Specific instruction 2",
-    "Specific instruction 3"
-  ]
+  "name": "kebab-case-name",
+  "tone": "A short description of communication style, e.g. professional, concise and direct",
+  "personality": "Character and behavioural traits — what makes this persona distinctive",
+  "expertise": "Domain knowledge and skills — what this persona knows and is good at"
 }
 
 Guidelines:
-- Make systemPrompt comprehensive and specific to the use case
-- Choose an appropriate tone that matches the persona's purpose
-- Add 2-5 instructions that provide additional behavioral guidance
-- Instructions can be formatted in markdown for better readability
-- Make the persona practical and immediately useful`
+- name must be lowercase alphanumeric with hyphens only (e.g. "senior-go-engineer")
+- tone is a short free-form string (e.g. "professional", "friendly and encouraging")
+- personality describes how the persona behaves and communicates
+- expertise describes the domain knowledge and technical skills
+- Make all fields specific and immediately useful`
 
     const userPrompt = `Create a persona for: ${idea}`
 
@@ -185,8 +180,8 @@ Guidelines:
       const jsonText = jsonMatch ? jsonMatch[1] : generatedText
       personaData = JSON.parse(jsonText.trim())
       
-      // Validate that required fields are present
-      if (!personaData.displayName || !personaData.systemPrompt) {
+      // Validate that at least one meaningful field is present
+      if (!personaData.name && !personaData.tone && !personaData.personality && !personaData.expertise) {
         throw new GenerationParsingError(generatedText)
       }
     } catch (parseError) {

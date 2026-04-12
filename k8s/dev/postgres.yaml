@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dashboard-dev-postgres
+  namespace: language-operator
+  labels:
+    app: dashboard-dev-postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dashboard-dev-postgres
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: dashboard-dev-postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          env:
+            - name: POSTGRES_DB
+              value: dashboard
+            - name: POSTGRES_USER
+              value: dashboard
+            - name: POSTGRES_PASSWORD
+              value: devpassword
+          ports:
+            - containerPort: 5432
+          readinessProbe:
+            exec:
+              command: [pg_isready, -U, dashboard]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dashboard-dev-postgres
+  namespace: language-operator
+spec:
+  selector:
+    app: dashboard-dev-postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
