@@ -45,9 +45,9 @@ const agentFormSchema = z.object({
   selectedTools: z.array(z.string()),
   selectedPersona: z.string().optional(),
   runtime: z.string().optional(),
-  workspaceRetain: z.boolean().default(false),
-  selfConfigureEnabled: z.boolean().default(false),
-  selfConfigureActions: z.array(z.enum(['tools', 'models', 'envVars', 'instructions', 'roleRules'])).default([]),
+  workspaceRetain: z.boolean().optional(),
+  selfConfigureEnabled: z.boolean().optional(),
+  selfConfigureActions: z.array(z.enum(['tools', 'models', 'envVars', 'instructions', 'roleRules'])).optional(),
 })
 
 type AgentFormValues = z.infer<typeof agentFormSchema>
@@ -121,7 +121,7 @@ export default function CreateClusterAgentPage() {
         runtime: values.runtime || undefined,
         workspaceRetain: values.workspaceRetain || undefined,
         selfConfigure: values.selfConfigureEnabled
-          ? { enabled: true, allowedActions: values.selfConfigureActions }
+          ? { enabled: true, allowedActions: values.selfConfigureActions ?? [] }
           : undefined,
       }
 
@@ -424,12 +424,13 @@ export default function CreateClusterAgentPage() {
                               {(['tools', 'models', 'envVars', 'instructions', 'roleRules'] as const).map((action) => (
                                 <div key={action} className="flex items-center space-x-2">
                                   <Checkbox
-                                    checked={field.value.includes(action)}
+                                    checked={(field.value ?? []).includes(action)}
                                     onCheckedChange={(checked) => {
+                                      const current = field.value ?? []
                                       if (checked) {
-                                        field.onChange([...field.value, action])
+                                        field.onChange([...current, action])
                                       } else {
-                                        field.onChange(field.value.filter((a) => a !== action))
+                                        field.onChange(current.filter((a) => a !== action))
                                       }
                                     }}
                                   />
