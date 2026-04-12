@@ -48,14 +48,6 @@ function ModelOverview({ model, clusterName }: ModelOverviewProps) {
           <CardTitle>Status & Conditions</CardTitle>
         </CardHeader>
         <CardContent>
-          {model.status?.phase === 'Managed' && (
-            <div className="flex items-center gap-2 p-3 mb-3 border border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/30">
-              <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400 shrink-0" />
-              <p className="text-sm text-green-800 dark:text-green-300">
-                Managed by cluster proxy — this model is registered with the shared LiteLLM proxy for its cluster.
-              </p>
-            </div>
-          )}
           {model.status?.conditions && model.status.conditions.length > 0 ? (
             <div className="space-y-3">
               {model.status.conditions.map((condition, index) => (
@@ -111,12 +103,6 @@ function ModelOverview({ model, clusterName }: ModelOverviewProps) {
                 <div>
                   <p className="text-sm font-medium text-stone-600 dark:text-stone-400">Tokens per Minute</p>
                   <p className="text-sm">{model.spec.rateLimits.tokensPerMinute.toLocaleString()}</p>
-                </div>
-              )}
-              {model.spec.rateLimits.concurrentRequests && (
-                <div>
-                  <p className="text-sm font-medium text-stone-600 dark:text-stone-400">Concurrent Requests</p>
-                  <p className="text-sm">{model.spec.rateLimits.concurrentRequests}</p>
                 </div>
               )}
             </div>

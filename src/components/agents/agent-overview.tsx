@@ -29,52 +29,23 @@ export function AgentOverview({ agent, clusterName }: AgentOverviewProps) {
   const allTools = toolsResponse?.data || []
   const allPersonas = personasResponse?.data || []
 
-  // Handle both old format (spec.model) and new format (spec.modelRefs)
-  const referencedModel = agent.spec.model?.name
-    ? allModels.find((model: any) => model.metadata.name === agent.spec.model?.name)
-    : agent.spec.modelRefs?.[0]?.name
-    ? allModels.find((model: any) => model.metadata.name === agent.spec.modelRefs?.[0]?.name)
-    : null
-
-  // Handle both old format (spec.tools) and new format (spec.toolRefs)
-  const referencedTools = agent.spec.tools
-    ? agent.spec.tools.map((toolRef) =>
-        allTools.find((tool: any) => tool.metadata.name === toolRef.name)
-      ).filter(Boolean)
-    : agent.spec.toolRefs
-    ? agent.spec.toolRefs.map((toolRef) =>
-        allTools.find((tool: any) => tool.metadata.name === toolRef.name)
-      ).filter(Boolean)
-    : []
-
-  // Handle both old format (spec.persona) and new format (spec.personaRefs)
-  const referencedPersona = agent.spec.persona?.name
-    ? allPersonas.find((persona: any) => persona.metadata.name === agent.spec.persona?.name)
-    : agent.spec.personaRefs?.[0]?.name
-    ? allPersonas.find((persona: any) => persona.metadata.name === agent.spec.personaRefs?.[0]?.name)
-    : null
-
   return (
     <div className="space-y-6">
-      {/* Basic Information - Full Width */}
+      {/* Basic Information */}
       <Card>
         <CardHeader>
           <CardTitle>Basic Information</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-3">
             <div>
               <p className="text-sm font-medium text-stone-600 dark:text-stone-400">Name</p>
               <p className="text-sm">{agent.metadata.name}</p>
             </div>
-            <div>
-              <p className="text-sm font-medium text-stone-600 dark:text-stone-400">Execution Mode</p>
-              <Badge variant="secondary">{agent.spec.executionMode}</Badge>
-            </div>
-            {agent.spec.executionMode === 'scheduled' && agent.spec.schedule && (
+            {agent.spec.runtime && (
               <div>
-                <p className="text-sm font-medium text-stone-600 dark:text-stone-400">Schedule</p>
-                <p className="text-sm font-mono">{agent.spec.schedule}</p>
+                <p className="text-sm font-medium text-stone-600 dark:text-stone-400">Runtime</p>
+                <Badge variant="secondary">{agent.spec.runtime}</Badge>
               </div>
             )}
             <div>
@@ -85,7 +56,7 @@ export function AgentOverview({ agent, clusterName }: AgentOverviewProps) {
         </CardContent>
       </Card>
 
-      {/* Goal - Prominent Full Width Section */}
+      {/* Goal / Instructions */}
       <Card>
         <CardHeader>
           <CardTitle>Goal</CardTitle>
@@ -124,46 +95,30 @@ export function AgentOverview({ agent, clusterName }: AgentOverviewProps) {
         </CardContent>
       </Card>
 
-      {/* Models, Tools, and Persona - Third Row */}
+      {/* Models, Tools, and Persona */}
       <div className="grid gap-6 md:grid-cols-3">
         <Card>
           <CardHeader>
             <CardTitle>Models</CardTitle>
           </CardHeader>
           <CardContent>
-            {agent.spec.model?.name || (agent.spec.modelRefs && agent.spec.modelRefs.length > 0) ? (
+            {agent.spec.models && agent.spec.models.length > 0 ? (
               <div className="flex flex-wrap gap-2">
-                {/* Handle old format (spec.model) */}
-                {agent.spec.model?.name && (
-                  <>
-                    {referencedModel ? (
-                      <Link href={`/clusters/${clusterName}/models/${agent.spec.model.name}`}>
-                        <Badge variant="outline" className="hover:bg-primary/10 cursor-pointer">
-                          {agent.spec.model.name}
-                        </Badge>
-                      </Link>
-                    ) : (
-                      <Badge variant="destructive">
-                        {agent.spec.model.name}
-                      </Badge>
-                    )}
-                  </>
-                )}
-                {/* Handle new format (spec.modelRefs) */}
-                {agent.spec.modelRefs?.map((modelRef, index) => {
-                  const foundModel = allModels.find((model: any) => model.metadata.name === modelRef.name)
+                {agent.spec.models.map((modelRef, index) => {
+                  const found = allModels.find((m: any) => m.metadata.name === modelRef.name)
                   return (
                     <div key={index}>
-                      {foundModel ? (
+                      {found ? (
                         <Link href={`/clusters/${clusterName}/models/${modelRef.name}`}>
                           <Badge variant="outline" className="hover:bg-primary/10 cursor-pointer">
                             {modelRef.name}
+                            {modelRef.role && modelRef.role !== 'primary' && (
+                              <span className="ml-1 text-xs text-muted-foreground">({modelRef.role})</span>
+                            )}
                           </Badge>
                         </Link>
                       ) : (
-                        <Badge variant="destructive">
-                          {modelRef.name}
-                        </Badge>
+                        <Badge variant="destructive">{modelRef.name}</Badge>
                       )}
                     </div>
                   )
@@ -180,42 +135,20 @@ export function AgentOverview({ agent, clusterName }: AgentOverviewProps) {
             <CardTitle>Tools</CardTitle>
           </CardHeader>
           <CardContent>
-            {(agent.spec.tools && agent.spec.tools.length > 0) || (agent.spec.toolRefs && agent.spec.toolRefs.length > 0) ? (
+            {agent.spec.tools && agent.spec.tools.length > 0 ? (
               <div className="flex flex-wrap gap-2">
-                {/* Handle old format (spec.tools) */}
-                {agent.spec.tools?.map((toolRef, index) => {
-                  const referencedTool = allTools.find((tool: any) => tool.metadata.name === toolRef.name)
+                {agent.spec.tools.map((toolRef, index) => {
+                  const found = allTools.find((t: any) => t.metadata.name === toolRef.name)
                   return (
-                    <div key={`old-${index}`}>
-                      {referencedTool ? (
+                    <div key={index}>
+                      {found ? (
                         <Link href={`/clusters/${clusterName}/tools/${toolRef.name}`}>
                           <Badge variant="outline" className="hover:bg-primary/10 cursor-pointer">
                             {toolRef.name}
                           </Badge>
                         </Link>
                       ) : (
-                        <Badge variant="destructive">
-                          {toolRef.name}
-                        </Badge>
-                      )}
-                    </div>
-                  )
-                })}
-                {/* Handle new format (spec.toolRefs) */}
-                {agent.spec.toolRefs?.map((toolRef, index) => {
-                  const referencedTool = allTools.find((tool: any) => tool.metadata.name === toolRef.name)
-                  return (
-                    <div key={`new-${index}`}>
-                      {referencedTool ? (
-                        <Link href={`/clusters/${clusterName}/tools/${toolRef.name}`}>
-                          <Badge variant="outline" className="hover:bg-primary/10 cursor-pointer">
-                            {toolRef.name}
-                          </Badge>
-                        </Link>
-                      ) : (
-                        <Badge variant="destructive">
-                          {toolRef.name}
-                        </Badge>
+                        <Badge variant="destructive">{toolRef.name}</Badge>
                       )}
                     </div>
                   )
@@ -232,43 +165,20 @@ export function AgentOverview({ agent, clusterName }: AgentOverviewProps) {
             <CardTitle>Persona</CardTitle>
           </CardHeader>
           <CardContent>
-            {agent.spec.persona?.name || (agent.spec.personaRefs && agent.spec.personaRefs.length > 0) ? (
+            {agent.spec.persona ? (
               <div className="flex flex-wrap gap-2">
-                {/* Handle old format (spec.persona) */}
-                {agent.spec.persona?.name && (
-                  <>
-                    {referencedPersona ? (
-                      <Link href={`/clusters/${clusterName}/personas/${agent.spec.persona.name}`}>
-                        <Badge variant="outline" className="hover:bg-primary/10 cursor-pointer">
-                          {agent.spec.persona.name}
-                        </Badge>
-                      </Link>
-                    ) : (
-                      <Badge variant="destructive">
-                        {agent.spec.persona.name}
+                {(() => {
+                  const found = allPersonas.find((p: any) => p.metadata.name === agent.spec.persona)
+                  return found ? (
+                    <Link href={`/clusters/${clusterName}/personas/${agent.spec.persona}`}>
+                      <Badge variant="outline" className="hover:bg-primary/10 cursor-pointer">
+                        {agent.spec.persona}
                       </Badge>
-                    )}
-                  </>
-                )}
-                {/* Handle new format (spec.personaRefs) */}
-                {agent.spec.personaRefs?.map((personaRef, index) => {
-                  const foundPersona = allPersonas.find((persona: any) => persona.metadata.name === personaRef.name)
-                  return (
-                    <div key={index}>
-                      {foundPersona ? (
-                        <Link href={`/clusters/${clusterName}/personas/${personaRef.name}`}>
-                          <Badge variant="outline" className="hover:bg-primary/10 cursor-pointer">
-                            {personaRef.name}
-                          </Badge>
-                        </Link>
-                      ) : (
-                        <Badge variant="destructive">
-                          {personaRef.name}
-                        </Badge>
-                      )}
-                    </div>
+                    </Link>
+                  ) : (
+                    <Badge variant="destructive">{agent.spec.persona}</Badge>
                   )
-                })}
+                })()}
               </div>
             ) : (
               <p className="text-sm text-stone-600 dark:text-stone-400">None</p>
@@ -280,7 +190,7 @@ export function AgentOverview({ agent, clusterName }: AgentOverviewProps) {
       {/* Status and Conditions */}
       <Card>
         <CardHeader>
-          <CardTitle>Status & Conditions</CardTitle>
+          <CardTitle>Status &amp; Conditions</CardTitle>
         </CardHeader>
         <CardContent>
           {agent.status?.conditions && agent.status.conditions.length > 0 ? (
@@ -318,7 +228,6 @@ export function AgentOverview({ agent, clusterName }: AgentOverviewProps) {
         namespace={agent.metadata.namespace || ''}
         limit={10}
       />
-
     </div>
   )
 }

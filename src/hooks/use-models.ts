@@ -21,8 +21,6 @@ export function useModels(params: LanguageModelListParams & { clusterName: strin
       }
       if (params?.sortBy) searchParams.append('sortBy', params.sortBy)
       if (params?.sortOrder) searchParams.append('sortOrder', params.sortOrder)
-      if (params?.healthy !== undefined) searchParams.append('healthy', params.healthy.toString())
-
       const endpoint = `/api/clusters/${params.clusterName}/models?${searchParams}`
 
       const response = await fetch(endpoint)

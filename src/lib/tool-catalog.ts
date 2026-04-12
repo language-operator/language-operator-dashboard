@@ -66,7 +66,7 @@ export function searchTools(catalog: ToolCatalog, query: string): ToolCatalogEnt
 
   return Object.values(catalog.tools).filter(tool => {
     const displayName = tool.metadata.annotations?.['langop.io/display-name'] || tool.metadata.name || ''
-    const description = tool.spec?.description || ''
+    const description = tool.metadata.annotations?.['langop.io/description'] || ''
     const tags = tool.metadata.annotations?.['langop.io/tags']?.split(',').map(t => t.trim()) || []
 
     return (tool.metadata.name || '').toLowerCase().includes(lowercaseQuery) ||
@@ -102,11 +102,6 @@ export function prepareCatalogEntryForInstallation(
   // Add catalog labels (preserve existing)
   tool.metadata.labels['langop.io/source'] = 'catalog'
   tool.metadata.labels['langop.io/catalog-name'] = entry.metadata.name || ''
-
-  // Inject cluster reference if provided
-  if (clusterName && tool.spec) {
-    tool.spec.clusterRef = clusterName
-  }
 
   return tool
 }

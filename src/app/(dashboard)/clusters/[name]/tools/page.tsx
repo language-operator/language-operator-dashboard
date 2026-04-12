@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { ResourceHeader } from '@/components/ui/resource-header'
-import { Wrench, Download, CheckCircle, Search, ExternalLink, Shield, Network } from 'lucide-react'
+import { Wrench, Download, CheckCircle, Search, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState, useMemo } from 'react'
 import { ToolCatalog, ToolCatalogEntry, InstalledTool, getToolDisplayName, getToolTags } from '@/types/tool-catalog'
@@ -136,7 +136,7 @@ export default function ClusterTools() {
           <div className="flex-1">
             <CardTitle className="text-lg">{getToolDisplayName(tool)}</CardTitle>
             <CardDescription className="mt-1 line-clamp-2">
-              {tool.spec?.description || ''}
+              {tool.metadata.annotations?.['langop.io/description'] || ''}
             </CardDescription>
           </div>
         </div>
@@ -145,24 +145,15 @@ export default function ClusterTools() {
         <div className="space-y-3 flex-1">
           {/* Tool metadata */}
           <div className="flex flex-wrap gap-2">
-            <Badge variant="outline" className="text-xs">
-              {tool.spec?.type || 'container'}
-            </Badge>
-            {tool.spec?.authentication?.enabled && (
+            {tool.spec?.type && (
               <Badge variant="outline" className="text-xs">
-                <Shield className="h-3 w-3 mr-1" />
-                Auth Required
+                {tool.spec.type}
               </Badge>
             )}
-          </div>
-
-          {/* Features */}
-          <div className="text-xs text-muted-foreground space-y-1">
-            {tool.spec?.egress && tool.spec.egress.length > 0 && (
-              <div className="flex items-center gap-1">
-                <Network className="h-3 w-3" />
-                <span>Network Policy</span>
-              </div>
+            {tool.spec?.deploymentMode && (
+              <Badge variant="outline" className="text-xs">
+                {tool.spec.deploymentMode}
+              </Badge>
             )}
           </div>
         </div>
@@ -223,7 +214,7 @@ export default function ClusterTools() {
     ? Object.entries(catalog.tools).filter(([_, tool]) => {
         const query = searchQuery.toLowerCase()
         const displayName = getToolDisplayName(tool)
-        const description = tool.spec?.description || ''
+        const description = tool.metadata.annotations?.['langop.io/description'] || ''
         return (
           (tool.metadata.name || '').toLowerCase().includes(query) ||
           displayName.toLowerCase().includes(query) ||
@@ -238,7 +229,7 @@ export default function ClusterTools() {
     if (!catalogEntry) return false
     const query = searchQuery.toLowerCase()
     const displayName = getToolDisplayName(catalogEntry)
-    const description = catalogEntry.spec?.description || ''
+    const description = catalogEntry.metadata.annotations?.['langop.io/description'] || ''
     return (
       (catalogEntry.metadata.name || '').toLowerCase().includes(query) ||
       displayName.toLowerCase().includes(query) ||

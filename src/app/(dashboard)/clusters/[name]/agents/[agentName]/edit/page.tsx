@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -10,13 +10,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
-import { 
-  Save, Settings, Zap, Network
-} from 'lucide-react'
-import { ResourceNetworkPolicyForm } from '@/components/forms/resource-network-policy-form'
+import { Save } from 'lucide-react'
 import {
   Form,
   FormControl,
@@ -30,7 +25,7 @@ import { useAgent, useUpdateAgent } from '@/hooks/use-agents'
 import { useModels } from '@/hooks/use-models'
 import { useTools } from '@/hooks/use-tools'
 import { usePersonas } from '@/hooks/use-personas'
-import { LanguageAgentFormData, LanguageAgent } from '@/types/agent'
+import { LanguageAgentFormData } from '@/types/agent'
 import { useToast } from '@/hooks/use-toast'
 import { kubernetesNameValidation } from '@/lib/validation'
 
@@ -45,34 +40,6 @@ const agentFormSchema = z.object({
   selectedModels: z.array(z.string()).min(1, 'At least one model must be selected'),
   selectedTools: z.array(z.string()),
   selectedPersona: z.string().optional(),
-  
-  // Resources
-  cpuRequest: z.string().optional(),
-  memoryRequest: z.string().optional(),
-  cpuLimit: z.string().optional(),
-  memoryLimit: z.string().optional(),
-  
-  
-  // Network Policies
-  egressRules: z.array(z.object({
-    description: z.string().optional(),
-    dns: z.array(z.string()).optional(),
-    cidr: z.string().optional(),
-    ports: z.array(z.object({
-      port: z.number().min(1).max(65535),
-      protocol: z.enum(['TCP', 'UDP'])
-    })).optional()
-  })).optional(),
-  
-  // Ingress rules - agents accept connections from external/gateway
-  ingressRules: z.array(z.object({
-    description: z.string().optional(),
-    from: z.enum(['agents', 'tools', 'models', 'cluster', 'external', 'gateway']),
-    ports: z.array(z.object({
-      port: z.number().min(1).max(65535),
-      protocol: z.enum(['TCP', 'UDP'])
-    })).optional()
-  })).optional(),
 })
 
 type AgentFormValues = z.infer<typeof agentFormSchema>
@@ -84,7 +51,6 @@ export default function EditClusterAgentPage() {
   const clusterName = params?.name as string
   const agentName = params?.agentName as string
   
-  const [activeTab, setActiveTab] = useState('basic')
   const { toast } = useToast()
 
   const { data: agentResponse, isLoading: isLoadingAgent } = useAgent(agentName, clusterName)
@@ -109,12 +75,6 @@ export default function EditClusterAgentPage() {
       selectedModels: [],
       selectedTools: [],
       selectedPersona: 'none',
-      cpuRequest: '100m',
-      memoryRequest: '128Mi',
-      cpuLimit: '500m',
-      memoryLimit: '512Mi',
-      egressRules: [],
-      ingressRules: [],
     },
   })
 
@@ -124,29 +84,12 @@ export default function EditClusterAgentPage() {
       form.reset({
         instructions: agent.spec.instructions || '',
         name: agent.metadata.name,
-        selectedModels: agent.spec.modelRefs?.map((m: any) => m.name) || [],
-        selectedTools: agent.spec.toolRefs?.map((t: any) => t.name) || [],
-        selectedPersona: agent.spec.personaRefs?.[0]?.name || 'none',
-        cpuRequest: agent.spec.resources?.requests?.cpu || '100m',
-        memoryRequest: agent.spec.resources?.requests?.memory || '128Mi',
-        cpuLimit: agent.spec.resources?.limits?.cpu || '500m',
-        memoryLimit: agent.spec.resources?.limits?.memory || '512Mi',
-        egressRules: agent.spec.egress?.map((rule: any) => ({
-          description: rule.description || '',
-          dns: rule.to?.dns || [],
-          cidr: rule.to?.cidr || '',
-          ports: rule.ports || []
-        })) || [],
-        ingressRules: agent.spec.ingress?.map((rule: any) => ({
-          description: rule.description || '',
-          from: rule.from?.type || 'external',
-          ports: rule.ports || []
-        })) || [],
+        selectedModels: agent.spec.models?.map((m: { name: string }) => m.name) || [],
+        selectedTools: agent.spec.tools?.map((t: { name: string }) => t.name) || [],
+        selectedPersona: agent.spec.persona || 'none',
       })
     }
   }, [agent, form])
-
-  const watchedValues = form.watch()
 
   const onSubmit = async (values: AgentFormValues) => {
     try {
@@ -157,12 +100,6 @@ export default function EditClusterAgentPage() {
         selectedModels: values.selectedModels,
         selectedTools: values.selectedTools,
         selectedPersona: values.selectedPersona === 'none' ? undefined : values.selectedPersona,
-        cpuRequest: values.cpuRequest,
-        memoryRequest: values.memoryRequest,
-        cpuLimit: values.cpuLimit,
-        memoryLimit: values.memoryLimit,
-        egressRules: values.egressRules,
-        ingressRules: values.ingressRules,
       }
 
       await updateAgent.mutateAsync({ name: agentName, agent: formData as any })
@@ -214,24 +151,6 @@ export default function EditClusterAgentPage() {
         <div>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="basic">
-                    <Settings className="h-4 w-4 mr-2" />
-                    Basic
-                  </TabsTrigger>
-                  <TabsTrigger value="resources">
-                    <Zap className="h-4 w-4 mr-2" />
-                    Resources
-                  </TabsTrigger>
-                  <TabsTrigger value="networking">
-                    <Network className="h-4 w-4 mr-2" />
-                    Network
-                  </TabsTrigger>
-                </TabsList>
-
-                {/* Basic Configuration */}
-                <TabsContent value="basic" className="space-y-6 mt-3">
                   <Card>
                     <CardHeader>
                       <CardTitle>Agent Configuration</CardTitle>
@@ -395,102 +314,6 @@ export default function EditClusterAgentPage() {
                       />
                     </CardContent>
                   </Card>
-                </TabsContent>
-
-
-                {/* Resources Configuration */}
-                <TabsContent value="resources" className="space-y-6 mt-3">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Resource Limits</CardTitle>
-                      <CardDescription>
-                        Configure CPU and memory resources
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <FormField
-                          control={form.control}
-                          name="cpuRequest"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>CPU Request</FormLabel>
-                              <FormControl>
-                                <Input placeholder="100m" {...field} />
-                              </FormControl>
-                              <FormDescription>e.g., 100m, 0.5, 1</FormDescription>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name="cpuLimit"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>CPU Limit</FormLabel>
-                              <FormControl>
-                                <Input placeholder="500m" {...field} />
-                              </FormControl>
-                              <FormDescription>e.g., 500m, 1, 2</FormDescription>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name="memoryRequest"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Memory Request</FormLabel>
-                              <FormControl>
-                                <Input placeholder="128Mi" {...field} />
-                              </FormControl>
-                              <FormDescription>e.g., 128Mi, 1Gi</FormDescription>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name="memoryLimit"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Memory Limit</FormLabel>
-                              <FormControl>
-                                <Input placeholder="512Mi" {...field} />
-                              </FormControl>
-                              <FormDescription>e.g., 512Mi, 2Gi</FormDescription>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                </TabsContent>
-
-                {/* Network Policy Configuration */}
-                <TabsContent value="networking" className="space-y-6 mt-3">
-                  <ResourceNetworkPolicyForm
-                    control={form.control}
-                    egressRulesFieldName="egressRules"
-                    ingressRulesFieldName="ingressRules"
-                    watchedEgressRules={watchedValues.egressRules}
-                    watchedIngressRules={watchedValues.ingressRules}
-                    setValue={form.setValue}
-                    getValues={form.getValues}
-                    title="Network Policy"
-                    description="Control network access for security. By default, agents can access cluster resources but no external endpoints."
-                    resourceType="agent"
-                    showIngressRules={true}
-                  />
-                </TabsContent>
-              </Tabs>
 
               {/* Submit Buttons */}
               <div className="flex items-center justify-between">

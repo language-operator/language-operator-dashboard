@@ -117,56 +117,23 @@ export async function PATCH(
       updatedSpec.instructions = body.instructions
     }
 
-    // Update model references
+    // Update model references — operator uses spec.models
     if (body.selectedModels) {
-      updatedSpec.modelRefs = body.selectedModels.map(name => ({ name }))
+      updatedSpec.models = body.selectedModels.map((name: string) => ({ name }))
     }
 
-    // Update tool references
+    // Update tool references — operator uses spec.tools
     if (body.selectedTools) {
-      updatedSpec.toolRefs = body.selectedTools.map(name => ({ name }))
+      updatedSpec.tools = body.selectedTools.map((name: string) => ({ name }))
     }
 
-    // Update persona references
+    // Update persona — operator uses spec.persona (string name)
     if (body.selectedPersona !== undefined) {
       if (body.selectedPersona && body.selectedPersona !== 'none') {
-        updatedSpec.personaRefs = [{ name: body.selectedPersona }]
+        updatedSpec.persona = body.selectedPersona
       } else {
-        updatedSpec.personaRefs = []
+        delete updatedSpec.persona
       }
-    }
-
-    // Update resources
-    if (body.cpuRequest || body.memoryRequest || body.cpuLimit || body.memoryLimit) {
-      updatedSpec.resources = updatedSpec.resources || {}
-
-      if (body.cpuRequest || body.memoryRequest) {
-        updatedSpec.resources.requests = updatedSpec.resources.requests || {}
-        if (body.cpuRequest) updatedSpec.resources.requests.cpu = body.cpuRequest
-        if (body.memoryRequest) updatedSpec.resources.requests.memory = body.memoryRequest
-      }
-
-      if (body.cpuLimit || body.memoryLimit) {
-        updatedSpec.resources.limits = updatedSpec.resources.limits || {}
-        if (body.cpuLimit) updatedSpec.resources.limits.cpu = body.cpuLimit
-        if (body.memoryLimit) updatedSpec.resources.limits.memory = body.memoryLimit
-      }
-    }
-
-    // Update egress rules
-    if (body.egressRules) {
-      updatedSpec.egress = body.egressRules.map(rule => ({
-        description: rule.description,
-        ...((rule.dns && rule.dns.length > 0) || rule.cidr) && {
-          to: {
-            ...(rule.dns && rule.dns.length > 0 && { dns: rule.dns }),
-            ...(rule.cidr && { cidr: rule.cidr }),
-          },
-        },
-        ...(rule.ports && rule.ports.length > 0) && {
-          ports: rule.ports,
-        },
-      }))
     }
 
     // Create the updated agent object

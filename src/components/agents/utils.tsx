@@ -62,8 +62,6 @@ export function getStatusIcon(agent: LanguageAgent) {
     return <Clock className="h-5 w-5 text-yellow-500" />
   } else if (phase === 'Failed') {
     return <AlertCircle className="h-5 w-5 text-red-500" />
-  } else if (phase === 'Succeeded') {
-    return <CheckCircle className="h-5 w-5 text-blue-500" />
   } else {
     return <AlertCircle className="h-5 w-5 text-gray-500" />
   }
@@ -78,8 +76,6 @@ export function getStatusColor(agent: LanguageAgent) {
     return 'text-yellow-600'
   } else if (phase === 'Failed') {
     return 'text-red-600'
-  } else if (phase === 'Succeeded') {
-    return 'text-blue-600'
   } else {
     return 'text-gray-600'
   }

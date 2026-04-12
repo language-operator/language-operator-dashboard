@@ -77,13 +77,6 @@ export async function PUT(
       return NextResponse.json({ error: 'Tool not found' }, { status: 404 })
     }
 
-    // Verify tool belongs to the specified cluster
-    if (existingTool.spec.clusterRef !== clusterName) {
-      return NextResponse.json({ 
-        error: `Tool ${toolName} does not belong to cluster ${clusterName}` 
-      }, { status: 400 })
-    }
-
     // Build update payload focusing on editable fields
     const updatedTool = {
       ...existingTool,
@@ -91,59 +84,10 @@ export async function PUT(
         ...existingTool.spec,
         // Update container image if provided
         ...(updateData.image && { image: updateData.image }),
-        
-        // Update resource limits
-        ...(updateData.resources && {
-          resources: {
-            requests: {
-              cpu: updateData.resources.cpu || existingTool.spec.resources?.requests?.cpu || '100m',
-              memory: updateData.resources.memory || existingTool.spec.resources?.requests?.memory || '128Mi'
-            },
-            limits: {
-              cpu: updateData.resources.cpuLimit || existingTool.spec.resources?.limits?.cpu || '500m',
-              memory: updateData.resources.memoryLimit || existingTool.spec.resources?.limits?.memory || '512Mi'
-            }
-          }
-        }),
-        
         // Update port configuration
-        ...(updateData.port && {
-          port: updateData.port
-        }),
-        
+        ...(updateData.port && { port: updateData.port }),
         // Update deployment mode
-        ...(updateData.deploymentMode && {
-          deploymentMode: updateData.deploymentMode
-        }),
-        
-        // Update environment variables
-        ...(updateData.envVars && {
-          env: updateData.envVars.map((envVar: { key: string; value: string }) => ({
-            name: envVar.key,
-            value: envVar.value
-          }))
-        }),
-
-        // Update egress rules
-        ...(updateData.egress && {
-          egress: updateData.egress.map((rule: any) => ({
-            description: rule.description,
-            ...(((rule.to?.dns && rule.to.dns.length > 0) || rule.to?.cidr) && {
-              to: {
-                ...(rule.to?.dns && rule.to.dns.length > 0 && { dns: rule.to.dns }),
-                ...(rule.to?.cidr && { cidr: rule.to.cidr }),
-              },
-            }),
-            ...(rule.ports && rule.ports.length > 0 && {
-              ports: rule.ports.map((port: number) => ({
-                port,
-                protocol: 'TCP'
-              })),
-            }),
-          })).filter((rule: any) =>
-            (rule.to?.dns && rule.to.dns.length > 0) || rule.to?.cidr
-          )
-        })
+        ...(updateData.deploymentMode && { deploymentMode: updateData.deploymentMode }),
       }
     }
 

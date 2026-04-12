@@ -23,10 +23,6 @@ async function fetchAgents(params: LanguageAgentListParams = {}): Promise<Langua
     params.phase.forEach(phase => searchParams.append('phase', phase))
   }
   
-  if (params.executionMode) {
-    params.executionMode.forEach(mode => searchParams.append('executionMode', mode))
-  }
-
   const response = await fetch(`/api/agents?${searchParams.toString()}`)
   
   if (!response.ok) {
@@ -175,7 +171,8 @@ export function useAgentStats() {
     running: agents.filter(a => a.status?.phase === 'Running').length,
     pending: agents.filter(a => a.status?.phase === 'Pending').length,
     failed: agents.filter(a => a.status?.phase === 'Failed').length,
-    succeeded: agents.filter(a => a.status?.phase === 'Succeeded').length,
+    updating: agents.filter(a => a.status?.phase === 'Updating').length,
+    degraded: agents.filter(a => a.status?.phase === 'Degraded').length,
   }
 }
 
@@ -193,9 +190,3 @@ export function useAgentsByPhase(phases: string[]) {
   })
 }
 
-export function useAgentsByExecutionMode(executionModes: string[]) {
-  return useAgents({
-    executionMode: executionModes,
-    limit: 100,
-  })
-}

@@ -56,16 +56,16 @@ export async function GET(
       { allowOrphanedResources: true }
     ) as LanguagePersona[]
 
-    // Apply search filtering 
+    // Apply search filtering
     let filteredPersonas = clusterPersonas.filter((persona: LanguagePersona) => {
       if (queryParams.search) {
         const searchLower = queryParams.search.toLowerCase()
         const nameMatch = persona.metadata.name?.toLowerCase().includes(searchLower)
-        const displayNameMatch = persona.spec.displayName?.toLowerCase().includes(searchLower)
-        const descMatch = persona.spec.description?.toLowerCase().includes(searchLower)
-        if (!nameMatch && !displayNameMatch && !descMatch) return false
+        const personalityMatch = persona.spec.personality?.toLowerCase().includes(searchLower)
+        const expertiseMatch = persona.spec.expertise?.toLowerCase().includes(searchLower)
+        if (!nameMatch && !personalityMatch && !expertiseMatch) return false
       }
-      
+
       if (queryParams.tone && queryParams.tone.length > 0) {
         if (!queryParams.tone.includes(persona.spec.tone || '')) return false
       }
@@ -84,8 +84,6 @@ export async function GET(
       switch (queryParams.sortBy) {
         case 'name':
           return (a.metadata.name || '').localeCompare(b.metadata.name || '') * order
-        case 'displayName':
-          return (a.spec.displayName || '').localeCompare(b.spec.displayName || '') * order
         case 'tone':
           return ((a.spec.tone || '').localeCompare(b.spec.tone || '')) * order
         case 'phase':
@@ -151,24 +149,9 @@ export async function POST(
         },
       },
       spec: {
-        ...(formData.displayName && { displayName: formData.displayName }),
-        ...(formData.description && { description: formData.description }),
-        ...(formData.systemPrompt && { systemPrompt: formData.systemPrompt }),
-        clusterRef: clusterName,  // This makes it cluster-scoped
         ...(formData.tone && { tone: formData.tone }),
-        ...(formData.language && { language: formData.language }),
-        ...(formData.version && { version: formData.version }),
-        ...(formData.capabilities && formData.capabilities.length > 0 && { capabilities: formData.capabilities }),
-        ...(formData.limitations && formData.limitations.length > 0 && { limitations: formData.limitations }),
-        ...(formData.instructions && formData.instructions.length > 0 && { instructions: formData.instructions }),
-        ...(formData.examples && formData.examples.length > 0 && {
-          examples: formData.examples.map(ex => ({
-            input: ex.input,
-            output: ex.output,
-            ...(ex.context && { context: ex.context }),
-            ...(ex.tags && { tags: ex.tags }),
-          })),
-        }),
+        ...(formData.personality && { personality: formData.personality }),
+        ...(formData.expertise && { expertise: formData.expertise }),
       },
     }
 

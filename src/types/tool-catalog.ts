@@ -22,12 +22,11 @@ export function getToolTags(tool: ToolCatalogEntry): string[] {
 
 export interface InstalledTool {
   name: string
-  namespace: string
+  namespace?: string
   catalogName?: string
   status: {
-    phase: 'Pending' | 'Ready' | 'Failed'
+    phase: string
     message?: string
-    lastUpdated: string
+    lastUpdated?: string
   }
-  spec: any
 }

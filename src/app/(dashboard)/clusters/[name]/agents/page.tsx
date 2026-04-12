@@ -1,12 +1,11 @@
 'use client'
 
-import React, { useState, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ResourceHeader } from '@/components/ui/resource-header'
 import { EventsActivity } from '@/components/ui/events-activity'
 import {
@@ -24,7 +23,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Bot, Plus, Activity, Clock, Zap, MoreHorizontal, Eye, Edit, Trash2, Search, MessageCircle } from 'lucide-react'
+import { Bot, Plus, MoreHorizontal, Eye, Edit, Trash2, Search, MessageCircle } from 'lucide-react'
 import Link from 'next/link'
 import { LanguageAgent } from '@/types/agent'
 import { useAgents } from '@/hooks/use-agents'
@@ -51,7 +50,6 @@ export default function ClusterAgents() {
   const clusterName = params?.name as string
 
   const [search, setSearch] = useState('')
-  const [executionModeFilter, setExecutionModeFilter] = useState<string>('all')
 
   // Use the agents hook for real-time updates
   const { data: agentsData, isLoading: loading, error: agentsError } = useAgents({
@@ -66,56 +64,31 @@ export default function ClusterAgents() {
   const agents = agentsData?.data || []
   const error = agentsError ? (agentsError as Error).message : null
 
-  // Filter agents based on search and execution mode
+  // Filter agents based on search
   const filteredAgents = useMemo(() => {
     return agents.filter((agent: any) => {
       const searchQuery = search.toLowerCase()
-      const matchesSearch = !search ||
+      return !search ||
         agent.metadata.name.toLowerCase().includes(searchQuery) ||
-        (agent.spec.displayName || '').toLowerCase().includes(searchQuery) ||
-        (agent.spec.description || '').toLowerCase().includes(searchQuery)
-
-      const matchesExecutionMode = executionModeFilter === 'all' ||
-        (agent.spec.executionMode || 'autonomous').toLowerCase() === executionModeFilter.toLowerCase()
-
-      return matchesSearch && matchesExecutionMode
+        (agent.spec.instructions || '').toLowerCase().includes(searchQuery)
     })
-  }, [agents, search, executionModeFilter])
+  }, [agents, search])
 
   const clusterAgents = filteredAgents
-  
-  // Get unique execution modes for filter dropdown
-  const executionModes = React.useMemo(() => {
-    const uniqueModes = Array.from(new Set(
-      agents.map((agent: any) => agent.spec.executionMode || 'autonomous')
-    )) as string[]
-    return uniqueModes.sort()
-  }, [agents])
 
   const getStatusColor = (phase?: string) => {
     switch (phase) {
-      case 'Ready':
       case 'Running':
         return 'bg-green-100 text-green-800'
       case 'Pending':
         return 'bg-yellow-100 text-yellow-800'
       case 'Failed':
+      case 'Degraded':
         return 'bg-red-100 text-red-800'
+      case 'Updating':
+        return 'bg-blue-100 text-blue-800'
       default:
         return 'bg-gray-100 text-gray-800'
-    }
-  }
-
-  const getExecutionModeIcon = (mode?: string) => {
-    switch (mode) {
-      case 'autonomous':
-        return <Zap className="h-4 w-4" />
-      case 'interactive':
-        return <Activity className="h-4 w-4" />
-      case 'scheduled':
-        return <Clock className="h-4 w-4" />
-      default:
-        return <Bot className="h-4 w-4" />
     }
   }
 
@@ -155,20 +128,6 @@ export default function ClusterAgents() {
                   />
                 </div>
               </div>
-              
-              <Select value={executionModeFilter} onValueChange={setExecutionModeFilter}>
-                <SelectTrigger className="w-full md:w-48">
-                  <SelectValue placeholder="All Modes" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Modes</SelectItem>
-                  {executionModes.map((mode) => (
-                    <SelectItem key={mode} value={mode}>
-                      {mode.charAt(0).toUpperCase() + mode.slice(1)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
           </CardContent>
         </Card>
@@ -231,7 +190,6 @@ export default function ClusterAgents() {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Name</TableHead>
-                        <TableHead>Mode</TableHead>
                         <TableHead>Models</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Age</TableHead>
@@ -242,7 +200,7 @@ export default function ClusterAgents() {
                       {clusterAgents.map((agent: any) => (
                         <TableRow key={agent.metadata.name}>
                           <TableCell className="font-medium">
-                            <Link 
+                            <Link
                               href={`/clusters/${clusterName}/agents/${agent.metadata.name}`}
                               className="hover:underline"
                             >
@@ -250,29 +208,15 @@ export default function ClusterAgents() {
                             </Link>
                           </TableCell>
                           <TableCell>
-                            <div className="flex items-center space-x-1">
-                              {getExecutionModeIcon(agent.spec.executionMode)}
-                              <span className="text-sm capitalize">
-                                {agent.spec.executionMode || 'autonomous'}
-                              </span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
                             <div className="flex flex-wrap gap-1">
-                              {(agent.spec.modelRefs || []).slice(0, 2).map((modelRef: any) => (
+                              {(agent.spec.models || []).slice(0, 2).map((modelRef: any) => (
                                 <Badge key={modelRef.name} variant="outline" className="text-xs">
                                   {modelRef.name}
                                 </Badge>
                               ))}
-                              {/* Legacy support */}
-                              {agent.spec.model && (
+                              {(agent.spec.models?.length || 0) > 2 && (
                                 <Badge variant="outline" className="text-xs">
-                                  {agent.spec.model.name}
-                                </Badge>
-                              )}
-                              {(agent.spec.modelRefs?.length || 0) > 2 && (
-                                <Badge variant="outline" className="text-xs">
-                                  +{(agent.spec.modelRefs?.length || 0) - 2}
+                                  +{(agent.spec.models.length - 2)}
                                 </Badge>
                               )}
                             </div>

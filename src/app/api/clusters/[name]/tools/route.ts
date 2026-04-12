@@ -55,18 +55,18 @@ export async function GET(
       { allowOrphanedResources: true }
     ) as LanguageTool[]
 
-    // Apply search filtering 
+    // Apply search filtering
     let filteredTools = clusterTools.filter((tool: LanguageTool) => {
       if (queryParams.search) {
         const searchLower = queryParams.search.toLowerCase()
         const nameMatch = tool.metadata.name?.toLowerCase().includes(searchLower)
         const typeMatch = tool.spec.type?.toLowerCase().includes(searchLower)
-        const descMatch = tool.metadata?.annotations?.['langop.io/description']?.toLowerCase().includes(searchLower)
-        if (!nameMatch && !typeMatch && !descMatch) return false
+        const imageMatch = tool.spec.image?.toLowerCase().includes(searchLower)
+        if (!nameMatch && !typeMatch && !imageMatch) return false
       }
-      
+
       if (queryParams.type && queryParams.type.length > 0) {
-        if (!queryParams.type.includes(tool.spec.type)) return false
+        if (!queryParams.type.includes(tool.spec.type || '')) return false
       }
       
       if (queryParams.phase && queryParams.phase.length > 0) {
@@ -132,7 +132,7 @@ export async function POST(
 
     const formData: LanguageToolFormData = await request.json()
 
-    // Transform form data to LanguageTool CRD structure
+    // Build the LanguageTool CRD matching the exact operator spec
     const tool: LanguageTool = {
       apiVersion: 'langop.io/v1alpha1',
       kind: 'LanguageTool',
@@ -143,74 +143,14 @@ export async function POST(
           'langop.io/cluster': clusterName,
         },
         annotations: {
-          'langop.io/description': formData.description || '',
           'langop.io/created-by-email': email,
         },
       },
       spec: {
-        type: formData.type,
-        clusterRef: clusterName,
-        ...(formData.image && { image: formData.image }),
-        ...(formData.description && { description: formData.description }),
-
-        // Environment variables
-        ...(formData.envVars && formData.envVars.length > 0 && {
-          env: formData.envVars.map(v => ({
-            name: v.name,
-            value: v.value,
-          }))
-        }),
-
-        // Resource management
-        ...(formData.cpuRequest || formData.memoryRequest || formData.cpuLimit || formData.memoryLimit) && {
-          resources: {
-            requests: {
-              ...(formData.cpuRequest && { cpu: formData.cpuRequest }),
-              ...(formData.memoryRequest && { memory: formData.memoryRequest }),
-            },
-            limits: {
-              ...(formData.cpuLimit && { cpu: formData.cpuLimit }),
-              ...(formData.memoryLimit && { memory: formData.memoryLimit }),
-            }
-          }
-        },
-
-        // Service configuration
-        ...(formData.enableService && formData.servicePort && {
-          service: {
-            port: formData.servicePort,
-            ...(formData.serviceType && { type: formData.serviceType }),
-          }
-        }),
-
-        // Health check configuration
-        ...(formData.enableHealthCheck && formData.healthCheckPath && {
-          healthCheck: {
-            enabled: true,
-            path: formData.healthCheckPath,
-            ...(formData.healthCheckPort && { port: formData.healthCheckPort }),
-          }
-        }),
-
-        // Transform egressRules (form data) to egress (K8s spec) - CRITICAL FIX
-        ...(formData.egressRules && formData.egressRules.length > 0 && {
-          egress: formData.egressRules.map(rule => ({
-            description: rule.description,
-            // Fix: Add parentheses to ensure correct precedence
-            ...((rule.dns && rule.dns.length > 0) || rule.cidr) && {
-              to: {
-                ...(rule.dns && rule.dns.length > 0 && { dns: rule.dns }),
-                ...(rule.cidr && { cidr: rule.cidr }),
-              },
-            },
-            ...(rule.ports && rule.ports.length > 0) && {
-              ports: rule.ports,
-            },
-          })).filter(rule =>
-            // Only include rules that have at least one target
-            (rule.to?.dns && rule.to.dns.length > 0) || rule.to?.cidr
-          )
-        }),
+        image: formData.image,
+        ...(formData.type && { type: formData.type }),
+        ...(formData.deploymentMode && { deploymentMode: formData.deploymentMode }),
+        ...(formData.port && { port: formData.port }),
       },
     }
 

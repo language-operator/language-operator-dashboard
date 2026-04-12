@@ -16,10 +16,7 @@ export function useAgents(params: LanguageAgentListParams & { clusterName: strin
       if (params?.phase?.length) {
         params.phase.forEach(p => searchParams.append('phase', p))
       }
-      if (params?.executionMode?.length) {
-        params.executionMode.forEach(e => searchParams.append('executionMode', e))
-      }
-      if (params?.sortBy) searchParams.append('sortBy', params.sortBy)
+if (params?.sortBy) searchParams.append('sortBy', params.sortBy)
       if (params?.sortOrder) searchParams.append('sortOrder', params.sortOrder)
 
       const endpoint = `/api/clusters/${params.clusterName}/agents?${searchParams}`

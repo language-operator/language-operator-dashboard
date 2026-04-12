@@ -25,26 +25,14 @@ export default function EditClusterToolPage() {
         image: tool.spec.image || '',
         port: tool.spec.port || 3000,
         deploymentMode: (tool.spec.deploymentMode || 'service') as 'service' | 'sidecar',
-        envVars: tool.spec.env?.map((env: { name: string; value?: string }) => ({
-          key: env.name,
-          value: env.value || ''
-        })) || [],
+        envVars: [],
         resources: {
-          cpu: tool.spec.resources?.requests?.cpu || '100m',
-          memory: tool.spec.resources?.requests?.memory || '128Mi',
-          cpuLimit: tool.spec.resources?.limits?.cpu || '500m',
-          memoryLimit: tool.spec.resources?.limits?.memory || '512Mi'
+          cpu: '100m',
+          memory: '128Mi',
+          cpuLimit: '500m',
+          memoryLimit: '512Mi'
         },
-        egress: tool.spec.egress?.map((rule: any) => ({
-          description: rule.description || '',
-          to: {
-            dns: rule.to?.dns || [],
-            cidr: rule.to?.cidr || ''
-          },
-          ports: rule.ports?.map((port: any) =>
-            typeof port === 'object' && port.port ? port.port : port
-          ) || []
-        })) || []
+        egress: [],
       })
     }
   }, [tool])

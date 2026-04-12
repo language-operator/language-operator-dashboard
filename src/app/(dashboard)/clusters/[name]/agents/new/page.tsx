@@ -104,28 +104,13 @@ export default function CreateClusterAgentPage() {
 
   const onSubmit = async (values: AgentFormValues) => {
     try {
-      // Get the first selected model for legacy API compatibility
-      const firstModel = availableModels.find((m: any) => values.selectedModels.includes(m.metadata.name))
-      console.log('First model data:', firstModel)
-      
       const formData: LanguageAgentFormData = {
         instructions: values.instructions,
         name: values.name,
-        namespace: clusterName ? `cluster-${clusterName}` : 'default',
+        namespace: clusterName || 'default',
         selectedModels: values.selectedModels,
         selectedTools: values.selectedTools,
         selectedPersona: values.selectedPersona === 'none' ? undefined : values.selectedPersona,
-        // Legacy fields for API compatibility
-        executionMode: 'autonomous',
-        replicas: 1,
-        modelName: values.selectedModels[0] || '',
-        modelProvider: firstModel?.spec?.provider || '',
-        modelEndpoint: firstModel?.spec?.endpoint || '',
-        modelParameters: firstModel?.spec?.parameters || {},
-        personaName: values.selectedPersona === 'none' ? '' : values.selectedPersona || '',
-        personaInstructions: values.instructions,
-        // Cluster reference for cluster-scoped agents
-        clusterRef: clusterName || '',
       }
 
       console.log('Submitting form data:', formData)

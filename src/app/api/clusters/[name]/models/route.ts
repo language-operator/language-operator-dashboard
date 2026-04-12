@@ -39,7 +39,6 @@ export async function GET(
       search: url.searchParams.get('search') || undefined,
       provider: url.searchParams.getAll('provider') || undefined,
       phase: url.searchParams.getAll('phase') || undefined,
-      healthy: url.searchParams.get('healthy') === 'true' ? true : url.searchParams.get('healthy') === 'false' ? false : undefined,
     }
 
     // Fetch models from Kubernetes namespace with proper error handling
@@ -103,13 +102,6 @@ export async function GET(
         }
       }
 
-      // Healthy filter
-      if (listParams.healthy !== undefined) {
-        if (model.status?.healthy !== listParams.healthy) {
-          return false
-        }
-      }
-
       return true
     })
 
@@ -129,14 +121,6 @@ export async function GET(
         case 'phase':
           aValue = a.status?.phase || ''
           bValue = b.status?.phase || ''
-          break
-        case 'healthy':
-          aValue = a.status?.healthy ? 1 : 0
-          bValue = b.status?.healthy ? 1 : 0
-          break
-        case 'requests':
-          aValue = a.status?.metrics?.totalRequests || 0
-          bValue = b.status?.metrics?.totalRequests || 0
           break
         case 'age':
           aValue = new Date(a.metadata.creationTimestamp || 0).getTime()
@@ -214,7 +198,7 @@ export async function POST(
       )
     }
 
-    // Create model spec with clusterRef automatically set
+    // Create model spec matching the exact CRD spec
     const modelSpec = {
       apiVersion: 'langop.io/v1alpha1',
       kind: 'LanguageModel',
@@ -227,17 +211,22 @@ export async function POST(
         }
       },
       spec: {
-        clusterRef: clusterName, // Automatically set clusterRef to the cluster name
         provider: body.provider,
         modelName: body.modelName,
-        endpoint: body.endpoint,
-        ...(body.apiKeySecretName && { 
-          apiKeySecretName: body.apiKeySecretName,
-          apiKeySecretKey: body.apiKeySecretKey || 'api-key'
+        ...(body.endpoint && { endpoint: body.endpoint }),
+        ...(body.apiKeySecretName && {
+          apiKeySecretRef: {
+            name: body.apiKeySecretName,
+            ...(body.apiKeySecretKey && { key: body.apiKeySecretKey }),
+          }
         }),
-        ...(body.temperature !== undefined && { temperature: body.temperature }),
-        ...(body.maxTokens !== undefined && { maxTokens: body.maxTokens }),
-        ...(body.topP !== undefined && { topP: body.topP }),
+        ...((body.requestsPerMinute || body.tokensPerMinute) && {
+          rateLimits: {
+            ...(body.requestsPerMinute && { requestsPerMinute: body.requestsPerMinute }),
+            ...(body.tokensPerMinute && { tokensPerMinute: body.tokensPerMinute }),
+          }
+        }),
+        ...(body.timeout && { timeout: body.timeout }),
       }
     }
 

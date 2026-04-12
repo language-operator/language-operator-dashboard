@@ -5,12 +5,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { 
-  ArrowLeft, 
-  Download, 
-  Shield, 
-  Network, 
-  Server, 
+import {
+  ArrowLeft,
+  Download,
+  Server,
   AlertCircle,
   CheckCircle,
   Loader2
@@ -170,7 +168,7 @@ export default function InstallToolPage() {
       <Card>
         <CardHeader>
           <CardTitle>{getToolDisplayName(tool)}</CardTitle>
-          <CardDescription>{tool.spec?.description || ''}</CardDescription>
+          <CardDescription>{tool.metadata.annotations?.['langop.io/description'] || ''}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Basic Information */}
@@ -181,16 +179,18 @@ export default function InstallToolPage() {
                 <span className="text-stone-600 dark:text-stone-400">Tool ID:</span>
                 <span className="ml-2 font-mono">{toolName}</span>
               </div>
-              <div>
-                <span className="text-stone-600 dark:text-stone-400">Type:</span>
-                <Badge variant="secondary" className="ml-2">
-                  {(tool.spec?.type || 'container').toUpperCase()}
-                </Badge>
-              </div>
-              {tool.spec?.service?.port && (
+              {tool.spec?.type && (
+                <div>
+                  <span className="text-stone-600 dark:text-stone-400">Type:</span>
+                  <Badge variant="secondary" className="ml-2">
+                    {tool.spec.type.toUpperCase()}
+                  </Badge>
+                </div>
+              )}
+              {tool.spec?.port && (
                 <div>
                   <span className="text-stone-600 dark:text-stone-400">Port:</span>
-                  <span className="ml-2">{tool.spec.service.port}</span>
+                  <span className="ml-2">{tool.spec.port}</span>
                 </div>
               )}
             </div>
@@ -206,44 +206,6 @@ export default function InstallToolPage() {
               </div>
             </div>
           )}
-
-          {/* Security & Permissions */}
-          <div>
-            <h3 className="font-semibold mb-3">Security & Permissions</h3>
-            <div className="space-y-3">
-              {tool.spec?.authentication?.enabled && (
-                <div className="flex items-center gap-2 text-sm">
-                  <Shield className="h-4 w-4 text-amber-600" />
-                  <span>Authentication required for this tool</span>
-                </div>
-              )}
-
-              {tool.spec?.egress && tool.spec.egress.length > 0 && (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm">
-                    <Network className="h-4 w-4 text-purple-600" />
-                    <span>Network policies will be applied</span>
-                  </div>
-                  {tool.spec.egress.map((rule, idx) => (
-                    <div key={idx} className="ml-6 p-2 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded text-xs">
-                      {rule.description && <div className="font-medium">{rule.description}</div>}
-                      {rule.to?.dns && rule.to.dns.length > 0 && (
-                        <div>DNS: {rule.to.dns.join(', ')}</div>
-                      )}
-                      {rule.to?.cidr && (
-                        <div>CIDR: {rule.to.cidr}</div>
-                      )}
-                      {rule.ports && rule.ports.length > 0 && (
-                        <div>
-                          Ports: {rule.ports.map(p => `${p.port}/${p.protocol || 'TCP'}`).join(', ')}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
 
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-4 border-t">

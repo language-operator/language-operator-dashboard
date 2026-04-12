@@ -20,64 +20,45 @@ const KubernetesMetadataSchema = z.object({
 
 // LanguageAgent validation matching the Go CRD specification
 export const LanguageAgentSpecSchema = z.object({
-  // Required fields per CRD
-  image: z.string().min(1, "Container image is required"),
-  modelRefs: z.array(z.object({
+  // Runtime preset (provides default image, ports, probes, env vars)
+  runtime: z.string().optional(),
+
+  // Container image — required unless runtime provides a default
+  image: z.string().optional(),
+
+  // Model references
+  models: z.array(z.object({
     name: z.string().min(1, "Model name is required"),
-    namespace: z.string().optional(),
     role: z.enum(['primary', 'fallback', 'reasoning', 'tool-calling', 'summarization']).optional(),
     priority: z.number().int().optional(),
-  })).min(1, "At least one model reference is required"),
-  
-  // Optional fields
-  clusterRef: z.string().optional(),
-  instructions: z.string().min(10).max(10000).optional(),
-  goal: z.string().optional(),
-  executionMode: z.enum(['autonomous', 'interactive', 'scheduled', 'event-driven']).optional(),
-  replicas: z.number().int().min(0).max(100).optional(),
-  
-  // Tool and persona references
-  toolRefs: z.array(z.object({
-    name: z.string().min(1, "Tool name is required"),
-    namespace: z.string().optional(),
-    enabled: z.boolean().optional(),
-    requireApproval: z.boolean().optional(),
   })).optional(),
-  
-  personaRefs: z.array(z.object({
-    name: z.string().min(1, "Persona name is required"),
-    namespace: z.string().optional(),
-  })).optional(),
-  
-  // Additional CRD fields
-  timeout: z.string().regex(/^[0-9]+(ns|us|µs|ms|s|m|h)$/).optional(),
-  maxIterations: z.number().int().min(1).max(1000).optional(),
-  schedule: z.string().optional(),
-  
-  // Legacy fields for backward compatibility
-  model: z.object({
-    name: z.string(),
-    provider: z.string().optional(),
-    endpoint: z.string().optional(),
-    parameters: z.record(z.string(), z.any()).optional(),
-  }).optional(),
-  persona: z.object({
-    name: z.string(),
-    tone: z.string().optional(),
-    instructions: z.string().optional(),
-  }).optional(),
+
+  // Tool references
   tools: z.array(z.object({
-    name: z.string(),
+    name: z.string().min(1, "Tool name is required"),
+    enabled: z.boolean().optional(),
   })).optional(),
+
+  // Persona name
+  persona: z.string().optional(),
+
+  // System instructions
+  instructions: z.string().min(10).max(10000).optional(),
+
+  // Remaining spec fields are complex Kubernetes objects; accept them loosely
+  workspace: z.record(z.string(), z.unknown()).optional(),
+  networkPolicies: z.record(z.string(), z.unknown()).optional(),
+  ports: z.array(z.record(z.string(), z.unknown())).optional(),
+  deployment: z.record(z.string(), z.unknown()).optional(),
+  opencode: z.record(z.string(), z.unknown()).optional(),
+  openclaw: z.record(z.string(), z.unknown()).optional(),
+  claudeCode: z.record(z.string(), z.unknown()).optional(),
+  selfConfigure: z.record(z.string(), z.unknown()).optional(),
+  monitoring: z.record(z.string(), z.unknown()).optional(),
 })
 
 export const LanguageAgentStatusSchema = z.object({
-  phase: z.enum(['Pending', 'Ready', 'Failed', 'Updating']).optional(),
-  replicas: z.object({
-    ready: z.number().int().min(0).optional(),
-    total: z.number().int().min(0).optional(),
-    available: z.number().int().min(0).optional(),
-  }).optional(),
+  phase: z.enum(['Pending', 'Running', 'Failed', 'Updating', 'Degraded']).optional(),
   conditions: z.array(z.object({
     type: z.string(),
     status: z.enum(['True', 'False', 'Unknown']),
@@ -85,9 +66,13 @@ export const LanguageAgentStatusSchema = z.object({
     message: z.string().optional(),
     lastTransitionTime: z.string().optional(),
   })).optional(),
-  lastUpdateTime: z.string().optional(),
-  message: z.string().optional(),
-  endpoint: z.string().url().optional(),
+  activeReplicas: z.number().int().min(0).optional(),
+  readyReplicas: z.number().int().min(0).optional(),
+  uuid: z.string().optional(),
+  webhookURLs: z.array(z.string()).optional(),
+  observedGeneration: z.number().int().optional(),
+  workspacePVCName: z.string().optional(),
+  managedResources: z.array(z.record(z.string(), z.unknown())).optional(),
 })
 
 export const LanguageAgentSchema = z.object({
@@ -107,37 +92,17 @@ export const LanguageModelSpecSchema = z.object({
   endpoint: z.string().optional(),
   apiKeySecretRef: z.object({
     name: z.string(),
-    namespace: z.string().optional(),
     key: z.string().optional(),
-  }).optional(),
-  configuration: z.object({
-    maxTokens: z.number().int().min(1).max(100000).optional(),
-    temperature: z.number().min(0).max(2).optional(),
-    topP: z.number().min(0).max(1).optional(),
-    frequencyPenalty: z.number().min(-2).max(2).optional(),
-    presencePenalty: z.number().min(-2).max(2).optional(),
-    timeout: z.number().int().min(1).max(3600).optional(),
   }).optional(),
   rateLimits: z.object({
     requestsPerMinute: z.number().int().min(1).max(10000).optional(),
     tokensPerMinute: z.number().int().min(1).max(1000000).optional(),
   }).optional(),
+  timeout: z.string().regex(/^[0-9]+(ns|us|µs|ms|s|m|h)$/).optional(),
 })
 
 export const LanguageModelStatusSchema = z.object({
-  phase: z.enum(['Pending', 'Available', 'Failed', 'Testing']).optional(),
-  lastTested: z.string().optional(),
-  testResult: z.object({
-    success: z.boolean(),
-    latency: z.number().optional(),
-    error: z.string().optional(),
-    timestamp: z.string().optional(),
-  }).optional(),
-  usage: z.object({
-    totalRequests: z.number().int().min(0).optional(),
-    totalTokens: z.number().int().min(0).optional(),
-    lastUsed: z.string().optional(),
-  }).optional(),
+  phase: z.enum(['Pending', 'Ready', 'Failed']).optional(),
   conditions: z.array(z.object({
     type: z.string(),
     status: z.enum(['True', 'False', 'Unknown']),
@@ -146,6 +111,7 @@ export const LanguageModelStatusSchema = z.object({
     lastTransitionTime: z.string().optional(),
   })).optional(),
   message: z.string().optional(),
+  observedGeneration: z.number().int().optional(),
 })
 
 export const LanguageModelSchema = z.object({
@@ -158,52 +124,16 @@ export const LanguageModelSchema = z.object({
 
 // LanguageTool validation
 export const LanguageToolSpecSchema = z.object({
-  type: z.enum(['function', 'api', 'webhook', 'script'], {
-    message: "Tool type must be one of: function, api, webhook, script"
-  }),
-  name: z.string().min(1, "Tool name is required"),
-  description: z.string().min(1, "Tool description is required"),
-  parameters: z.object({
-    type: z.literal('object'),
-    properties: z.record(z.string(), z.any()),
-    required: z.array(z.string()).optional(),
-    additionalProperties: z.boolean().optional(),
-  }),
-  implementation: z.object({
-    code: z.string().optional(),
-    endpoint: z.string().url().optional(),
-    method: z.enum(['GET', 'POST', 'PUT', 'DELETE', 'PATCH']).optional(),
-    headers: z.record(z.string(), z.string()).optional(),
-    timeout: z.number().int().min(1).max(300).optional(),
-    retries: z.number().int().min(0).max(5).optional(),
-  }),
-  security: z.object({
-    requiresAuth: z.boolean().optional(),
-    allowedOrigins: z.array(z.string()).optional(),
-    rateLimiting: z.object({
-      requestsPerMinute: z.number().int().min(1).max(1000).optional(),
-    }).optional(),
-  }).optional(),
+  image: z.string().min(1, "Container image is required"),
+  type: z.enum(['mcp']).optional(),
+  deploymentMode: z.enum(['service', 'sidecar']).optional(),
+  port: z.number().int().min(1).max(65535).optional(),
+  deployment: z.record(z.string(), z.unknown()).optional(),
+  networkPolicies: z.record(z.string(), z.unknown()).optional(),
 })
 
 export const LanguageToolStatusSchema = z.object({
-  phase: z.enum(['Pending', 'Available', 'Failed', 'Testing']).optional(),
-  lastTested: z.string().optional(),
-  testResult: z.object({
-    success: z.boolean(),
-    responseTime: z.number().optional(),
-    error: z.string().optional(),
-    timestamp: z.string().optional(),
-  }).optional(),
-  usage: z.object({
-    totalCalls: z.number().int().min(0).optional(),
-    successfulCalls: z.number().int().min(0).optional(),
-    lastUsed: z.string().optional(),
-  }).optional(),
-  agentReferences: z.array(z.object({
-    name: z.string(),
-    namespace: z.string(),
-  })).optional(),
+  phase: z.enum(['Pending', 'Running', 'Failed', 'Updating', 'Degraded']).optional(),
   conditions: z.array(z.object({
     type: z.string(),
     status: z.enum(['True', 'False', 'Unknown']),
@@ -211,7 +141,13 @@ export const LanguageToolStatusSchema = z.object({
     message: z.string().optional(),
     lastTransitionTime: z.string().optional(),
   })).optional(),
-  message: z.string().optional(),
+  endpoint: z.string().optional(),
+  toolSchemas: z.array(z.record(z.string(), z.unknown())).optional(),
+  readyReplicas: z.number().int().min(0).optional(),
+  availableReplicas: z.number().int().min(0).optional(),
+  updatedReplicas: z.number().int().min(0).optional(),
+  unavailableReplicas: z.number().int().min(0).optional(),
+  observedGeneration: z.number().int().optional(),
 })
 
 export const LanguageToolSchema = z.object({
@@ -224,46 +160,13 @@ export const LanguageToolSchema = z.object({
 
 // LanguagePersona validation matching CRD spec
 export const LanguagePersonaSpecSchema = z.object({
-  // All fields are optional except those enforced by the CRD
-  description: z.string().optional(),
-  displayName: z.string().optional(),
-  systemPrompt: z.string().optional(),
-
-  // Optional fields
   tone: z.string().optional(),
-  language: z.string().optional(),
-  version: z.string().optional(),
-  capabilities: z.array(z.string()).optional(),
-  limitations: z.array(z.string()).optional(),
-  instructions: z.array(z.string()).optional(),
-  examples: z.array(z.object({
-    input: z.string().min(1, "Example input is required"),
-    output: z.string().min(1, "Example output is required"),
-    context: z.string().optional(),
-    tags: z.array(z.string()).optional(),
-  })).optional(),
-  constraints: z.array(z.string()).optional(),
-  vocabulary: z.object({
-    preferred: z.array(z.string()).optional(),
-    forbidden: z.array(z.string()).optional(),
-  }).optional(),
-  responseFormat: z.object({
-    structure: z.enum(['freeform', 'structured', 'json', 'markdown']).optional(),
-    maxLength: z.number().int().min(1).max(10000).optional(),
-    includeMetadata: z.boolean().optional(),
-  }).optional(),
+  personality: z.string().optional(),
+  expertise: z.string().optional(),
 })
 
 export const LanguagePersonaStatusSchema = z.object({
-  phase: z.enum(['Pending', 'Available', 'Failed']).optional(),
-  agentReferences: z.array(z.object({
-    name: z.string(),
-    namespace: z.string(),
-  })).optional(),
-  usage: z.object({
-    totalAgents: z.number().int().min(0).optional(),
-    lastUsed: z.string().optional(),
-  }).optional(),
+  phase: z.enum(['Pending', 'Ready', 'Failed']).optional(),
   conditions: z.array(z.object({
     type: z.string(),
     status: z.enum(['True', 'False', 'Unknown']),
@@ -271,7 +174,7 @@ export const LanguagePersonaStatusSchema = z.object({
     message: z.string().optional(),
     lastTransitionTime: z.string().optional(),
   })).optional(),
-  message: z.string().optional(),
+  observedGeneration: z.number().int().optional(),
 })
 
 export const LanguagePersonaSchema = z.object({

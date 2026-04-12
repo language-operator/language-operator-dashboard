@@ -34,7 +34,6 @@ export async function GET(
       sortOrder: (url.searchParams.get('sortOrder') as any) || 'asc',
       search: url.searchParams.get('search') || undefined,
       phase: url.searchParams.getAll('phase') || undefined,
-      executionMode: url.searchParams.getAll('executionMode') || undefined,
     }
 
     // Fetch all agents from namespace with proper error handling
@@ -59,16 +58,11 @@ export async function GET(
         const searchLower = queryParams.search.toLowerCase()
         const nameMatch = agent.metadata.name?.toLowerCase().includes(searchLower)
         const instructionsMatch = agent.spec.instructions?.toLowerCase().includes(searchLower)
-        const execModeMatch = agent.spec.executionMode?.toLowerCase().includes(searchLower)
-        if (!nameMatch && !instructionsMatch && !execModeMatch) return false
+        if (!nameMatch && !instructionsMatch) return false
       }
 
       if (queryParams.phase && queryParams.phase.length > 0) {
         if (!queryParams.phase.includes(agent.status?.phase || '')) return false
-      }
-
-      if (queryParams.executionMode && queryParams.executionMode.length > 0) {
-        if (!queryParams.executionMode.includes(agent.spec.executionMode || '')) return false
       }
 
       return true
@@ -83,14 +77,6 @@ export async function GET(
           return (a.metadata.name || '').localeCompare(b.metadata.name || '') * order
         case 'phase':
           return ((a.status?.phase || '').localeCompare(b.status?.phase || '')) * order
-        case 'executions':
-          const aExecs = a.status?.executionCount || 0
-          const bExecs = b.status?.executionCount || 0
-          return (bExecs - aExecs) * order
-        case 'successRate':
-          const aRate = parseFloat(a.status?.metrics?.successRate || '0')
-          const bRate = parseFloat(b.status?.metrics?.successRate || '0')
-          return (bRate - aRate) * order
         case 'age':
           const aTime = a.metadata.creationTimestamp ? new Date(a.metadata.creationTimestamp).getTime() : 0
           const bTime = b.metadata.creationTimestamp ? new Date(b.metadata.creationTimestamp).getTime() : 0
@@ -135,7 +121,7 @@ export async function POST(
 
     const agentData = await request.json()
 
-    // Transform LanguageAgentFormData to LanguageAgent CRD format
+    // Build the LanguageAgent CRD matching the exact operator spec
     const agentCrd: LanguageAgent = {
       apiVersion: 'langop.io/v1alpha1',
       kind: 'LanguageAgent',
@@ -149,51 +135,19 @@ export async function POST(
       },
       spec: {
         instructions: agentData.instructions,
-        executionMode: agentData.executionMode || 'autonomous',
-        replicas: agentData.replicas || 1,
 
-        // Required fields based on existing agent structure
-        image: 'ghcr.io/language-operator/agent:latest',
-        imagePullPolicy: 'Always',
-        clusterRef: clusterName,
-        backoffLimit: 3,
-        maxIterations: 50,
-        timeout: '10m',
-        restartPolicy: 'OnFailure',
+        // Model references — operator uses spec.models
+        models: agentData.selectedModels?.map((name: string) => ({ name })) || [],
 
-        // Model references with namespace and role
-        modelRefs: agentData.selectedModels?.map((name: string) => ({
-          name,
-          namespace: clusterName,
-          role: 'primary' as const
-        })) || [],
-
-        // Tool references with namespace
+        // Tool references — operator uses spec.tools
         ...(agentData.selectedTools?.length > 0 && {
-          toolRefs: agentData.selectedTools.map((name: string) => ({
-            name,
-            namespace: clusterName
-          })),
+          tools: agentData.selectedTools.map((name: string) => ({ name })),
         }),
 
-        // Persona references with namespace
+        // Persona — operator uses spec.persona (string name)
         ...(agentData.selectedPersona && agentData.selectedPersona !== 'none' && {
-          personaRefs: [{
-            name: agentData.selectedPersona,
-            namespace: clusterName
-          }],
+          persona: agentData.selectedPersona,
         }),
-
-        // Default workspace configuration
-        workspace: {
-          enabled: true,
-          size: '10Gi',
-          accessMode: 'ReadWriteOnce',
-          mountPath: '/workspace',
-        },
-
-        // Empty resources (let defaults apply)
-        resources: {},
       },
     }
 
