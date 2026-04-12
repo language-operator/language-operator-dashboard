@@ -20,18 +20,13 @@ export default function ClusterEditModelPage() {
       await updateModel.mutateAsync({
         modelName,
         updateData: {
-          name: formData.name,
-          namespace: clusterName,
           provider: formData.provider,
-          modelName: formData.model,
+          modelName: formData.modelName,
           endpoint: formData.endpoint || undefined,
-          ...(formData.apiKey && {
-            apiKeySecretName: formData.apiKey,
-          }),
-          ...(formData.requestsPerMinute || formData.tokensPerMinute ? {
-            requestsPerMinute: formData.requestsPerMinute,
-            tokensPerMinute: formData.tokensPerMinute,
-          } : {}),
+          apiKeySecretName: formData.apiKeySecretName || undefined,
+          apiKeySecretKey: formData.apiKeySecretKey || undefined,
+          requestsPerMinute: formData.requestsPerMinute,
+          tokensPerMinute: formData.tokensPerMinute,
           timeout: formData.timeout || undefined,
         },
       })
@@ -46,16 +41,15 @@ export default function ClusterEditModelPage() {
     router.push(`/clusters/${clusterName}/models/${modelName}`)
   }
 
-  // Populate form with only the fields that exist in the current CRD spec
   const initialData: Partial<ModelFormData> | undefined = model ? {
     name: model.metadata.name,
     provider: model.spec.provider,
-    model: model.spec.modelName,
-    endpoint: model.spec.endpoint || '',
-    timeout: model.spec.timeout || '',
+    modelName: model.spec.modelName,
+    endpoint: model.spec.endpoint,
     requestsPerMinute: model.spec.rateLimits?.requestsPerMinute,
     tokensPerMinute: model.spec.rateLimits?.tokensPerMinute,
-    // Note: apiKey is intentionally not populated for security reasons
+    timeout: model.spec.timeout,
+    // apiKeySecretName / apiKeySecretKey intentionally not pre-filled
   } : undefined
 
   if (isLoadingModel) {
