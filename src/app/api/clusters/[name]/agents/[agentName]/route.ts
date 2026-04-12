@@ -136,6 +136,30 @@ export async function PATCH(
       }
     }
 
+    // Update runtime preset
+    if (body.runtime !== undefined) {
+      if (body.runtime) {
+        updatedSpec.runtime = body.runtime
+      } else {
+        delete updatedSpec.runtime
+      }
+    }
+
+    // Update workspace retain
+    if (body.workspaceRetain !== undefined) {
+      if (body.workspaceRetain) {
+        updatedSpec.workspace = { ...updatedSpec.workspace, retain: true }
+      } else if (updatedSpec.workspace) {
+        const { retain: _, ...rest } = updatedSpec.workspace
+        updatedSpec.workspace = Object.keys(rest).length > 0 ? rest : undefined
+      }
+    }
+
+    // Update self-configuration permissions
+    if (body.selfConfigure !== undefined) {
+      updatedSpec.selfConfigure = body.selfConfigure || undefined
+    }
+
     // Create the updated agent object
     const updatedAgent: LanguageAgent = {
       ...currentAgent,

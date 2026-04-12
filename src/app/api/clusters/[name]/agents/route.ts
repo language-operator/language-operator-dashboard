@@ -136,6 +136,9 @@ export async function POST(
       spec: {
         instructions: agentData.instructions,
 
+        // Runtime preset (optional)
+        ...(agentData.runtime && { runtime: agentData.runtime }),
+
         // Model references — operator uses spec.models
         models: agentData.selectedModels?.map((name: string) => ({ name })) || [],
 
@@ -147,6 +150,16 @@ export async function POST(
         // Persona — operator uses spec.persona (string name)
         ...(agentData.selectedPersona && agentData.selectedPersona !== 'none' && {
           persona: agentData.selectedPersona,
+        }),
+
+        // Workspace retain — only set when explicitly enabled
+        ...(agentData.workspaceRetain && {
+          workspace: { retain: true },
+        }),
+
+        // Self-configuration permissions
+        ...(agentData.selfConfigure && {
+          selfConfigure: agentData.selfConfigure,
         }),
       },
     }

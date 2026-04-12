@@ -88,7 +88,7 @@ export interface LanguageAgentStatus {
   managedResources?: ManagedResource[]
 }
 
-// Frontend-specific form type (matches the 5-field create form)
+// Frontend-specific form type
 export interface LanguageAgentFormData {
   name: string
   namespace: string
@@ -96,6 +96,12 @@ export interface LanguageAgentFormData {
   selectedModels?: string[]
   selectedTools?: string[]
   selectedPersona?: string
+  runtime?: string
+  workspaceRetain?: boolean
+  selfConfigure?: {
+    enabled?: boolean
+    allowedActions?: Array<'tools' | 'models' | 'envVars' | 'instructions' | 'roleRules'>
+  }
 }
 
 export interface LanguageAgentListItem {

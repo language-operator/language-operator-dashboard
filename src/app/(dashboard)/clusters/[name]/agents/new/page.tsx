@@ -35,7 +35,6 @@ import { LanguageAgentFormData, LanguageAgent } from '@/types/agent'
 import { useToast } from '@/hooks/use-toast'
 import { kubernetesNameValidation } from '@/lib/validation'
 
-// Simplified form validation schema - only 5 essential fields
 const agentFormSchema = z.object({
   instructions: z.string()
     .min(1, 'Goal is required')
@@ -45,6 +44,10 @@ const agentFormSchema = z.object({
   selectedModels: z.array(z.string()).min(1, 'At least one model must be selected'),
   selectedTools: z.array(z.string()),
   selectedPersona: z.string().optional(),
+  runtime: z.string().optional(),
+  workspaceRetain: z.boolean().default(false),
+  selfConfigureEnabled: z.boolean().default(false),
+  selfConfigureActions: z.array(z.enum(['tools', 'models', 'envVars', 'instructions', 'roleRules'])).default([]),
 })
 
 type AgentFormValues = z.infer<typeof agentFormSchema>
@@ -80,6 +83,10 @@ export default function CreateClusterAgentPage() {
       selectedModels: [],
       selectedTools: [],
       selectedPersona: 'none',
+      runtime: '',
+      workspaceRetain: false,
+      selfConfigureEnabled: false,
+      selfConfigureActions: [],
     },
   })
 
@@ -111,6 +118,11 @@ export default function CreateClusterAgentPage() {
         selectedModels: values.selectedModels,
         selectedTools: values.selectedTools,
         selectedPersona: values.selectedPersona === 'none' ? undefined : values.selectedPersona,
+        runtime: values.runtime || undefined,
+        workspaceRetain: values.workspaceRetain || undefined,
+        selfConfigure: values.selfConfigureEnabled
+          ? { enabled: true, allowedActions: values.selfConfigureActions }
+          : undefined,
       }
 
       console.log('Submitting form data:', formData)
@@ -336,6 +348,100 @@ export default function CreateClusterAgentPage() {
                         </FormItem>
                       )}
                     />
+                    {/* Runtime */}
+                    <FormField
+                      control={form.control}
+                      name="runtime"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Runtime</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g. opencode" {...field} />
+                          </FormControl>
+                          <FormDescription>
+                            Name of a LanguageAgentRuntime preset (optional). Provides default image, ports, and probes.
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Workspace Retain */}
+                    <FormField
+                      control={form.control}
+                      name="workspaceRetain"
+                      render={({ field }) => (
+                        <FormItem className="flex items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div>
+                            <FormLabel>Retain workspace PVC on deletion</FormLabel>
+                            <FormDescription>
+                              Prevents the persistent volume claim from being deleted when the agent is removed
+                            </FormDescription>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Self-Configure */}
+                    <FormField
+                      control={form.control}
+                      name="selfConfigureEnabled"
+                      render={({ field }) => (
+                        <FormItem className="flex items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div>
+                            <FormLabel>Allow self-configuration</FormLabel>
+                            <FormDescription>
+                              Permit the agent to modify its own configuration at runtime
+                            </FormDescription>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+
+                    {form.watch('selfConfigureEnabled') && (
+                      <FormField
+                        control={form.control}
+                        name="selfConfigureActions"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Allowed self-configure actions</FormLabel>
+                            <FormDescription>
+                              Which aspects of its configuration the agent may change
+                            </FormDescription>
+                            <div className="grid grid-cols-2 gap-2 mt-2">
+                              {(['tools', 'models', 'envVars', 'instructions', 'roleRules'] as const).map((action) => (
+                                <div key={action} className="flex items-center space-x-2">
+                                  <Checkbox
+                                    checked={field.value.includes(action)}
+                                    onCheckedChange={(checked) => {
+                                      if (checked) {
+                                        field.onChange([...field.value, action])
+                                      } else {
+                                        field.onChange(field.value.filter((a) => a !== action))
+                                      }
+                                    }}
+                                  />
+                                  <span className="text-sm font-medium">{action}</span>
+                                </div>
+                              ))}
+                            </div>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
                   </CardContent>
 
                   {/* Form Actions */}
