@@ -62,7 +62,7 @@ export function AgentOverview({ agent, clusterName }: AgentOverviewProps) {
           <CardTitle>Goal</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="border border-stone-200 dark:border-stone-700 rounded-md overflow-hidden">
+          <div className="border border-stone-200 dark:border-stone-700 overflow-hidden">
             {agent.spec.instructions ? (
               <SyntaxHighlighter
                 language="markdown"

@@ -170,7 +170,7 @@ export function AgentLogs({ agent, clusterName }: AgentLogsProps) {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-accent">
-              <div className="animate-pulse w-2 h-2 bg-accent rounded-full" />
+              <div className="animate-pulse w-2 h-2 bg-accent" />
               <span className="text-sm">Streaming logs in real-time</span>
             </div>
           </CardContent>
