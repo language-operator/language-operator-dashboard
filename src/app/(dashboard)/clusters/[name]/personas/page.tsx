@@ -216,7 +216,7 @@ export default function ClusterPersonas() {
                     <TableBody>
                       {clusterPersonas.map((persona: any) => (
                         <TableRow key={persona.metadata.name}>
-                          <TableCell className="font-medium">
+                          <TableCell className="font-light">
                             <Link
                               href={`/clusters/${clusterName}/personas/${persona.metadata.name}`}
                               className="hover:underline"

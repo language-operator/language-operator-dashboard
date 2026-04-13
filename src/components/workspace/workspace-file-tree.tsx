@@ -253,7 +253,7 @@ export function WorkspaceFileTree({
   if (loading) {
     return (
       <div className="space-y-2">
-        <div className="text-sm font-medium mb-4">Files</div>
+        <div className="text-sm font-light mb-4">Files</div>
         {[...Array(6)].map((_, i) => (
           <Skeleton key={i} className="h-8 w-full" />
         ))}
@@ -267,7 +267,7 @@ export function WorkspaceFileTree({
     return (
       <div className="flex flex-col items-center justify-center py-8 text-center">
         <AlertCircle className="w-8 h-8 text-destructive mb-2" />
-        <p className="text-sm font-medium">
+        <p className="text-sm font-light">
           {isPodError ? 'Workspace pod needs restart' : 'Error loading workspace'}
         </p>
         <p className="text-xs text-muted-foreground mb-4">
@@ -285,7 +285,7 @@ export function WorkspaceFileTree({
 
   return (
     <div className="space-y-0 p-4">
-      <div className="text-sm font-medium mb-4 flex items-center">
+      <div className="text-sm font-light mb-4 flex items-center">
         <FolderOpen className="w-4 h-4 mr-2" />
         Files
       </div>

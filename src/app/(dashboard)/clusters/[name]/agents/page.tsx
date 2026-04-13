@@ -196,7 +196,7 @@ export default function ClusterAgents() {
                     <TableBody>
                       {clusterAgents.map((agent: any) => (
                         <TableRow key={agent.metadata.name}>
-                          <TableCell className="font-medium">
+                          <TableCell className="font-light">
                             <Link
                               href={`/clusters/${clusterName}/agents/${agent.metadata.name}`}
                               className="hover:underline"

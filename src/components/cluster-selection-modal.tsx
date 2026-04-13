@@ -87,7 +87,7 @@ export function ClusterSelectionModal({
           ) : clusters.length === 0 ? (
             <div className="text-center py-8">
               <Boxes className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No clusters available</h3>
+              <h3 className="text-lg font-light text-gray-900 mb-2">No clusters available</h3>
               <p className="text-sm text-gray-500 mb-4">
                 You need to create a cluster before you can {actionType === 'agent' ? 'deploy agents' : actionType === 'model' ? 'add models' : 'configure tools'}.
               </p>
@@ -102,7 +102,7 @@ export function ClusterSelectionModal({
             </div>
           ) : (
             <div className="space-y-3">
-              <div className="text-sm font-medium text-muted-foreground mb-3">
+              <div className="text-sm font-light text-muted-foreground mb-3">
                 Available Clusters ({clusters.length})
               </div>
               <div className="grid gap-2 max-h-64 overflow-y-auto">
@@ -120,7 +120,7 @@ export function ClusterSelectionModal({
                       <div className="flex items-center gap-3">
                         <Boxes className="h-5 w-5 text-muted-foreground" />
                         <div>
-                          <div className="font-medium text-sm">
+                          <div className="font-light text-sm">
                             {cluster.metadata?.name}
                           </div>
                           {cluster.spec?.domain && (

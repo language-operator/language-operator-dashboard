@@ -39,7 +39,7 @@ export default function AgentWorkspacePage() {
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-16">
           <FolderOpen className="w-16 h-16 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-medium mb-2">Workspace Not Enabled</h3>
+          <h3 className="text-lg font-light mb-2">Workspace Not Enabled</h3>
           <p className="text-muted-foreground text-center max-w-md">
             This agent doesn't have workspace storage enabled.
             Enable workspace in the agent configuration to access files.

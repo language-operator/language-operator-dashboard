@@ -256,7 +256,7 @@ export default function AgentDetailLayout({ children }: AgentDetailLayoutProps) 
             ) : (
               <div className="border rounded-lg flex-1 min-h-0 flex flex-col">
                 <div className="bg-muted p-3 border-b flex justify-between items-center">
-                  <span className="font-medium text-sm">
+                  <span className="font-light text-sm">
                     {agent?.metadata.name || agentName}.yaml
                   </span>
                   <Button

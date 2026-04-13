@@ -241,7 +241,7 @@ export default function EditClusterAgentPage() {
                                       }}
                                     />
                                     <div className="flex-1">
-                                      <div className="font-medium">{model.metadata.name}</div>
+                                      <div className="font-light">{model.metadata.name}</div>
                                       <div className="text-sm text-stone-600 dark:text-stone-400">{model.spec.provider} - {model.spec.modelName}</div>
                                     </div>
                                   </div>
@@ -283,7 +283,7 @@ export default function EditClusterAgentPage() {
                                       }}
                                     />
                                     <div className="flex-1">
-                                      <div className="font-medium">{tool.metadata.name}</div>
+                                      <div className="font-light">{tool.metadata.name}</div>
                                     </div>
                                   </div>
                                 ))}
@@ -414,7 +414,7 @@ export default function EditClusterAgentPage() {
                                         }
                                       }}
                                     />
-                                    <span className="text-sm font-medium">{action}</span>
+                                    <span className="text-sm font-light">{action}</span>
                                   </div>
                                 ))}
                               </div>

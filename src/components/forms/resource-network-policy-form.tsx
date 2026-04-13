@@ -242,7 +242,7 @@ export function ResourceNetworkPolicyForm<T extends FieldValues>({
         
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <Label className="text-base font-medium">Egress Rules</Label>
+            <Label className="text-base font-light">Egress Rules</Label>
             <Button
               type="button"
               variant="outline"
@@ -399,7 +399,7 @@ export function ResourceNetworkPolicyForm<T extends FieldValues>({
         <div className="space-y-4">
           <Separator />
           <div className="space-y-3">
-            <Label className="text-sm font-medium">Common Patterns</Label>
+            <Label className="text-sm font-light">Common Patterns</Label>
             <div className="grid grid-cols-2 gap-2">
               {commonEgressRules.map((template) => (
                 <Button
@@ -427,7 +427,7 @@ export function ResourceNetworkPolicyForm<T extends FieldValues>({
         
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <Label className="text-base font-medium">Ingress Rules</Label>
+            <Label className="text-base font-light">Ingress Rules</Label>
             <Button
               type="button"
               variant="outline"
@@ -560,7 +560,7 @@ export function ResourceNetworkPolicyForm<T extends FieldValues>({
         <div className="space-y-4">
           <Separator />
           <div className="space-y-3">
-            <Label className="text-sm font-medium">Common Patterns</Label>
+            <Label className="text-sm font-light">Common Patterns</Label>
             <div className="grid grid-cols-2 gap-2">
               {commonIngressRules.map((template) => (
                 <Button
@@ -590,7 +590,7 @@ export function ResourceNetworkPolicyForm<T extends FieldValues>({
       
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <Label className="text-base font-medium">Egress Rules</Label>
+          <Label className="text-base font-light">Egress Rules</Label>
           <Button
             type="button"
             variant="outline"
@@ -747,7 +747,7 @@ export function ResourceNetworkPolicyForm<T extends FieldValues>({
       <div className="space-y-4">
         <Separator />
         <div className="space-y-3">
-          <Label className="text-sm font-medium">Common Patterns</Label>
+          <Label className="text-sm font-light">Common Patterns</Label>
           <div className="grid grid-cols-2 gap-2">
             {commonEgressRules.map((template) => (
               <Button

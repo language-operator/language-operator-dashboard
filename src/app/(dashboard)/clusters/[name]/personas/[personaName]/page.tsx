@@ -122,7 +122,7 @@ export default function ClusterPersonaDetailPage() {
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
-            <h3 className="text-lg font-medium mb-2">Persona not found</h3>
+            <h3 className="text-lg font-light mb-2">Persona not found</h3>
             <p className="text-muted-foreground mb-4">
               The persona &quot;{personaName}&quot; could not be found in cluster &quot;{clusterName}&quot;.
             </p>
@@ -195,21 +195,21 @@ export default function ClusterPersonaDetailPage() {
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-2">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Name</p>
+                <p className="text-sm font-light text-muted-foreground">Name</p>
                 <p className="text-sm">{persona.metadata?.name}</p>
               </div>
               {persona.spec?.tone && (
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Tone</p>
+                  <p className="text-sm font-light text-muted-foreground">Tone</p>
                   <Badge variant="secondary">{persona.spec.tone}</Badge>
                 </div>
               )}
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Status</p>
+                <p className="text-sm font-light text-muted-foreground">Status</p>
                 <AnimatedStatus status={persona.status?.phase || 'Unknown'} size="sm" />
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Created</p>
+                <p className="text-sm font-light text-muted-foreground">Created</p>
                 <p className="text-sm">{formatTimeAgo(persona.metadata?.creationTimestamp)}</p>
               </div>
             </CardContent>
@@ -281,7 +281,7 @@ export default function ClusterPersonaDetailPage() {
             ) : (
               <div className="border rounded-lg flex-1 min-h-0 flex flex-col">
                 <div className="bg-muted p-3 border-b flex justify-between items-center">
-                  <span className="font-medium text-sm">
+                  <span className="font-light text-sm">
                     {persona?.metadata.name || personaName}.yaml
                   </span>
                   <Button

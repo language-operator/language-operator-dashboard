@@ -256,7 +256,7 @@ export default function ClusterTools() {
     return (
         <div className="space-y-6">
           <div>
-            <h1 className="text-3xl font-bold">Tools</h1>
+            <h1 className="text-3xl font-light">Tools</h1>
             <p className="text-gray-600 mt-1">
               Official tools for the {clusterName} cluster
             </p>
@@ -298,7 +298,7 @@ export default function ClusterTools() {
         {/* Installed Tools Section */}
         {filteredInstalledTools.length > 0 && (
           <div>
-            <h2 className="text-xl font-semibold mb-4">Installed Tools ({filteredInstalledTools.length})</h2>
+            <h2 className="text-xl font-light mb-4">Installed Tools ({filteredInstalledTools.length})</h2>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {filteredInstalledTools.map((installedTool: InstalledTool) => {
                 const catalogEntry = getCatalogEntryForInstalledTool(installedTool)
@@ -321,7 +321,7 @@ export default function ClusterTools() {
 
         {/* Available Tools Section */}
         <div>
-          <h2 className="text-xl font-semibold mb-4">Available Tools</h2>
+          <h2 className="text-xl font-light mb-4">Available Tools</h2>
           {filteredTools.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-16">

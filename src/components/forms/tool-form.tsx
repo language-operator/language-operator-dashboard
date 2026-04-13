@@ -268,7 +268,7 @@ export function ToolForm({
                 {TOOL_TYPES.map((type) => (
                   <SelectItem key={type.id} value={type.id}>
                     <div>
-                      <div className="font-medium">{type.name}</div>
+                      <div className="font-light">{type.name}</div>
                       <div className="text-sm text-muted-foreground">{type.description}</div>
                     </div>
                   </SelectItem>
@@ -317,7 +317,7 @@ export function ToolForm({
                   disabled={isLoading}
                 >
                   <div className="text-left">
-                    <div className="font-medium">{tool.name}</div>
+                    <div className="font-light">{tool.name}</div>
                     <div className="text-sm text-muted-foreground">{tool.image}</div>
                   </div>
                 </Button>

@@ -150,7 +150,7 @@ export function ToolLogs({ tool, clusterName }: ToolLogsProps) {
           <CardContent className="flex items-center justify-center py-16">
             <div className="text-center">
               <Box className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-foreground mb-2">No Pods Found</h3>
+              <h3 className="text-lg font-light text-foreground mb-2">No Pods Found</h3>
               <p className="text-muted-foreground mb-4">
                 {deploymentMode === 'sidecar' 
                   ? `No agent pods found using this sidecar tool.`

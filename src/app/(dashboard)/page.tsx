@@ -104,11 +104,11 @@ export default function OrganizationDashboard() {
       <div className="grid gap-4 grid-cols-5">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Clusters</CardTitle>
+            <CardTitle className="text-sm font-light">Clusters</CardTitle>
             <Boxes className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-light">
               {loading ? '...' : error ? '0' : counts?.clusters || 0}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -119,11 +119,11 @@ export default function OrganizationDashboard() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Agents</CardTitle>
+            <CardTitle className="text-sm font-light">Agents</CardTitle>
             <Bot className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-light">
               {loading ? '...' : error ? '0' : counts?.agents || 0}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -134,11 +134,11 @@ export default function OrganizationDashboard() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tools</CardTitle>
+            <CardTitle className="text-sm font-light">Tools</CardTitle>
             <Wrench className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-light">
               {loading ? '...' : error ? '0' : counts?.tools || 0}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -149,11 +149,11 @@ export default function OrganizationDashboard() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Models</CardTitle>
+            <CardTitle className="text-sm font-light">Models</CardTitle>
             <Cpu className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-light">
               {loading ? '...' : error ? '0' : counts?.models || 0}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -164,11 +164,11 @@ export default function OrganizationDashboard() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Personas</CardTitle>
+            <CardTitle className="text-sm font-light">Personas</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-light">
               {loading ? '...' : error ? '0' : counts?.personas || 0}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -220,7 +220,7 @@ export default function OrganizationDashboard() {
                   <div key={cluster.metadata.name} className="flex items-center justify-between">
                     <div className="flex items-center space-x-3 min-w-0 flex-1">
                       <div className="min-w-0 flex-1">
-                        <Link href={`/clusters/${cluster.metadata.name}`} className="text-sm font-medium truncate hover:text-foreground hover:underline">
+                        <Link href={`/clusters/${cluster.metadata.name}`} className="text-sm font-light truncate hover:text-foreground hover:underline">
                           {cluster.metadata.name}
                         </Link>
                         <div className="mt-1">
@@ -304,7 +304,7 @@ export default function OrganizationDashboard() {
                   <div key={agent.metadata.name} className="flex items-center justify-between">
                     <div className="flex items-center space-x-3 min-w-0 flex-1">
                       <div className="min-w-0 flex-1">
-                        <Link href={`/clusters/${agent.spec?.clusterRef || agent.metadata.namespace}/agents/${agent.metadata.name}`} className="text-sm font-medium truncate hover:text-foreground hover:underline">
+                        <Link href={`/clusters/${agent.spec?.clusterRef || agent.metadata.namespace}/agents/${agent.metadata.name}`} className="text-sm font-light truncate hover:text-foreground hover:underline">
                           {agent.metadata.name}
                         </Link>
                         <div className="mt-1">

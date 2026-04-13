@@ -183,7 +183,7 @@ export default function RegistrySettingsPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Registries</h1>
+            <h1 className="text-2xl font-light">Registries</h1>
             <p className="text-stone-600 dark:text-stone-400">Showing allowed container registries for agents and tools</p>
           </div>
           <div className="flex gap-3">
@@ -223,7 +223,7 @@ export default function RegistrySettingsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Registries</h1>
+          <h1 className="text-2xl font-light">Registries</h1>
           <p className="text-stone-600 dark:text-stone-400">Showing allowed container registries for agents and tools</p>
         </div>
         <Button onClick={() => setShowAddDialog(true)}>
@@ -259,7 +259,7 @@ export default function RegistrySettingsPage() {
                       <div className="w-12 h-12 bg-stone-100 border border-stone-200 flex items-center justify-center mb-4 dark:bg-stone-800 dark:border-stone-700">
                         <Package className="w-6 h-6 text-stone-400 dark:text-stone-500" />
                       </div>
-                      <h3 className="text-lg font-semibold mb-2">No registries configured</h3>
+                      <h3 className="text-lg font-light mb-2">No registries configured</h3>
                       <p className="text-stone-600 dark:text-stone-400 mb-4">
                         Add a registry pattern to allow container images from specific registries
                       </p>

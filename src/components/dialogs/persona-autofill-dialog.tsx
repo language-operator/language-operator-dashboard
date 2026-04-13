@@ -124,7 +124,7 @@ function ErrorDisplay({ error, onRetry, clusterName }: ErrorDisplayProps) {
       <div className="flex items-start gap-2">
         {icon}
         <div className="flex-1 min-w-0">
-          <div className="font-medium text-red-900 text-sm">{title}</div>
+          <div className="font-light text-red-900 text-sm">{title}</div>
           <div className="text-red-700 text-sm mt-1">
             {details || errorMessage}
           </div>
@@ -227,7 +227,7 @@ export function PersonaAutofillDialog({
                   {availableModels.map((model: any) => (
                     <SelectItem key={model.metadata.name} value={model.metadata.name}>
                       <div className="flex items-center gap-2">
-                        <span className="font-medium">{model.metadata.name}</span>
+                        <span className="font-light">{model.metadata.name}</span>
                         <span className="text-xs text-muted-foreground">
                           ({model.spec.provider} - {model.spec.modelName})
                         </span>

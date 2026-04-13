@@ -104,12 +104,12 @@ export default function ClusterDashboard() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <dt className="text-sm font-medium text-stone-600 dark:text-stone-400">Name</dt>
+                <dt className="text-sm font-light text-stone-600 dark:text-stone-400">Name</dt>
                 <dd className="mt-1 text-sm text-stone-900 dark:text-stone-300">{cluster.metadata?.name}</dd>
               </div>
               {cluster.spec?.domain && (
                 <div>
-                  <dt className="text-sm font-medium text-stone-600 dark:text-stone-400">Domain</dt>
+                  <dt className="text-sm font-light text-stone-600 dark:text-stone-400">Domain</dt>
                   <dd className="mt-1 text-sm text-stone-900 dark:text-stone-300">
                     <a 
                       href={`https://${cluster.spec.domain}`} 
@@ -124,17 +124,17 @@ export default function ClusterDashboard() {
                 </div>
               )}
               <div>
-                <dt className="text-sm font-medium text-stone-600 dark:text-stone-400">Namespace</dt>
+                <dt className="text-sm font-light text-stone-600 dark:text-stone-400">Namespace</dt>
                 <dd className="mt-1 text-sm text-stone-900 dark:text-stone-300">{cluster.metadata?.namespace}</dd>
               </div>
               <div>
-                <dt className="text-sm font-medium text-stone-600 dark:text-stone-400">Status</dt>
+                <dt className="text-sm font-light text-stone-600 dark:text-stone-400">Status</dt>
                 <dd className="mt-1">
                   <ClusterStatusBadge cluster={cluster} />
                 </dd>
               </div>
               <div>
-                <dt className="text-sm font-medium text-stone-600 dark:text-stone-400">Proxy</dt>
+                <dt className="text-sm font-light text-stone-600 dark:text-stone-400">Proxy</dt>
                 <dd className="mt-1 flex items-center gap-2">
                   {cluster.status?.proxyReady === true ? (
                     <span className="inline-flex items-center gap-1 text-xs text-status-ready-foreground">
@@ -214,12 +214,12 @@ export default function ClusterDashboard() {
           <Link href={`/clusters/${clusterName}/models`}>
             <Card className="hover:shadow-md transition-shadow cursor-pointer">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Models</CardTitle>
+                <CardTitle className="text-sm font-light">Models</CardTitle>
                 <Cpu className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="flex items-center justify-between">
-                  <div className="text-2xl font-bold">
+                  <div className="text-2xl font-light">
                     {countsLoading ? '-' : counts?.models || 0}
                   </div>
                   {isStale && (
@@ -237,12 +237,12 @@ export default function ClusterDashboard() {
           <Link href={`/clusters/${clusterName}/tools`}>
             <Card className="hover:shadow-md transition-shadow cursor-pointer">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Tools</CardTitle>
+                <CardTitle className="text-sm font-light">Tools</CardTitle>
                 <Wrench className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="flex items-center justify-between">
-                  <div className="text-2xl font-bold">
+                  <div className="text-2xl font-light">
                     {countsLoading ? '-' : counts?.tools || 0}
                   </div>
                   {isStale && (
@@ -260,12 +260,12 @@ export default function ClusterDashboard() {
           <Link href={`/clusters/${clusterName}/personas`}>
             <Card className="hover:shadow-md transition-shadow cursor-pointer">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Personas</CardTitle>
+                <CardTitle className="text-sm font-light">Personas</CardTitle>
                 <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="flex items-center justify-between">
-                  <div className="text-2xl font-bold">
+                  <div className="text-2xl font-light">
                     {countsLoading ? '-' : counts?.personas || 0}
                   </div>
                   {isStale && (
@@ -283,12 +283,12 @@ export default function ClusterDashboard() {
           <Link href={`/clusters/${clusterName}/agents`}>
             <Card className="hover:shadow-md transition-shadow cursor-pointer">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Agents</CardTitle>
+                <CardTitle className="text-sm font-light">Agents</CardTitle>
                 <Bot className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="flex items-center justify-between">
-                  <div className="text-2xl font-bold">
+                  <div className="text-2xl font-light">
                     {countsLoading ? '-' : counts?.agents || 0}
                   </div>
                   {isStale && (

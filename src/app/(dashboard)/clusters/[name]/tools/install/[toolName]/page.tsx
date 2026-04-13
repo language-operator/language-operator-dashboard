@@ -173,7 +173,7 @@ export default function InstallToolPage() {
         <CardContent className="space-y-6">
           {/* Basic Information */}
           <div>
-            <h3 className="font-semibold mb-3">Basic Information</h3>
+            <h3 className="font-light mb-3">Basic Information</h3>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <span className="text-stone-600 dark:text-stone-400">Tool ID:</span>
@@ -199,7 +199,7 @@ export default function InstallToolPage() {
           {/* Container */}
           {tool.spec?.image && (
             <div>
-              <h3 className="font-semibold mb-3">Container</h3>
+              <h3 className="font-light mb-3">Container</h3>
               <div className="flex items-center gap-2 p-3 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md">
                 <Server className="h-4 w-4 text-stone-600 dark:text-stone-400" />
                 <code className="text-sm flex-1 font-mono">{tool.spec.image}</code>

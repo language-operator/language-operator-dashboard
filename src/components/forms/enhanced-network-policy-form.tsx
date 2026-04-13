@@ -210,7 +210,7 @@ export function EnhancedNetworkPolicyForm<T extends FieldValues>({
 
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <Label className="text-base font-medium">Egress Rules</Label>
+                  <Label className="text-base font-light">Egress Rules</Label>
                   <Button
                     type="button"
                     variant="outline"
@@ -351,7 +351,7 @@ export function EnhancedNetworkPolicyForm<T extends FieldValues>({
                 )}
 
                 <div className="space-y-3">
-                  <Label className="text-sm font-medium">Common Patterns</Label>
+                  <Label className="text-sm font-light">Common Patterns</Label>
                   <div className="flex gap-2 flex-wrap">
                     {commonEgressRules.map((template) => (
                       <Button
@@ -381,7 +381,7 @@ export function EnhancedNetworkPolicyForm<T extends FieldValues>({
 
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <Label className="text-base font-medium">Ingress Rules</Label>
+                  <Label className="text-base font-light">Ingress Rules</Label>
                   <Button
                     type="button"
                     variant="outline"
@@ -538,7 +538,7 @@ export function EnhancedNetworkPolicyForm<T extends FieldValues>({
                 )}
 
                 <div className="space-y-3">
-                  <Label className="text-sm font-medium">Common Patterns</Label>
+                  <Label className="text-sm font-light">Common Patterns</Label>
                   <div className="flex gap-2 flex-wrap">
                     {commonIngressRules.map((template) => (
                       <Button
@@ -569,7 +569,7 @@ export function EnhancedNetworkPolicyForm<T extends FieldValues>({
             
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <Label className="text-base font-medium">Egress Rules</Label>
+                <Label className="text-base font-light">Egress Rules</Label>
                 <Button
                   type="button"
                   variant="outline"
@@ -679,7 +679,7 @@ export function EnhancedNetworkPolicyForm<T extends FieldValues>({
               )}
 
               <div className="space-y-3">
-                <Label className="text-sm font-medium">Common Patterns</Label>
+                <Label className="text-sm font-light">Common Patterns</Label>
                 <div className="flex gap-2 flex-wrap">
                   {commonEgressRules.map((template) => (
                     <Button

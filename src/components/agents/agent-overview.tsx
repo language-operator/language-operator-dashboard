@@ -39,17 +39,17 @@ export function AgentOverview({ agent, clusterName }: AgentOverviewProps) {
         <CardContent>
           <div className="grid gap-4 md:grid-cols-3">
             <div>
-              <p className="text-sm font-medium text-stone-600 dark:text-stone-400">Name</p>
+              <p className="text-sm font-light text-stone-600 dark:text-stone-400">Name</p>
               <p className="text-sm">{agent.metadata.name}</p>
             </div>
             {agent.spec.runtime && (
               <div>
-                <p className="text-sm font-medium text-stone-600 dark:text-stone-400">Runtime</p>
+                <p className="text-sm font-light text-stone-600 dark:text-stone-400">Runtime</p>
                 <Badge variant="secondary">{agent.spec.runtime}</Badge>
               </div>
             )}
             <div>
-              <p className="text-sm font-medium text-stone-600 dark:text-stone-400">Created</p>
+              <p className="text-sm font-light text-stone-600 dark:text-stone-400">Created</p>
               <p className="text-sm">{formatTimeAgo(agent.metadata.creationTimestamp)}</p>
             </div>
           </div>
@@ -198,7 +198,7 @@ export function AgentOverview({ agent, clusterName }: AgentOverviewProps) {
               {agent.status.conditions.map((condition, index) => (
                 <div key={index} className="flex items-center justify-between p-3 border border-stone-200 dark:border-stone-700">
                   <div>
-                    <p className="text-sm font-medium">{condition.type}</p>
+                    <p className="text-sm font-light">{condition.type}</p>
                     {condition.message && (
                       <p className="text-xs text-stone-600 dark:text-stone-400">{condition.message}</p>
                     )}

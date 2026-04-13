@@ -29,13 +29,13 @@ function ModelDetails({ model }: ModelDetailsProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {model.spec.rateLimits.requestsPerMinute && (
                 <div>
-                  <p className="text-sm font-medium text-stone-600 dark:text-stone-400">Requests per Minute</p>
+                  <p className="text-sm font-light text-stone-600 dark:text-stone-400">Requests per Minute</p>
                   <p className="text-sm">{model.spec.rateLimits.requestsPerMinute.toLocaleString()}</p>
                 </div>
               )}
               {model.spec.rateLimits.tokensPerMinute && (
                 <div>
-                  <p className="text-sm font-medium text-stone-600 dark:text-stone-400">Tokens per Minute</p>
+                  <p className="text-sm font-light text-stone-600 dark:text-stone-400">Tokens per Minute</p>
                   <p className="text-sm">{model.spec.rateLimits.tokensPerMinute.toLocaleString()}</p>
                 </div>
               )}
@@ -54,7 +54,7 @@ function ModelDetails({ model }: ModelDetailsProps) {
         <Card>
           <CardContent className="pt-6">
             <div>
-              <p className="text-sm font-medium text-stone-600 dark:text-stone-400">Request Timeout</p>
+              <p className="text-sm font-light text-stone-600 dark:text-stone-400">Request Timeout</p>
               <p className="text-sm">{model.spec.timeout}</p>
             </div>
           </CardContent>
