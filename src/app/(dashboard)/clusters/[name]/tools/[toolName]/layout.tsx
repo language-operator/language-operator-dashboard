@@ -19,6 +19,7 @@ import { NotFound } from '@/components/ui/not-found'
 import { cn } from '@/lib/utils'
 import { DeleteResourceDialog } from '@/components/ui/delete-resource-dialog'
 import { toast } from 'sonner'
+import { Spinner } from '@/components/ui/spinner'
 
 function getCurrentTabValue(pathname: string, clusterName: string, toolName: string): string {
   const basePath = `/clusters/${clusterName}/tools/${toolName}`
@@ -236,7 +237,7 @@ export default function ToolDetailLayout({ children }: ToolDetailLayoutProps) {
           <div className="flex-1 min-h-0 flex flex-col">
             {yamlLoading ? (
               <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                <Spinner size="sm" />
               </div>
             ) : (
               <div className="border rounded-lg flex-1 min-h-0 flex flex-col">

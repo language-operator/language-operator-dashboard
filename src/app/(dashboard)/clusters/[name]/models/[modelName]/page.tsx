@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { ResourceEventsActivity } from '@/components/ui/events-activity'
 import { AlertCircle, CheckCircle, Clock } from 'lucide-react'
 import { LanguageModel } from '@/types/model'
+import { Spinner } from '@/components/ui/spinner'
 
 
 interface ModelOverviewProps {
@@ -127,7 +128,7 @@ export default function ModelOverviewPage() {
         <Card>
           <CardContent className="flex items-center justify-center py-16">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
+              <Spinner className="mx-auto mb-4" />
               <p className="text-gray-600">Loading model...</p>
             </div>
           </CardContent>

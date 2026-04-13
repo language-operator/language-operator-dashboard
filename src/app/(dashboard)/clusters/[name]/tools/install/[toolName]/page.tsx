@@ -18,6 +18,7 @@ import { useEffect, useState } from 'react'
 import { ToolCatalogEntry, getToolDisplayName } from '@/types/tool-catalog'
 import { ResourceHeader } from '@/components/ui/resource-header'
 import { Wrench } from 'lucide-react'
+import { Spinner } from '@/components/ui/spinner'
 
 export default function InstallToolPage() {
   const params = useParams()
@@ -100,7 +101,7 @@ export default function InstallToolPage() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-stone-900 dark:border-stone-100 mx-auto"></div>
+          <Spinner className="mx-auto" />
           <p className="mt-4 text-stone-600 dark:text-stone-400">Loading tool details...</p>
         </div>
       </div>

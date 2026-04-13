@@ -14,6 +14,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { formatTimeAgo } from '@/components/agents/utils'
+import { Spinner } from '@/components/ui/spinner'
 
 function phaseBadgeClass(phase?: SelfConfigPhase): string {
   switch (phase) {
@@ -58,7 +59,7 @@ export function AgentSelfConfigs({ agent, clusterName }: AgentSelfConfigsProps) 
       <Card>
         <CardContent className="flex items-center justify-center py-16">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-foreground mx-auto mb-4" />
+            <Spinner className="mx-auto mb-4" />
             <p className="text-muted-foreground">Loading self-configs...</p>
           </div>
         </CardContent>
