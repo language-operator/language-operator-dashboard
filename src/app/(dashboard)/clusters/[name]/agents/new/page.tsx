@@ -171,7 +171,7 @@ export default function CreateClusterAgentPage() {
             </Button>
             <Bot className="h-8 w-8 text-muted-foreground" />
             <div>
-              <h1 className="text-3xl font-bold">Create Language Agent</h1>
+              <h1 className="text-3xl font-light">Create Language Agent</h1>
               <p className="text-muted-foreground">
                 Configure and deploy a new language agent in the {clusterName} cluster
               </p>
@@ -259,7 +259,7 @@ export default function CreateClusterAgentPage() {
                                     }}
                                   />
                                   <div className="flex-1">
-                                    <div className="font-medium">{model.metadata.name}</div>
+                                    <div className="font-light">{model.metadata.name}</div>
                                     <div className="text-sm text-muted-foreground">{model.spec.provider} - {model.spec.modelName}</div>
                                   </div>
                                 </div>
@@ -301,7 +301,7 @@ export default function CreateClusterAgentPage() {
                                     }}
                                   />
                                   <div className="flex-1">
-                                    <div className="font-medium">{tool.metadata.name}</div>
+                                    <div className="font-light">{tool.metadata.name}</div>
                                   </div>
                                 </div>
                               ))}
@@ -434,7 +434,7 @@ export default function CreateClusterAgentPage() {
                                       }
                                     }}
                                   />
-                                  <span className="text-sm font-medium">{action}</span>
+                                  <span className="text-sm font-light">{action}</span>
                                 </div>
                               ))}
                             </div>

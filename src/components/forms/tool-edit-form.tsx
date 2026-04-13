@@ -436,7 +436,7 @@ export function ToolEditForm({
             <CardContent className="space-y-4">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <Label className="text-base font-medium">Egress Rules</Label>
+                  <Label className="text-base font-light">Egress Rules</Label>
                   <Button
                     type="button"
                     variant="outline"

@@ -82,7 +82,7 @@ export function WorkspaceToolbar({
       <div className="flex items-center space-x-4">
         <div className="flex items-center space-x-2">
           <FolderOpen className="w-5 h-5 text-muted-foreground" />
-          <span className="font-medium">{currentPath}</span>
+          <span className="font-light">{currentPath}</span>
         </div>
       </div>
 
@@ -101,7 +101,7 @@ export function WorkspaceToolbar({
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <label className="text-sm font-medium">Upload to: {currentPath}</label>
+                <label className="text-sm font-light">Upload to: {currentPath}</label>
               </div>
               <Input
                 type="file"

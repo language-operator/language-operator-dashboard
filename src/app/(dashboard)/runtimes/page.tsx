@@ -106,7 +106,7 @@ export default function RuntimesPage() {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h3 className="text-lg font-medium mb-2">Failed to load runtimes</h3>
+          <h3 className="text-lg font-light mb-2">Failed to load runtimes</h3>
           <p className="text-muted-foreground mb-4">
             There was an error loading LanguageAgentRuntimes.
           </p>
@@ -169,7 +169,7 @@ export default function RuntimesPage() {
             <TableBody>
               {runtimes.map((runtime) => (
                 <TableRow key={runtime.metadata.name}>
-                  <TableCell className="font-medium">
+                  <TableCell className="font-light">
                     <Link
                       href={`/runtimes/${runtime.metadata.name}`}
                       className="hover:underline"
@@ -230,7 +230,7 @@ export default function RuntimesPage() {
           {runtimes.length === 0 && (
             <div className="text-center py-8">
               <Cpu className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">No runtimes found</h3>
+              <h3 className="text-lg font-light mb-2">No runtimes found</h3>
               <p className="text-muted-foreground mb-4">
                 Create a runtime preset to provide default configuration for agent deployments.
               </p>

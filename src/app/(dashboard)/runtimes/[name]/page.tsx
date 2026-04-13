@@ -147,7 +147,7 @@ export default function RuntimeDetailPage({
         title={
           <span className="flex items-center gap-3">
             {runtime.metadata.name}
-            <Badge variant="outline" className="font-mono text-xs font-normal">
+            <Badge variant="outline" className="font-mono text-xs font-light">
               {type}
             </Badge>
           </span>

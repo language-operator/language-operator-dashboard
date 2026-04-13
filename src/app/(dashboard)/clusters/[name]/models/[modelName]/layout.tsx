@@ -263,7 +263,7 @@ export default function ModelDetailLayout({ children }: ModelDetailLayoutProps) 
             ) : (
               <div className="border rounded-lg flex-1 min-h-0 flex flex-col">
                 <div className="bg-muted p-3 border-b flex justify-between items-center">
-                  <span className="font-medium text-sm">
+                  <span className="font-light text-sm">
                     {model?.metadata.name || modelName}.yaml
                   </span>
                   <Button

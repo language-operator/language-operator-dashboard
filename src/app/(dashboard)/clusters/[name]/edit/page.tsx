@@ -255,7 +255,7 @@ export default function EditClusterPage({ params }: { params: Promise<{ name: st
 
         <div className="max-w-2xl">
           <div className="text-center py-12">
-            <h3 className="text-lg font-medium mb-2">Error loading cluster</h3>
+            <h3 className="text-lg font-light mb-2">Error loading cluster</h3>
             <p className="text-muted-foreground mb-4">{error}</p>
             <Link href={"/clusters"}>
               <Button>Back to Clusters</Button>

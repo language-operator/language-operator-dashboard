@@ -76,7 +76,7 @@ export default function CreateClusterToolPage() {
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold">Create Language Tool</h1>
+          <h1 className="text-3xl font-light">Create Language Tool</h1>
           <p className="text-muted-foreground mt-1">
             Add a new language tool to the {clusterName} cluster
           </p>

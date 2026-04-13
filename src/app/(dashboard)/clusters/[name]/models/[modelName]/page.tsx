@@ -25,16 +25,16 @@ function ModelOverview({ model, clusterName }: ModelOverviewProps) {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <p className="text-sm font-medium text-stone-600 dark:text-stone-400">Provider</p>
+              <p className="text-sm font-light text-stone-600 dark:text-stone-400">Provider</p>
               <Badge variant="outline">{model.spec.provider}</Badge>
             </div>
             <div>
-              <p className="text-sm font-medium text-stone-600 dark:text-stone-400">Model Name</p>
+              <p className="text-sm font-light text-stone-600 dark:text-stone-400">Model Name</p>
               <p className="text-sm font-mono">{model.spec.modelName}</p>
             </div>
             {model.spec.endpoint && (
               <div>
-                <p className="text-sm font-medium text-stone-600 dark:text-stone-400">Endpoint</p>
+                <p className="text-sm font-light text-stone-600 dark:text-stone-400">Endpoint</p>
                 <p className="text-sm font-mono text-xs break-all">{model.spec.endpoint}</p>
               </div>
             )}
@@ -53,7 +53,7 @@ function ModelOverview({ model, clusterName }: ModelOverviewProps) {
               {model.status.conditions.map((condition, index) => (
                 <div key={index} className="flex items-center justify-between p-3 border border-stone-200 dark:border-stone-700">
                   <div>
-                    <p className="text-sm font-medium">{condition.type}</p>
+                    <p className="text-sm font-light">{condition.type}</p>
                     {condition.message && (
                       <p className="text-xs text-stone-600 dark:text-stone-400">{condition.message}</p>
                     )}
@@ -95,13 +95,13 @@ function ModelOverview({ model, clusterName }: ModelOverviewProps) {
             <div className="grid gap-4 md:grid-cols-3">
               {model.spec.rateLimits.requestsPerMinute && (
                 <div>
-                  <p className="text-sm font-medium text-stone-600 dark:text-stone-400">Requests per Minute</p>
+                  <p className="text-sm font-light text-stone-600 dark:text-stone-400">Requests per Minute</p>
                   <p className="text-sm">{model.spec.rateLimits.requestsPerMinute.toLocaleString()}</p>
                 </div>
               )}
               {model.spec.rateLimits.tokensPerMinute && (
                 <div>
-                  <p className="text-sm font-medium text-stone-600 dark:text-stone-400">Tokens per Minute</p>
+                  <p className="text-sm font-light text-stone-600 dark:text-stone-400">Tokens per Minute</p>
                   <p className="text-sm">{model.spec.rateLimits.tokensPerMinute.toLocaleString()}</p>
                 </div>
               )}

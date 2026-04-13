@@ -229,7 +229,7 @@ export default function CapacityPage() {
 
                   return (
                     <TableRow key={row.name}>
-                      <TableCell className="font-medium">
+                      <TableCell className="font-light">
                         <Link href={`/clusters/${row.name}`} className="hover:underline">
                           {row.name}
                         </Link>

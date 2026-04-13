@@ -40,34 +40,34 @@ export default function ClusterToolDetailPage() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-sm font-medium">Name</p>
+                <p className="text-sm font-light">Name</p>
                 <p className="text-sm text-muted-foreground">{tool.metadata.name}</p>
               </div>
               <div>
-                <p className="text-sm font-medium">Type</p>
+                <p className="text-sm font-light">Type</p>
                 <p className="text-sm text-muted-foreground">{tool.spec.type || 'Unknown'}</p>
               </div>
               <div>
-                <p className="text-sm font-medium">Status</p>
+                <p className="text-sm font-light">Status</p>
                 <Badge variant={tool.status?.phase === 'Ready' ? 'default' : 'secondary'}>
                   {tool.status?.phase || 'Unknown'}
                 </Badge>
               </div>
               <div>
-                <p className="text-sm font-medium">Created</p>
+                <p className="text-sm font-light">Created</p>
                 <p className="text-sm text-muted-foreground">
                   {tool.metadata.creationTimestamp ? new Date(tool.metadata.creationTimestamp).toLocaleDateString() : 'Unknown'}
                 </p>
               </div>
               {tool.spec.image && (
                 <div>
-                  <p className="text-sm font-medium">Image</p>
+                  <p className="text-sm font-light">Image</p>
                   <p className="text-sm text-muted-foreground font-mono">{tool.spec.image}</p>
                 </div>
               )}
               {tool.spec.port && (
                 <div>
-                  <p className="text-sm font-medium">Port</p>
+                  <p className="text-sm font-light">Port</p>
                   <p className="text-sm text-muted-foreground">{tool.spec.port}</p>
                 </div>
               )}
@@ -75,7 +75,7 @@ export default function ClusterToolDetailPage() {
 
             {tool.spec.description && (
               <div>
-                <p className="text-sm font-medium">Description</p>
+                <p className="text-sm font-light">Description</p>
                 <p className="text-sm text-muted-foreground">{tool.spec.description}</p>
               </div>
             )}
@@ -93,32 +93,32 @@ export default function ClusterToolDetailPage() {
               <div className="grid grid-cols-2 gap-4">
                 {tool.spec.resources.requests?.cpu && (
                   <div>
-                    <p className="text-sm font-medium">CPU Request</p>
+                    <p className="text-sm font-light">CPU Request</p>
                     <p className="text-sm text-muted-foreground font-mono">{tool.spec.resources.requests.cpu}</p>
                   </div>
                 )}
                 {tool.spec.resources.limits?.cpu && (
                   <div>
-                    <p className="text-sm font-medium">CPU Limit</p>
+                    <p className="text-sm font-light">CPU Limit</p>
                     <p className="text-sm text-muted-foreground font-mono">{tool.spec.resources.limits.cpu}</p>
                   </div>
                 )}
                 {tool.spec.resources.requests?.memory && (
                   <div>
-                    <p className="text-sm font-medium">Memory Request</p>
+                    <p className="text-sm font-light">Memory Request</p>
                     <p className="text-sm text-muted-foreground font-mono">{tool.spec.resources.requests.memory}</p>
                   </div>
                 )}
                 {tool.spec.resources.limits?.memory && (
                   <div>
-                    <p className="text-sm font-medium">Memory Limit</p>
+                    <p className="text-sm font-light">Memory Limit</p>
                     <p className="text-sm text-muted-foreground font-mono">{tool.spec.resources.limits.memory}</p>
                   </div>
                 )}
               </div>
               {tool.spec.endpoint && (
                 <div className="mt-4">
-                  <p className="text-sm font-medium">Endpoint</p>
+                  <p className="text-sm font-light">Endpoint</p>
                   <p className="text-sm text-muted-foreground font-mono">{tool.spec.endpoint}</p>
                 </div>
               )}

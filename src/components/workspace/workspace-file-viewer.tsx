@@ -228,7 +228,7 @@ export function WorkspaceFileViewer({
     return (
       <div className="flex flex-col items-center justify-center h-full text-center p-8">
         <FileText className="w-16 h-16 text-muted-foreground mb-4" />
-        <h3 className="text-lg font-medium mb-2">No file selected</h3>
+        <h3 className="text-lg font-light mb-2">No file selected</h3>
         <p className="text-muted-foreground">
           Select a file from the file tree to view its contents
         </p>
@@ -240,7 +240,7 @@ export function WorkspaceFileViewer({
     return (
       <div className="flex flex-col items-center justify-center h-full text-center p-8">
         <File className="w-16 h-16 text-muted-foreground mb-4" />
-        <h3 className="text-lg font-medium mb-2">Directory selected</h3>
+        <h3 className="text-lg font-light mb-2">Directory selected</h3>
         <p className="text-muted-foreground">
           Directories cannot be viewed. Select a file to see its contents.
         </p>
@@ -265,7 +265,7 @@ export function WorkspaceFileViewer({
           </Button>
           <div className="min-w-0 flex-1">
             <div className="flex items-center space-x-2">
-              <h3 className="font-medium truncate">{selectedFile.name}</h3>
+              <h3 className="font-light truncate">{selectedFile.name}</h3>
             </div>
             <div className="flex items-center space-x-4 mt-1">
               <Badge variant="secondary" className="text-xs">
@@ -360,7 +360,7 @@ export function WorkspaceFileViewer({
         ) : error ? (
           <div className="flex flex-col items-center justify-center h-full text-center p-8">
             <AlertCircle className="w-16 h-16 text-destructive mb-4" />
-            <h3 className="text-lg font-medium mb-2">Error loading file</h3>
+            <h3 className="text-lg font-light mb-2">Error loading file</h3>
             <p className="text-muted-foreground mb-4">{error}</p>
             <div className="flex items-center space-x-2">
               <Button
@@ -408,7 +408,7 @@ export function WorkspaceFileViewer({
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-center p-8">
             <EyeOff className="w-16 h-16 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium mb-2">Cannot preview file</h3>
+            <h3 className="text-lg font-light mb-2">Cannot preview file</h3>
             <p className="text-muted-foreground mb-4">
               This file type is not supported for preview
             </p>

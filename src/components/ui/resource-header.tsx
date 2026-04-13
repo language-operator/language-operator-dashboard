@@ -62,7 +62,7 @@ export function ResourceHeader({
         
         {/* Title and Subtitle */}
         <div>
-          <h1 className="text-3xl font-bold font-mono">{title}</h1>
+          <h1 className="text-3xl font-light tracking-wider">{title}</h1>
           {subtitle && (
             <div className="text-stone-600 dark:text-stone-400">{subtitle}</div>
           )}

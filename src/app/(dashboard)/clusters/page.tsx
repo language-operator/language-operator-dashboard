@@ -87,7 +87,7 @@ function ClusterTable({ clusters, onDelete, isDeleting }: ClusterTableProps) {
           <TableBody>
             {clusters.map((cluster) => (
               <TableRow key={cluster.metadata.name}>
-                <TableCell className="font-medium">
+                <TableCell className="font-light">
                   <Link 
                     href={`/clusters/${cluster.metadata.name}`}
                     className="hover:underline"
@@ -160,7 +160,7 @@ function ClusterTable({ clusters, onDelete, isDeleting }: ClusterTableProps) {
         {clusters.length === 0 && (
           <div className="text-center py-8">
             <Boxes className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-medium mb-2">No clusters found</h3>
+            <h3 className="text-lg font-light mb-2">No clusters found</h3>
             <p className="text-muted-foreground mb-4">
               Create your first language cluster to get started.
             </p>
@@ -254,7 +254,7 @@ export default function ClustersPage() {
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-medium mb-2">Failed to load clusters</h3>
+            <h3 className="text-lg font-light mb-2">Failed to load clusters</h3>
             <p className="text-muted-foreground mb-4">
               There was an error loading your language clusters.
             </p>

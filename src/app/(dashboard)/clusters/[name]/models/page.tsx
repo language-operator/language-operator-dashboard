@@ -202,7 +202,7 @@ export default function ClusterModels() {
                 <TableBody>
                   {clusterModels.map((model: any) => (
                     <TableRow key={model.metadata.name}>
-                      <TableCell className="font-medium">
+                      <TableCell className="font-light">
                         <Link 
                           href={`/clusters/${clusterName}/models/${model.metadata.name}`}
                           className="hover:underline"

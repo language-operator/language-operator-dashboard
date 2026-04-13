@@ -55,17 +55,17 @@ export default function ToolNetworkPage() {
               {(tool.spec.networkPolicies?.egress || []).map((rule: NetworkEgressRule, index: number) => (
                 <div key={index} className="border border-stone-200 p-3 dark:border-stone-700">
                   <div className="space-y-2">
-                    <div className="text-sm font-medium text-stone-600 dark:text-stone-400">Egress Rule {index + 1}</div>
+                    <div className="text-sm font-light text-stone-600 dark:text-stone-400">Egress Rule {index + 1}</div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                       {rule.to && rule.to.length > 0 && rule.to.flatMap(peer => peer.dns || []).length > 0 && (
                         <div>
-                          <p className="text-sm font-medium text-stone-600 dark:text-stone-400">DNS Names</p>
+                          <p className="text-sm font-light text-stone-600 dark:text-stone-400">DNS Names</p>
                           <p className="text-sm font-mono">{rule.to.flatMap(peer => peer.dns || []).join(', ')}</p>
                         </div>
                       )}
                       {rule.ports && rule.ports.length > 0 && (
                         <div>
-                          <p className="text-sm font-medium text-stone-600 dark:text-stone-400">Ports</p>
+                          <p className="text-sm font-light text-stone-600 dark:text-stone-400">Ports</p>
                           <p className="text-sm font-mono">{rule.ports.map((p: NetworkPort) => p.port).join(', ')}</p>
                         </div>
                       )}
