@@ -19,10 +19,10 @@ export default function StyleGuidePage() {
     <div className="max-w-6xl mx-auto space-y-12">
       {/* Header */}
       <div className="space-y-4">
-        <h1 className="text-[13px] tracking-widest uppercase font-light text-stone-900 dark:text-stone-300">
+        <h1 className="text-[13px] tracking-widest uppercase font-light text-foreground">
           Marfa Design System
         </h1>
-        <p className="text-sm font-light text-stone-600 dark:text-stone-400">
+        <p className="text-sm font-light text-muted-foreground">
           A minimalist design system inspired by Donald Judd and the West Texas landscape of Marfa.
         </p>
         
@@ -108,9 +108,9 @@ export default function StyleGuidePage() {
           <div className="space-y-4">
             <div>
               <p className="text-[11px] tracking-wider uppercase font-light mb-2">Header Style</p>
-              <h1 className="text-[13px] tracking-widest uppercase font-light text-stone-900 dark:text-stone-300">
+              <h1 className="text-[13px] tracking-widest uppercase font-light text-foreground">
                 Language Operator
-                <span className="inline-block w-2 h-3.5 bg-stone-900 dark:bg-amber-400 animate-pulse ml-1" />
+                <span className="inline-block w-2 h-3.5 bg-foreground dark:bg-accent animate-pulse ml-1" />
               </h1>
             </div>
             
@@ -126,7 +126,7 @@ export default function StyleGuidePage() {
             
             <div>
               <p className="text-[11px] tracking-wider uppercase font-light mb-2">Body Text</p>
-              <p className="text-sm font-light text-stone-600 dark:text-stone-400">
+              <p className="text-sm font-light text-muted-foreground">
                 This is regular body text with light font weight for enhanced readability.
               </p>
             </div>
@@ -296,7 +296,7 @@ export default function StyleGuidePage() {
           
           {/* Basic Tabs */}
           <div className="space-y-4">
-            <h3 className="text-[11px] tracking-wider uppercase font-light text-stone-600 dark:text-stone-400">Basic Text Tabs</h3>
+            <h3 className="text-[11px] tracking-wider uppercase font-light text-muted-foreground">Basic Text Tabs</h3>
             <Tabs defaultValue="overview" className="space-y-4">
               <TabsList>
                 <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -341,8 +341,8 @@ export default function StyleGuidePage() {
 
           {/* Subnav with Icons */}
           <div className="space-y-4">
-            <h3 className="text-[11px] tracking-wider uppercase font-light text-stone-600 dark:text-stone-400">Resource Detail Subnav (Recommended)</h3>
-            <p className="text-xs font-light text-stone-600 dark:text-stone-400">
+            <h3 className="text-[11px] tracking-wider uppercase font-light text-muted-foreground">Resource Detail Subnav (Recommended)</h3>
+            <p className="text-xs font-light text-muted-foreground">
               Standard pattern for agent, model, tool, and persona detail pages. Features icons, clean typography, and amber active states.
             </p>
             <Tabs defaultValue="overview" className="space-y-4">
@@ -399,9 +399,9 @@ export default function StyleGuidePage() {
 
           {/* Implementation Code Example */}
           <div className="space-y-4">
-            <h3 className="text-[11px] tracking-wider uppercase font-light text-stone-600 dark:text-stone-400">Implementation</h3>
-            <div className="bg-stone-50 border border-stone-200 p-4 dark:bg-stone-800/50 dark:border-stone-700">
-              <pre className="text-xs font-mono text-stone-900 dark:text-stone-300 overflow-x-auto">
+            <h3 className="text-[11px] tracking-wider uppercase font-light text-muted-foreground">Implementation</h3>
+            <div className="bg-muted border p-4">
+              <pre className="text-xs font-mono text-foreground overflow-x-auto">
 {`<Tabs value={activeTab} onValueChange={setActiveTab}>
   <TabsList>
     <TabsTrigger value="overview">
@@ -436,11 +436,11 @@ export default function StyleGuidePage() {
 
           {/* Usage Guidelines */}
           <div className="space-y-4">
-            <h3 className="text-[11px] tracking-wider uppercase font-light text-stone-600 dark:text-stone-400">Usage Guidelines</h3>
+            <h3 className="text-[11px] tracking-wider uppercase font-light text-muted-foreground">Usage Guidelines</h3>
             <div className="grid md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <h4 className="text-xs font-light text-green-700 dark:text-green-400">✓ Do</h4>
-                <ul className="text-xs font-light text-stone-600 dark:text-stone-400 space-y-1">
+                <h4 className="text-xs font-light text-foreground">✓ Do</h4>
+                <ul className="text-xs font-light text-muted-foreground space-y-1">
                   <li>• Use icons for resource detail pages</li>
                   <li>• Keep tab labels concise and clear</li>
                   <li>• Follow Overview → Details → Metrics pattern</li>
@@ -449,8 +449,8 @@ export default function StyleGuidePage() {
                 </ul>
               </div>
               <div className="space-y-2">
-                <h4 className="text-xs font-light text-red-700 dark:text-red-400">✗ Don't</h4>
-                <ul className="text-xs font-light text-stone-600 dark:text-stone-400 space-y-1">
+                <h4 className="text-xs font-light text-destructive">✗ Don't</h4>
+                <ul className="text-xs font-light text-muted-foreground space-y-1">
                   <li>• Use more than 5 tabs in a single nav</li>
                   <li>• Mix icons and non-icon tabs in same set</li>
                   <li>• Create deeply nested tab structures</li>
@@ -496,6 +496,421 @@ export default function StyleGuidePage() {
         </CardContent>
       </Card>
 
+      {/* Design Tokens */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Design Tokens</CardTitle>
+          <CardDescription>
+            CSS custom properties defined in globals.css, wired through Tailwind. Use these classes everywhere — never use raw color utilities like stone-*, amber-*, gray-*, green-*, etc. in app code.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-8">
+
+          <div className="space-y-3">
+            <h3 className="text-[11px] tracking-wider uppercase font-light text-muted-foreground">Semantic Color Tokens</h3>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Tailwind class</TableHead>
+                  <TableHead>Purpose</TableHead>
+                  <TableHead>Light</TableHead>
+                  <TableHead>Dark</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">bg-background / text-foreground</TableCell>
+                  <TableCell className="text-xs font-light">Page canvas and primary text</TableCell>
+                  <TableCell className="text-xs font-light">stone-100 / stone-900</TableCell>
+                  <TableCell className="text-xs font-light">neutral-950 / stone-300</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">bg-card / text-card-foreground</TableCell>
+                  <TableCell className="text-xs font-light">Card and panel surfaces</TableCell>
+                  <TableCell className="text-xs font-light">white/95 / stone-900</TableCell>
+                  <TableCell className="text-xs font-light">stone-900/95 / stone-300</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">bg-muted / text-muted-foreground</TableCell>
+                  <TableCell className="text-xs font-light">Subdued surfaces and secondary labels</TableCell>
+                  <TableCell className="text-xs font-light">stone-200 / stone-600</TableCell>
+                  <TableCell className="text-xs font-light">stone-800 / stone-400</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">bg-primary / text-primary-foreground</TableCell>
+                  <TableCell className="text-xs font-light">Primary action fill and label</TableCell>
+                  <TableCell className="text-xs font-light">stone-900 / stone-50</TableCell>
+                  <TableCell className="text-xs font-light">stone-300 / stone-900</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">bg-secondary / text-secondary-foreground</TableCell>
+                  <TableCell className="text-xs font-light">Secondary action fill and label</TableCell>
+                  <TableCell className="text-xs font-light">stone-50 / stone-900</TableCell>
+                  <TableCell className="text-xs font-light">stone-900 / stone-300</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">bg-accent / text-accent-foreground</TableCell>
+                  <TableCell className="text-xs font-light">Amber highlight — hover states, active indicators</TableCell>
+                  <TableCell className="text-xs font-light">amber-400 / stone-900</TableCell>
+                  <TableCell className="text-xs font-light">amber-400 / stone-900</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">bg-destructive / text-destructive-foreground</TableCell>
+                  <TableCell className="text-xs font-light">Danger actions only (delete, revoke)</TableCell>
+                  <TableCell className="text-xs font-light">red-500 / white</TableCell>
+                  <TableCell className="text-xs font-light">red-900 / red-50</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">border</TableCell>
+                  <TableCell className="text-xs font-light">All borders — div, card, input, separator</TableCell>
+                  <TableCell className="text-xs font-light">stone-800/90</TableCell>
+                  <TableCell className="text-xs font-light">stone-700/90</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">ring</TableCell>
+                  <TableCell className="text-xs font-light">Focus rings on interactive elements</TableCell>
+                  <TableCell className="text-xs font-light">amber-900</TableCell>
+                  <TableCell className="text-xs font-light">amber-600</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">bg-popover / text-popover-foreground</TableCell>
+                  <TableCell className="text-xs font-light">Dropdowns, tooltips, floating panels</TableCell>
+                  <TableCell className="text-xs font-light">white / stone-900</TableCell>
+                  <TableCell className="text-xs font-light">stone-900 / stone-300</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+
+          <div className="space-y-3">
+            <h3 className="text-[11px] tracking-wider uppercase font-light text-muted-foreground">Custom Extension Tokens</h3>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Tailwind class</TableHead>
+                  <TableHead>Value</TableHead>
+                  <TableHead>Use for</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">shadow-warm / shadow-warm-sm</TableCell>
+                  <TableCell className="text-xs font-light">0 8px 32px rgba(120,53,15,0.08)</TableCell>
+                  <TableCell className="text-xs font-light">Cards and buttons in light mode</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">shadow-night / shadow-night-sm</TableCell>
+                  <TableCell className="text-xs font-light">0 8px 32px rgba(0,0,0,0.4)</TableCell>
+                  <TableCell className="text-xs font-light">Cards and buttons in dark mode</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">p-generous / gap-generous</TableCell>
+                  <TableCell className="text-xs font-light">48px (3rem)</TableCell>
+                  <TableCell className="text-xs font-light">Primary container padding — Card sections</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">p-comfortable / gap-comfortable</TableCell>
+                  <TableCell className="text-xs font-light">24px (1.5rem)</TableCell>
+                  <TableCell className="text-xs font-light">Form field spacing, section gaps</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">tracking-widest</TableCell>
+                  <TableCell className="text-xs font-light">0.2em</TableCell>
+                  <TableCell className="text-xs font-light">Headers, labels — all uppercase chrome</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">tracking-wider</TableCell>
+                  <TableCell className="text-xs font-light">0.15em</TableCell>
+                  <TableCell className="text-xs font-light">Button text</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+
+          <div className="space-y-3">
+            <h3 className="text-[11px] tracking-wider uppercase font-light text-muted-foreground">Enforcement Rule</h3>
+            <div className="bg-muted p-4 border text-xs font-mono space-y-1">
+              <p className="text-foreground">// CORRECT — semantic token, theme-aware</p>
+              <p className="text-foreground">{'<p className="text-muted-foreground">Secondary text</p>'}</p>
+              <p className="text-foreground mt-3">// WRONG — hardcoded palette class, not theme-aware</p>
+              <p className="text-destructive">{'<p className="text-stone-600">Secondary text</p>'}</p>
+              <p className="text-destructive">{'<p className="text-gray-500">Secondary text</p>'}</p>
+            </div>
+          </div>
+
+        </CardContent>
+      </Card>
+
+      {/* Component Inventory */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Component Inventory</CardTitle>
+          <CardDescription>
+            Every component in src/components/ui/. Check here before writing any inline CSS. If a component exists for your use case, use it.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-8">
+
+          <div className="space-y-3">
+            <h3 className="text-[11px] tracking-wider uppercase font-light text-muted-foreground">Critical — Most Commonly Bypassed</h3>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Component</TableHead>
+                  <TableHead>Use for</TableHead>
+                  <TableHead>Never do this instead</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">AlertDialog</TableCell>
+                  <TableCell className="text-xs font-light">All destructive confirm flows (delete, revoke)</TableCell>
+                  <TableCell className="text-xs font-destructive font-light text-destructive">confirm() / alert()</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">AnimatedStatus</TableCell>
+                  <TableCell className="text-xs font-light">Resource phase badges (Ready, Pending, Failed, Unknown)</TableCell>
+                  <TableCell className="text-xs font-light text-destructive">getStatusColor() inline functions with bg-green-* etc.</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">ResourceStatusBadge</TableCell>
+                  <TableCell className="text-xs font-light">Compact phase display in tables and headers</TableCell>
+                  <TableCell className="text-xs font-light text-destructive">{'<Badge className={getStatusColor(...)}>'}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">Skeleton</TableCell>
+                  <TableCell className="text-xs font-light">Loading placeholders for content that hasn't loaded yet</TableCell>
+                  <TableCell className="text-xs font-light text-destructive">{'<div className="animate-pulse rounded-full bg-gray-200">'}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">LoadingBoundary</TableCell>
+                  <TableCell className="text-xs font-light">Wrapping async route segments; shows Skeleton automatically</TableCell>
+                  <TableCell className="text-xs font-light text-destructive">{'<div className="animate-spin rounded-full border-b-2 border-gray-900">'}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">NotFound</TableCell>
+                  <TableCell className="text-xs font-light">Empty states and 404 conditions for any resource</TableCell>
+                  <TableCell className="text-xs font-light text-destructive">Inline h3 + p with custom copy and gray icons</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">ResourceHeader</TableCell>
+                  <TableCell className="text-xs font-light">Title bar on all resource detail pages (agent, model, tool, persona)</TableCell>
+                  <TableCell className="text-xs font-light text-destructive">{'<h1 className="text-3xl font-bold">'} inline</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+
+          <div className="space-y-3">
+            <h3 className="text-[11px] tracking-wider uppercase font-light text-muted-foreground">Actions & Overlays</h3>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Component</TableHead>
+                  <TableHead>Variants / sizes</TableHead>
+                  <TableHead>Notes</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">Button</TableCell>
+                  <TableCell className="text-xs font-light">default · outline · ghost · destructive · link — sm · default · lg · icon · icon-sm</TableCell>
+                  <TableCell className="text-xs font-light">Use size="icon" or size="icon-sm" for icon-only buttons — do not override h/w</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">Dialog</TableCell>
+                  <TableCell className="text-xs font-light">—</TableCell>
+                  <TableCell className="text-xs font-light">Non-destructive modals (forms, detail views)</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">AlertDialog</TableCell>
+                  <TableCell className="text-xs font-light">—</TableCell>
+                  <TableCell className="text-xs font-light">Destructive confirm only — see Critical table above</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">DropdownMenu</TableCell>
+                  <TableCell className="text-xs font-light">—</TableCell>
+                  <TableCell className="text-xs font-light">Context menus, kebab menus on table rows</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+
+          <div className="space-y-3">
+            <h3 className="text-[11px] tracking-wider uppercase font-light text-muted-foreground">Status & Feedback</h3>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Component</TableHead>
+                  <TableHead>Notes</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">Alert</TableCell>
+                  <TableCell className="text-xs font-light">Inline banners — default and destructive variants</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">Badge</TableCell>
+                  <TableCell className="text-xs font-light">default · secondary · destructive · outline — never add raw className color overrides; use variant prop only</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">AnimatedStatus</TableCell>
+                  <TableCell className="text-xs font-light">Animated phase badge with pulse dot — preferred for resource list pages</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">ResourceStatusBadge</TableCell>
+                  <TableCell className="text-xs font-light">Compact phase badge without animation — use in headers, tight spaces</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">ConnectionStatus</TableCell>
+                  <TableCell className="text-xs font-light">Live/disconnected indicator dot for SSE watch connections</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">ResourceNotifications</TableCell>
+                  <TableCell className="text-xs font-light">Toast-style K8s event alerts — used in sidebar header</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">NavigationProgress</TableCell>
+                  <TableCell className="text-xs font-light">Top-of-page route transition bar — already mounted globally</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">Sonner (toast)</TableCell>
+                  <TableCell className="text-xs font-light">{'import { toast } from "sonner" — use for error feedback instead of alert()'}</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+
+          <div className="space-y-3">
+            <h3 className="text-[11px] tracking-wider uppercase font-light text-muted-foreground">Forms</h3>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Component</TableHead>
+                  <TableHead>Notes</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">Form + FormField + FormItem + FormLabel + FormMessage</TableCell>
+                  <TableCell className="text-xs font-light">react-hook-form integration — use for all validated forms</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">Input</TableCell>
+                  <TableCell className="text-xs font-light">Single-line text fields</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">Textarea</TableCell>
+                  <TableCell className="text-xs font-light">Multi-line text fields</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">Select</TableCell>
+                  <TableCell className="text-xs font-light">Dropdown selection — Radix-based, keyboard accessible</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">Checkbox / Switch</TableCell>
+                  <TableCell className="text-xs font-light">Boolean toggles</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">Label</TableCell>
+                  <TableCell className="text-xs font-light">Form field labels — always pair with htmlFor</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">DateRangePicker / AdvancedDateRangePicker</TableCell>
+                  <TableCell className="text-xs font-light">Date filtering — AdvancedDateRangePicker has preset ranges</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+
+          <div className="space-y-3">
+            <h3 className="text-[11px] tracking-wider uppercase font-light text-muted-foreground">Data Display</h3>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Component</TableHead>
+                  <TableHead>Notes</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">Table + TableHeader + TableBody + TableRow + TableHead + TableCell</TableCell>
+                  <TableCell className="text-xs font-light">All data tables — never hand-roll table HTML</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">Card + CardHeader + CardTitle + CardDescription + CardContent</TableCell>
+                  <TableCell className="text-xs font-light">Primary surface container — use px-generous on CardContent for correct padding</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">Tabs + TabsList + TabsTrigger + TabsContent</TableCell>
+                  <TableCell className="text-xs font-light">Resource detail page subnav — see Tabs section above for pattern</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">LiveCounter</TableCell>
+                  <TableCell className="text-xs font-light">Animated stat counter card — use for dashboard overview metrics</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">Sparkline</TableCell>
+                  <TableCell className="text-xs font-light">Mini inline chart — use inside metric cards</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">Progress</TableCell>
+                  <TableCell className="text-xs font-light">Horizontal progress bar</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">Avatar</TableCell>
+                  <TableCell className="text-xs font-light">User avatars with initials fallback</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">MarkdownContent</TableCell>
+                  <TableCell className="text-xs font-light">Renders markdown strings — use for persona system prompts, descriptions</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">EventsActivity</TableCell>
+                  <TableCell className="text-xs font-light">K8s event feed with live updates — used in sidebar</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+
+          <div className="space-y-3">
+            <h3 className="text-[11px] tracking-wider uppercase font-light text-muted-foreground">Layout & Utility</h3>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Component</TableHead>
+                  <TableHead>Notes</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">Separator</TableCell>
+                  <TableCell className="text-xs font-light">Horizontal or vertical divider — uses border token</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">ScrollArea</TableCell>
+                  <TableCell className="text-xs font-light">Scrollable container with custom scrollbar — use for tall sidebars/panels</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">PodSelector</TableCell>
+                  <TableCell className="text-xs font-light">Pod/container picker for log and exec views</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">PodLogViewer</TableCell>
+                  <TableCell className="text-xs font-light">Log streaming panel with ANSI color support</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">Icons</TableCell>
+                  <TableCell className="text-xs font-light">Custom SVG icon set — check here before importing from lucide-react</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+
+        </CardContent>
+      </Card>
+
       {/* Spacing */}
       <Card>
         <CardHeader>
@@ -505,17 +920,17 @@ export default function StyleGuidePage() {
         <CardContent className="space-y-4">
           <div>
             <p className="text-[11px] tracking-wider uppercase font-light mb-2">Base Unit: 12px</p>
-            <div className="h-3 bg-stone-200 dark:bg-stone-700"></div>
+            <div className="h-3 bg-muted"></div>
           </div>
           
           <div>
             <p className="text-[11px] tracking-wider uppercase font-light mb-2">Comfortable: 24px</p>
-            <div className="h-6 bg-stone-200 dark:bg-stone-700"></div>
+            <div className="h-6 bg-muted"></div>
           </div>
           
           <div>
             <p className="text-[11px] tracking-wider uppercase font-light mb-2">Generous: 48px</p>
-            <div className="h-12 bg-stone-200 dark:bg-stone-700"></div>
+            <div className="h-12 bg-muted"></div>
           </div>
         </CardContent>
       </Card>
@@ -530,7 +945,7 @@ export default function StyleGuidePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <h3 className="text-[11px] tracking-wider uppercase font-light mb-2">Light Mode ☀️</h3>
-              <ul className="space-y-1 text-sm font-light text-stone-600">
+              <ul className="space-y-1 text-sm font-light text-muted-foreground">
                 <li>• Embrace white space and desert light</li>
                 <li>• Stone as primary, amber as warmth</li>
                 <li>• Warm brown shadows (not black)</li>
@@ -540,7 +955,7 @@ export default function StyleGuidePage() {
             
             <div>
               <h3 className="text-[11px] tracking-wider uppercase font-light mb-2">Dark Mode 🌌</h3>
-              <ul className="space-y-1 text-sm font-light text-stone-400">
+              <ul className="space-y-1 text-sm font-light text-muted-foreground">
                 <li>• Embrace vast darkness and starlight</li>
                 <li>• Deep blacks with stone undertones</li>
                 <li>• Sage moonlight for readable text</li>
@@ -567,10 +982,10 @@ export default function StyleGuidePage() {
 
       {/* Footer */}
       <div className="text-center space-y-2">
-        <p className="text-[11px] font-light text-stone-600 dark:text-stone-400">
+        <p className="text-[11px] font-light text-muted-foreground">
           Marfa Design System — Inspired by Donald Judd & West Texas
         </p>
-        <p className="text-[10px] tracking-widest uppercase font-light text-stone-500">
+        <p className="text-[10px] tracking-widest uppercase font-light text-muted-foreground">
           Not just a design system — an aesthetic philosophy
         </p>
       </div>
