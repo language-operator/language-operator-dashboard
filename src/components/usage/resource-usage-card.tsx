@@ -26,7 +26,7 @@ function UsageStatusBadge({ status }: { status: 'healthy' | 'warning' | 'critica
       )
     case 'critical':
       return (
-        <span className="text-[10px] tracking-widest uppercase font-light text-orange-600 dark:text-orange-400">
+        <span className="text-[10px] tracking-widest uppercase font-light text-destructive">
           Critical
         </span>
       )

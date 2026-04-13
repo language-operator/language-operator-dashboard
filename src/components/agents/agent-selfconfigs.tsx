@@ -18,14 +18,14 @@ import { formatTimeAgo } from '@/components/agents/utils'
 function phaseBadgeClass(phase?: SelfConfigPhase): string {
   switch (phase) {
     case 'Applied':
-      return 'border-green-600 text-green-700 dark:border-green-500 dark:text-green-400'
+      return 'border-status-ready text-status-ready-foreground'
     case 'Failed':
-      return 'border-red-600 text-red-700 dark:border-red-500 dark:text-red-400'
+      return 'border-destructive text-destructive'
     case 'Denied':
-      return 'border-stone-500 text-stone-600 dark:border-stone-500 dark:text-stone-400'
+      return 'border-muted-foreground text-muted-foreground'
     case 'Pending':
     default:
-      return 'border-yellow-600 text-yellow-700 dark:border-yellow-500 dark:text-yellow-400'
+      return 'border-status-pending text-status-pending-foreground'
   }
 }
 
@@ -58,8 +58,8 @@ export function AgentSelfConfigs({ agent, clusterName }: AgentSelfConfigsProps) 
       <Card>
         <CardContent className="flex items-center justify-center py-16">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4" />
-            <p className="text-gray-600">Loading self-configs...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground">Loading self-configs...</p>
           </div>
         </CardContent>
       </Card>
@@ -70,7 +70,7 @@ export function AgentSelfConfigs({ agent, clusterName }: AgentSelfConfigsProps) 
     return (
       <Card>
         <CardContent className="flex items-center justify-center py-16">
-          <p className="text-red-600 text-sm">Failed to load self-configuration requests.</p>
+          <p className="text-destructive text-sm">Failed to load self-configuration requests.</p>
         </CardContent>
       </Card>
     )

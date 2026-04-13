@@ -169,7 +169,7 @@ export default function CreateClusterAgentPage() {
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <Bot className="h-8 w-8 text-blue-500" />
+            <Bot className="h-8 w-8 text-muted-foreground" />
             <div>
               <h1 className="text-3xl font-bold">Create Language Agent</h1>
               <p className="text-muted-foreground">

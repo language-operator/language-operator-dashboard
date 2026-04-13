@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
 import { Boxes, ChevronDown, Plus } from 'lucide-react'
+import { AnimatedStatus } from '@/components/ui/animated-status'
 
 export function ClusterSelector() {
   const router = useRouter()
@@ -34,7 +35,7 @@ export function ClusterSelector() {
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
-            className="w-full justify-between text-yellow-600 hover:text-white hover:bg-transparent dark:text-yellow-400 dark:hover:text-white dark:hover:bg-transparent"
+            className="w-full justify-between text-accent hover:text-foreground hover:bg-transparent"
             disabled={isLoading}
           >
             <div className="flex items-center gap-2">
@@ -62,20 +63,14 @@ export function ClusterSelector() {
                     <span>{cluster.metadata?.name}</span>
                   </div>
                   {cluster.status?.phase && (
-                    <span className={`text-xs px-2 py-1 rounded-full ${
-                      cluster.status.phase === 'Ready' 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {cluster.status.phase}
-                    </span>
+                    <AnimatedStatus status={cluster.status.phase} size="sm" showIcon={false} />
                   )}
                 </DropdownMenuItem>
               ))}
               <DropdownMenuSeparator />
             </>
           ) : (
-            <div className="px-2 py-1 text-sm text-gray-500">
+            <div className="px-2 py-1 text-sm text-muted-foreground">
               {isLoading ? 'Loading...' : 'No clusters found'}
             </div>
           )}

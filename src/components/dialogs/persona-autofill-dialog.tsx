@@ -89,7 +89,7 @@ function ErrorDisplay({ error, onRetry, clusterName }: ErrorDisplayProps) {
       break
       
     case 'GENERATION_PARSING_ERROR':
-      icon = <AlertCircle className="h-4 w-4 text-orange-500" />
+      icon = <AlertCircle className="h-4 w-4 text-destructive" />
       title = 'Invalid Response Format'
       canRetry = true
       break
@@ -184,7 +184,7 @@ export function PersonaAutofillDialog({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-purple-500" />
+            <Sparkles className="h-5 w-5 text-accent" />
             Auto Create with AI
           </DialogTitle>
           <DialogDescription>

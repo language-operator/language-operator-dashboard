@@ -26,6 +26,16 @@
   --input: 20 14% 91%; /* stone-200 */
   --ring: 30 81% 31%; /* amber-900 */
   --radius: 0px; /* No rounded corners */
+
+  /* Semantic status tokens - Light Mode */
+  --status-ready:              47 96% 88%; /* warm amber-100 */
+  --status-ready-foreground:   28 73% 26%; /* amber-900 */
+  --status-pending:            20 14% 91%; /* stone-200 */
+  --status-pending-foreground: 25 5% 45%;  /* stone-600 */
+  --status-error:              0 84.2% 60.2%;
+  --status-error-foreground:   0 0% 98%;
+  --status-unknown:            20 14% 91%; /* stone-200 */
+  --status-unknown-foreground: 25 5% 45%;  /* stone-600 */
   
   /* Marfa color palette - Light Mode */
   --stone-50: 60 9% 98%;
@@ -102,6 +112,16 @@
   --amber-600: 43 96% 56%;
   --orange-600: 20 91% 48%;
   
+  /* Semantic status tokens - Dark Mode */
+  --status-ready:              43 60% 15%; /* dark amber */
+  --status-ready-foreground:   43 96% 56%; /* amber-400 */
+  --status-pending:            24 10% 18%; /* stone-800 */
+  --status-pending-foreground: 24 6% 70%;  /* stone-300 */
+  --status-error:              0 84.2% 60.2%;
+  --status-error-foreground:   0 0% 98%;
+  --status-unknown:            24 10% 18%; /* stone-800 */
+  --status-unknown-foreground: 24 6% 70%;  /* stone-300 */
+
   /* Night shadows for dark mode */
   --shadow-night: 0 8px 32px rgba(0,0,0,0.4);
   --shadow-night-sm: 0 2px 8px rgba(0,0,0,0.3);

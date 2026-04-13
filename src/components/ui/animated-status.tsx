@@ -26,8 +26,8 @@ export function AnimatedStatus({
         return {
           variant: 'default' as const,
           icon: CheckCircle,
-          className: 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300',
-          iconClass: 'text-green-500',
+          className: 'bg-status-ready text-status-ready-foreground',
+          iconClass: 'text-status-ready-foreground',
           animation: ''
         }
       case 'pending':
@@ -36,8 +36,8 @@ export function AnimatedStatus({
         return {
           variant: 'secondary' as const,
           icon: Clock,
-          className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300',
-          iconClass: 'text-yellow-500',
+          className: 'bg-status-pending text-status-pending-foreground',
+          iconClass: 'text-status-pending-foreground',
           animation: 'animate-pulse'
         }
       case 'failed':
@@ -45,16 +45,16 @@ export function AnimatedStatus({
         return {
           variant: 'destructive' as const,
           icon: XCircle,
-          className: 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300',
-          iconClass: 'text-red-500',
+          className: 'bg-status-error text-status-error-foreground',
+          iconClass: 'text-status-error-foreground',
           animation: ''
         }
       default:
         return {
           variant: 'outline' as const,
           icon: AlertCircle,
-          className: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300',
-          iconClass: 'text-gray-500',
+          className: 'bg-status-unknown text-status-unknown-foreground',
+          iconClass: 'text-status-unknown-foreground',
           animation: ''
         }
     }

@@ -24,6 +24,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Users, Plus, MessageCircle, Palette, Clock, MoreHorizontal, Eye, Edit, Trash2, Search } from 'lucide-react'
+import { AnimatedStatus } from '@/components/ui/animated-status'
 import Link from 'next/link'
 import { usePersonas, useDeletePersona } from '@/hooks/use-personas'
 import { useWatchPersonas } from '@/hooks/use-watch'
@@ -87,39 +88,6 @@ export default function ClusterPersonas() {
     )) as string[]
     return uniqueTones.sort()
   }, [allPersonas])
-
-  const getStatusColor = (phase?: string) => {
-    switch (phase) {
-      case 'Ready':
-      case 'Available':
-        return 'bg-green-100 text-green-800'
-      case 'Pending':
-      case 'Validating':
-        return 'bg-yellow-100 text-yellow-800'
-      case 'Failed':
-      case 'Error':
-        return 'bg-red-100 text-red-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
-    }
-  }
-
-  const getToneColor = (tone?: string) => {
-    switch (tone) {
-      case 'professional':
-        return 'bg-blue-100 text-blue-800'
-      case 'friendly':
-        return 'bg-green-100 text-green-800'
-      case 'casual':
-        return 'bg-orange-100 text-orange-800'
-      case 'formal':
-        return 'bg-purple-100 text-purple-800'
-      case 'empathetic':
-        return 'bg-pink-100 text-pink-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
-    }
-  }
 
   const handleConfirmDelete = () => {
     if (!deletingPersona) return
@@ -258,7 +226,7 @@ export default function ClusterPersonas() {
                           </TableCell>
                           <TableCell>
                             {persona.spec.tone ? (
-                              <Badge className={getToneColor(persona.spec.tone)} variant="secondary">
+                              <Badge className="bg-muted text-muted-foreground" variant="secondary">
                                 {persona.spec.tone}
                               </Badge>
                             ) : (
@@ -266,9 +234,7 @@ export default function ClusterPersonas() {
                             )}
                           </TableCell>
                           <TableCell>
-                            <Badge className={getStatusColor(persona.status?.phase)}>
-                              {persona.status?.phase || 'Unknown'}
-                            </Badge>
+                            <AnimatedStatus status={persona.status?.phase || 'Unknown'} size="sm" />
                           </TableCell>
                           <TableCell>
                             <span className="text-sm text-muted-foreground">

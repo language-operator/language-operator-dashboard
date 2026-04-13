@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
-  Users, AlertCircle, CheckCircle, Clock, ArrowLeft,
+  Users, AlertCircle, ArrowLeft,
   Edit, Trash2, MoreVertical, FileCode, Copy, Check
 } from 'lucide-react'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
@@ -21,6 +21,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { ResourceEventsActivity } from '@/components/ui/events-activity'
 import { DeleteResourceDialog } from '@/components/ui/delete-resource-dialog'
 import { toast } from 'sonner'
+import { AnimatedStatus } from '@/components/ui/animated-status'
 
 function formatTimeAgo(timestamp?: string | Date) {
   if (!timestamp) return 'Unknown'
@@ -53,34 +54,6 @@ export default function ClusterPersonaDetailPage() {
   const deletePersona = useDeletePersona(clusterName)
 
   const persona = personaResponse?.data?.persona
-
-  const getStatusIcon = (persona: any) => {
-    const phase = persona?.status?.phase || 'Unknown'
-
-    if (phase === 'Ready' || phase === 'Available') {
-      return <CheckCircle className="h-5 w-5 text-green-500" />
-    } else if (phase === 'Pending' || phase === 'Validating') {
-      return <Clock className="h-5 w-5 text-yellow-500" />
-    } else if (phase === 'Failed' || phase === 'Error') {
-      return <AlertCircle className="h-5 w-5 text-red-500" />
-    } else {
-      return <AlertCircle className="h-5 w-5 text-gray-500" />
-    }
-  }
-
-  const getStatusColor = (persona: any) => {
-    const phase = persona?.status?.phase || 'Unknown'
-
-    if (phase === 'Ready' || phase === 'Available') {
-      return 'bg-green-100 text-green-800'
-    } else if (phase === 'Pending' || phase === 'Validating') {
-      return 'bg-yellow-100 text-yellow-800'
-    } else if (phase === 'Failed' || phase === 'Error') {
-      return 'bg-red-100 text-red-800'
-    } else {
-      return 'bg-gray-100 text-gray-800'
-    }
-  }
 
   const handleDeletePersona = () => {
     if (!persona?.metadata.name) return
@@ -148,7 +121,7 @@ export default function ClusterPersonaDetailPage() {
     return (
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
             <h3 className="text-lg font-medium mb-2">Persona not found</h3>
             <p className="text-muted-foreground mb-4">
               The persona &quot;{personaName}&quot; could not be found in cluster &quot;{clusterName}&quot;.
@@ -174,10 +147,7 @@ export default function ClusterPersonaDetailPage() {
             <div className="flex items-center space-x-3">
               <span>{persona.metadata?.name}</span>
               <div className="flex items-center space-x-2">
-                {getStatusIcon(persona)}
-                <Badge className={getStatusColor(persona)}>
-                  {persona.status?.phase || 'Unknown'}
-                </Badge>
+                <AnimatedStatus status={persona.status?.phase || 'Unknown'} size="sm" />
               </div>
             </div>
           }
@@ -205,7 +175,7 @@ export default function ClusterPersonaDetailPage() {
                   <DropdownMenuItem
                     onClick={handleDeletePersona}
                     disabled={deletePersona.isPending}
-                    className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                    className="text-destructive focus:text-destructive"
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
                     {deletePersona.isPending ? 'Deleting...' : 'Delete Persona'}
@@ -236,9 +206,7 @@ export default function ClusterPersonaDetailPage() {
               )}
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Status</p>
-                <Badge variant={persona.status?.phase === 'Ready' ? 'default' : 'secondary'}>
-                  {persona.status?.phase || 'Unknown'}
-                </Badge>
+                <AnimatedStatus status={persona.status?.phase || 'Unknown'} size="sm" />
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Created</p>

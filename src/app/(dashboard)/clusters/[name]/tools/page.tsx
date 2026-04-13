@@ -165,7 +165,7 @@ export default function ClusterTools() {
                 <div className="flex-1 flex items-center gap-2">
                   <Badge 
                     variant={['Ready', 'Running'].includes(installedTool.status.phase) ? 'default' : 'secondary'}
-                    className={`text-xs ${['Ready', 'Running'].includes(installedTool.status.phase) ? 'bg-green-100 text-green-800 border-green-200' : ''}`}
+                    className={`text-xs ${['Ready', 'Running'].includes(installedTool.status.phase) ? 'bg-status-ready text-status-ready-foreground' : ''}`}
                   >
                     {['Ready', 'Running'].includes(installedTool.status.phase) ? 'Installed' : installedTool.status.phase}
                   </Badge>
@@ -179,7 +179,7 @@ export default function ClusterTools() {
             ) : (
               <>
                 {isInstalled ? (
-                  <Button disabled className="flex-1 bg-green-100 text-green-800 border-green-200 hover:bg-green-100" size="sm">
+                  <Button disabled className="flex-1 bg-status-ready text-status-ready-foreground hover:bg-status-ready" size="sm">
                     <CheckCircle className="h-4 w-4 mr-2" />
                     Installed
                   </Button>

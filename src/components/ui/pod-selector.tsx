@@ -63,11 +63,11 @@ export function PodSelector({
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Running': return 'text-green-600'
-      case 'Succeeded': return 'text-blue-600'
-      case 'Failed': return 'text-red-600'
-      case 'Pending': return 'text-yellow-600'
-      default: return 'text-gray-600'
+      case 'Running': return 'text-status-ready-foreground'
+      case 'Succeeded': return 'text-muted-foreground'
+      case 'Failed': return 'text-destructive'
+      case 'Pending': return 'text-status-pending-foreground'
+      default: return 'text-muted-foreground'
     }
   }
 
@@ -105,7 +105,7 @@ export function PodSelector({
                     <SelectItem key={pod.name} value={pod.name}>
                       <div className="flex items-center justify-between w-full">
                         <div className="flex items-center gap-2">
-                          <span className={`w-2 h-2 rounded-full ${pod.isRunning ? 'bg-green-500' : 'bg-gray-400'}`} />
+                          <span className={`w-2 h-2 rounded-full ${pod.isRunning ? 'bg-accent' : 'bg-muted-foreground'}`} />
                           <span className="font-mono text-sm">{pod.name}</span>
                         </div>
                         <div className="flex items-center gap-2 ml-4">
@@ -139,10 +139,10 @@ export function PodSelector({
                     {getContainersForPod(selectedPod).map(container => (
                       <SelectItem key={container.name} value={container.name}>
                         <div className="flex items-center gap-2">
-                          <span className={`w-2 h-2 rounded-full ${container.isToolContainer ? 'bg-blue-500' : 'bg-gray-400'}`} />
+                          <span className={`w-2 h-2 rounded-full ${container.isToolContainer ? 'bg-accent' : 'bg-muted-foreground'}`} />
                           <span className="font-mono text-sm">{container.name}</span>
                           {container.isToolContainer && (
-                            <span className="text-xs bg-blue-100 text-blue-800 px-1 rounded">tool</span>
+                            <span className="text-xs bg-muted text-muted-foreground px-1">tool</span>
                           )}
                         </div>
                       </SelectItem>
@@ -185,13 +185,13 @@ export function PodSelector({
           </div>
           <div className="flex items-center gap-2">
             {showModeIndicator && deploymentMode === 'sidecar' && (
-              <div className="flex items-center gap-1 text-xs text-muted-foreground bg-orange-50 px-2 py-1 rounded">
+              <div className="flex items-center gap-1 text-xs text-muted-foreground bg-muted px-2 py-1">
                 <Layers className="h-3 w-3" />
                 Sidecar Mode
               </div>
             )}
             {showModeIndicator && deploymentMode === 'service' && (
-              <div className="flex items-center gap-1 text-xs text-muted-foreground bg-blue-50 px-2 py-1 rounded">
+              <div className="flex items-center gap-1 text-xs text-muted-foreground bg-muted px-2 py-1">
                 <Box className="h-3 w-3" />
                 Service Mode
               </div>
@@ -229,7 +229,7 @@ export function PodSelector({
                   <SelectItem key={pod.name} value={pod.name}>
                     <div className="flex items-center justify-between w-full">
                       <div className="flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full ${pod.isRunning ? 'bg-green-500' : 'bg-gray-400'}`} />
+                        <span className={`w-2 h-2 rounded-full ${pod.isRunning ? 'bg-accent' : 'bg-muted-foreground'}`} />
                         <span className="font-mono text-sm">{pod.name}</span>
                       </div>
                       <div className="flex items-center gap-2 ml-4">
@@ -264,10 +264,10 @@ export function PodSelector({
                   {getContainersForPod(selectedPod).map(container => (
                     <SelectItem key={container.name} value={container.name}>
                       <div className="flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full ${container.isToolContainer ? 'bg-blue-500' : 'bg-gray-400'}`} />
+                        <span className={`w-2 h-2 rounded-full ${container.isToolContainer ? 'bg-accent' : 'bg-muted-foreground'}`} />
                         <span className="font-mono text-sm">{container.name}</span>
                         {container.isToolContainer && (
-                          <span className="text-xs bg-blue-100 text-blue-800 px-1 rounded">tool</span>
+                          <span className="text-xs bg-muted text-muted-foreground px-1">tool</span>
                         )}
                       </div>
                     </SelectItem>

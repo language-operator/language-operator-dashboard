@@ -172,8 +172,8 @@ export function AgentLogs({ agent, clusterName }: AgentLogsProps) {
       {isStreaming && (
         <Card>
           <CardContent className="p-4">
-            <div className="flex items-center gap-2 text-green-600">
-              <div className="animate-pulse w-2 h-2 bg-green-500 rounded-full" />
+            <div className="flex items-center gap-2 text-accent">
+              <div className="animate-pulse w-2 h-2 bg-accent rounded-full" />
               <span className="text-sm">Streaming logs in real-time</span>
             </div>
           </CardContent>

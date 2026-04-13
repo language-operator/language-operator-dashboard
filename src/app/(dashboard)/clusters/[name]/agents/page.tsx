@@ -24,6 +24,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Bot, Plus, MoreHorizontal, Eye, Edit, Trash2, Search } from 'lucide-react'
+import { AnimatedStatus } from '@/components/ui/animated-status'
 import Link from 'next/link'
 import { LanguageAgent } from '@/types/agent'
 import { useAgents, useDeleteAgent } from '@/hooks/use-agents'
@@ -88,23 +89,6 @@ export default function ClusterAgents() {
   }, [agents, search])
 
   const clusterAgents = filteredAgents
-
-  const getStatusColor = (phase?: string) => {
-    switch (phase) {
-      case 'Running':
-        return 'bg-green-100 text-green-800'
-      case 'Pending':
-        return 'bg-yellow-100 text-yellow-800'
-      case 'Failed':
-      case 'Degraded':
-        return 'bg-red-100 text-red-800'
-      case 'Updating':
-        return 'bg-blue-100 text-blue-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
-    }
-  }
-
 
   return (
     <div className="space-y-6">
@@ -235,9 +219,7 @@ export default function ClusterAgents() {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Badge className={getStatusColor(agent.status?.phase)}>
-                              {agent.status?.phase || 'Unknown'}
-                            </Badge>
+                            <AnimatedStatus status={agent.status?.phase || 'Unknown'} size="sm" />
                           </TableCell>
                           <TableCell>
                             <span className="text-sm text-muted-foreground">

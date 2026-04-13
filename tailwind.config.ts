@@ -66,6 +66,22 @@ const config: Config = {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
+        "status-ready": {
+          DEFAULT: "hsl(var(--status-ready))",
+          foreground: "hsl(var(--status-ready-foreground))",
+        },
+        "status-pending": {
+          DEFAULT: "hsl(var(--status-pending))",
+          foreground: "hsl(var(--status-pending-foreground))",
+        },
+        "status-error": {
+          DEFAULT: "hsl(var(--status-error))",
+          foreground: "hsl(var(--status-error-foreground))",
+        },
+        "status-unknown": {
+          DEFAULT: "hsl(var(--status-unknown))",
+          foreground: "hsl(var(--status-unknown-foreground))",
+        },
         chart: {
           "1": "hsl(var(--chart-1))",
           "2": "hsl(var(--chart-2))",

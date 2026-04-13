@@ -24,6 +24,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Cpu, Plus, ExternalLink, MoreHorizontal, Eye, Edit, Trash2, Search } from 'lucide-react'
+import { AnimatedStatus } from '@/components/ui/animated-status'
 import Link from 'next/link'
 import { useModels, useDeleteModel } from '@/hooks/use-models'
 import { useWatchModels } from '@/hooks/use-watch'
@@ -100,21 +101,6 @@ export default function ClusterModels() {
     )) as string[]
     return uniqueProviders.sort()
   }, [allModels])
-
-  const getStatusColor = (phase?: string) => {
-    switch (phase) {
-      case 'Ready':
-      case 'Available':
-      case 'Managed':
-        return 'bg-green-100 text-green-800'
-      case 'Pending':
-        return 'bg-yellow-100 text-yellow-800'
-      case 'Failed':
-        return 'bg-red-100 text-red-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
-    }
-  }
 
   if (isLoading) {
     return (
@@ -231,9 +217,7 @@ export default function ClusterModels() {
                         <span className="text-sm font-mono">{model.spec.modelName}</span>
                       </TableCell>
                       <TableCell>
-                        <Badge className={getStatusColor(model.status?.phase)}>
-                          {model.status?.phase || 'Unknown'}
-                        </Badge>
+                        <AnimatedStatus status={model.status?.phase || 'Unknown'} size="sm" />
                       </TableCell>
                       <TableCell>
                         <span className="text-sm text-muted-foreground">

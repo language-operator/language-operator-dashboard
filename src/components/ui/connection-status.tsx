@@ -18,14 +18,14 @@ export function ConnectionStatus({
 }: ConnectionStatusProps) {
   const getDotColor = () => {
     if (connectionError) {
-      return 'bg-red-500'
+      return 'bg-destructive'
     }
 
     if (isConnected) {
-      return 'bg-green-500'
+      return 'bg-accent'
     }
 
-    return 'bg-yellow-500'
+    return 'bg-status-pending-foreground'
   }
 
   return (
