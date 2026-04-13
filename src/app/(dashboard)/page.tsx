@@ -306,7 +306,7 @@ export default function OrganizationDashboard() {
                   <div key={agent.metadata.name} className="flex items-center justify-between">
                     <div className="flex items-center space-x-3 min-w-0 flex-1">
                       <div className="min-w-0 flex-1">
-                        <Link href={`/clusters/${agent.spec?.clusterRef || agent.metadata.namespace}/agents/${agent.metadata.name}`} className="text-sm font-light truncate hover:text-foreground hover:underline">
+                        <Link href={`/clusters/${agent.metadata.namespace}/agents/${agent.metadata.name}`} className="text-sm font-light truncate hover:text-foreground hover:underline">
                           {agent.metadata.name}
                         </Link>
                         <div className="mt-1">
