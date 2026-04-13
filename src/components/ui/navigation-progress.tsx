@@ -86,10 +86,10 @@ export function NavigationProgress({
       }}
     >
       <div 
-        className="h-full bg-green-500" 
-        style={{ 
-          boxShadow: progress > 0 ? '0 0 10px rgba(34, 197, 94, 0.6), 0 0 5px rgba(34, 197, 94, 0.4)' : 'none' 
-        }} 
+        className="h-full bg-accent"
+        style={{
+          boxShadow: progress > 0 ? '0 0 10px rgba(251,191,36,0.6), 0 0 5px rgba(251,191,36,0.4)' : 'none'
+        }}
       />
     </div>
   )

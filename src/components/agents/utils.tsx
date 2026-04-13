@@ -57,13 +57,13 @@ export function getStatusIcon(agent: LanguageAgent) {
   const phase = agent.status?.phase || 'Unknown'
 
   if (phase === 'Running') {
-    return <CheckCircle className="h-5 w-5 text-green-500" />
+    return <CheckCircle className="h-5 w-5 text-status-ready-foreground" />
   } else if (phase === 'Pending') {
-    return <Clock className="h-5 w-5 text-yellow-500" />
+    return <Clock className="h-5 w-5 text-status-pending-foreground" />
   } else if (phase === 'Failed') {
-    return <AlertCircle className="h-5 w-5 text-red-500" />
+    return <AlertCircle className="h-5 w-5 text-destructive" />
   } else {
-    return <AlertCircle className="h-5 w-5 text-gray-500" />
+    return <AlertCircle className="h-5 w-5 text-muted-foreground" />
   }
 }
 
@@ -71,12 +71,12 @@ export function getStatusColor(agent: LanguageAgent) {
   const phase = agent.status?.phase || 'Unknown'
 
   if (phase === 'Running') {
-    return 'text-green-600'
+    return 'text-status-ready-foreground'
   } else if (phase === 'Pending') {
-    return 'text-yellow-600'
+    return 'text-status-pending-foreground'
   } else if (phase === 'Failed') {
-    return 'text-red-600'
+    return 'text-destructive'
   } else {
-    return 'text-gray-600'
+    return 'text-muted-foreground'
   }
 }

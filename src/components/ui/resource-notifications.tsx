@@ -78,7 +78,7 @@ export function useResourceNotifications({
               description: `${resourceName} has been created`,
               icon: Plus,
               duration: 4000,
-              className: 'border-green-200 bg-green-50'
+              className: 'border-accent/30 bg-accent/10'
             }
           case 'DELETED':
             return {
@@ -86,7 +86,7 @@ export function useResourceNotifications({
               description: `${resourceName} has been deleted`,
               icon: Trash2,
               duration: 4000,
-              className: 'border-red-200 bg-red-50'
+              className: 'border-destructive/30 bg-destructive/10'
             }
           case 'MODIFIED':
             const status = event.data?.status?.phase
@@ -108,7 +108,7 @@ export function useResourceNotifications({
               description: `${resourceName} has been updated`,
               icon: Edit,
               duration: 3000,
-              className: 'border-blue-200 bg-blue-50'
+              className: 'border-muted bg-muted'
             }
           case 'ERROR':
             return {
@@ -116,7 +116,7 @@ export function useResourceNotifications({
               description: event.data?.error || `Error with ${resourceName}`,
               icon: AlertCircle,
               duration: 6000,
-              className: 'border-red-200 bg-red-50'
+              className: 'border-destructive/30 bg-destructive/10'
             }
           default:
             return {
@@ -163,26 +163,26 @@ function getStatusNotificationConfig(status: string) {
       return {
         icon: CheckCircle,
         duration: 4000,
-        className: 'border-green-200 bg-green-50'
+        className: 'border-status-ready/30 bg-status-ready'
       }
     case 'failed':
     case 'error':
       return {
         icon: XCircle,
         duration: 6000,
-        className: 'border-red-200 bg-red-50'
+        className: 'border-destructive/30 bg-destructive/10'
       }
     case 'pending':
       return {
         icon: AlertCircle,
         duration: 3000,
-        className: 'border-yellow-200 bg-yellow-50'
+        className: 'border-status-pending bg-status-pending'
       }
     default:
       return {
         icon: Edit,
         duration: 3000,
-        className: 'border-blue-200 bg-blue-50'
+        className: 'border-muted bg-muted'
       }
   }
 }

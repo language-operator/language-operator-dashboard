@@ -97,7 +97,7 @@ function ClusterTable({ clusters, onDelete, isDeleting }: ClusterTableProps) {
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center space-x-2">
-                    <LinkIcon className="h-3 w-3 text-blue-500" />
+                    <LinkIcon className="h-3 w-3 text-muted-foreground" />
                     <span className="text-sm font-mono">
                       {cluster.spec.domain || 'No domain configured'}
                     </span>
@@ -106,7 +106,7 @@ function ClusterTable({ clusters, onDelete, isDeleting }: ClusterTableProps) {
                 <TableCell>
                   <Link href={`/clusters/${cluster.metadata.name}/agents`}>
                     <div className="flex items-center space-x-1 hover:text-primary cursor-pointer">
-                      <Bot className="h-3 w-3 text-purple-500" />
+                      <Bot className="h-3 w-3 text-muted-foreground" />
                       <span className="text-sm">
                         {cluster.status?.agentCount || 0}
                       </span>

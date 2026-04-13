@@ -60,11 +60,11 @@ function ModelOverview({ model, clusterName }: ModelOverviewProps) {
                   </div>
                   <div className="flex items-center space-x-2">
                     {condition.status === 'True' ? (
-                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      <CheckCircle className="h-4 w-4 text-status-ready-foreground" />
                     ) : condition.status === 'False' ? (
-                      <AlertCircle className="h-4 w-4 text-red-500" />
+                      <AlertCircle className="h-4 w-4 text-destructive" />
                     ) : (
-                      <Clock className="h-4 w-4 text-yellow-500" />
+                      <Clock className="h-4 w-4 text-status-pending-foreground" />
                     )}
                   </div>
                 </div>

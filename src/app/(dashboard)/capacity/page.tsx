@@ -101,7 +101,7 @@ function sortRows(rows: CapacityRow[], key: SortKey, dir: 'asc' | 'desc'): Capac
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 function PctBar({ pct }: { pct: number }) {
-  const color = pct >= 90 ? 'bg-red-500' : pct >= 70 ? 'bg-amber-500' : 'bg-green-500'
+  const color = pct >= 90 ? 'bg-destructive' : pct >= 70 ? 'bg-accent' : 'bg-status-ready-foreground'
   return (
     <div className="h-1 w-full rounded-full bg-stone-200 dark:bg-stone-700 mt-1">
       <div className={`h-1 rounded-full ${color}`} style={{ width: `${pct}%` }} />

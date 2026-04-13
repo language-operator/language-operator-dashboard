@@ -98,7 +98,7 @@ export function GlobalLayout({ children }: GlobalLayoutProps) {
       </header>
       
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900">
+      <main className="flex-1 overflow-y-auto bg-background">
         {children}
       </main>
     </div>

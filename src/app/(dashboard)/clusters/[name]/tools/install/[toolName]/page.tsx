@@ -148,9 +148,9 @@ export default function InstallToolPage() {
 
       {/* Success Message */}
       {success && (
-        <Alert className="bg-green-50 border-green-200 dark:bg-green-950/50 dark:border-green-800">
-          <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-          <AlertDescription className="text-green-800 dark:text-green-200">
+        <Alert className="bg-status-ready border-status-ready/30">
+          <CheckCircle className="h-4 w-4 text-status-ready-foreground" />
+          <AlertDescription className="text-status-ready-foreground">
             Tool installed successfully! Redirecting to tools list...
           </AlertDescription>
         </Alert>

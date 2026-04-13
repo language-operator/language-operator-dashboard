@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Boxes, ExternalLink, Users } from 'lucide-react'
+import { AnimatedStatus } from '@/components/ui/animated-status'
 import { LanguageCluster } from '@/types/cluster'
 
 interface ClusterSelectionModalProps {
@@ -53,11 +54,11 @@ export function ClusterSelectionModal({
   const getActionIcon = () => {
     switch (actionType) {
       case 'agent':
-        return <Users className="h-5 w-5 text-blue-500" />
+        return <Users className="h-5 w-5 text-muted-foreground" />
       case 'model':
-        return <Boxes className="h-5 w-5 text-green-500" />
+        return <Boxes className="h-5 w-5 text-muted-foreground" />
       case 'tool':
-        return <ExternalLink className="h-5 w-5 text-purple-500" />
+        return <ExternalLink className="h-5 w-5 text-muted-foreground" />
     }
   }
 
@@ -101,29 +102,29 @@ export function ClusterSelectionModal({
             </div>
           ) : (
             <div className="space-y-3">
-              <div className="text-sm font-medium text-gray-700 mb-3">
+              <div className="text-sm font-medium text-muted-foreground mb-3">
                 Available Clusters ({clusters.length})
               </div>
               <div className="grid gap-2 max-h-64 overflow-y-auto">
                 {clusters.map((cluster: LanguageCluster) => (
                   <div
                     key={cluster.metadata?.name}
-                    className={`p-3 border rounded-lg cursor-pointer transition-all ${
+                    className={`p-3 border cursor-pointer transition-all ${
                       selectedCluster === cluster.metadata?.name
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                        ? 'border-accent bg-accent/10'
+                        : 'border-muted hover:border-border hover:bg-muted'
                     }`}
                     onClick={() => setSelectedCluster(cluster.metadata?.name || '')}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <Boxes className="h-5 w-5 text-blue-500" />
+                        <Boxes className="h-5 w-5 text-muted-foreground" />
                         <div>
                           <div className="font-medium text-sm">
                             {cluster.metadata?.name}
                           </div>
                           {cluster.spec?.domain && (
-                            <div className="text-xs text-gray-500">
+                            <div className="text-xs text-muted-foreground">
                               {cluster.spec.domain}
                             </div>
                           )}
@@ -131,15 +132,7 @@ export function ClusterSelectionModal({
                       </div>
                       <div className="flex items-center gap-2">
                         {cluster.status?.phase && (
-                          <span className={`text-xs px-2 py-1 rounded-full ${
-                            cluster.status.phase === 'Ready' 
-                              ? 'bg-green-100 text-green-800' 
-                              : cluster.status.phase === 'Pending'
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : 'bg-gray-100 text-gray-800'
-                          }`}>
-                            {cluster.status.phase}
-                          </span>
+                          <AnimatedStatus status={cluster.status.phase} size="sm" showIcon={false} />
                         )}
                       </div>
                     </div>

@@ -267,7 +267,7 @@ export default function ProfilePage() {
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-2">
-            <Badge variant="default" className="bg-green-100 text-green-800">
+            <Badge variant="default" className="bg-status-ready text-status-ready-foreground">
               Active
             </Badge>
             <span className="text-sm text-stone-600 dark:text-stone-400">

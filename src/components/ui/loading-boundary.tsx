@@ -112,13 +112,13 @@ class LoadingBoundaryClass extends React.Component<
       }
 
       return (
-        <Card className="border-red-200 bg-red-50">
+        <Card className="border-destructive/30 bg-destructive/10">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-red-700">
-              <AlertCircle className="h-5 w-5" />
+            <CardTitle className="flex items-center gap-2 text-foreground">
+              <AlertCircle className="h-5 w-5 text-destructive" />
               Loading Error
             </CardTitle>
-            <CardDescription className="text-red-600">
+            <CardDescription className="text-muted-foreground">
               Failed to load content
             </CardDescription>
           </CardHeader>
@@ -143,21 +143,21 @@ class LoadingBoundaryClass extends React.Component<
     // Timeout warning state
     if (hasTimedOut) {
       return (
-        <Card className="border-yellow-200 bg-yellow-50">
+        <Card className="border-accent/30 bg-accent/10">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-yellow-700">
+            <CardTitle className="flex items-center gap-2 text-foreground">
               <Loader2 className="h-5 w-5 animate-spin" />
               Still Loading...
             </CardTitle>
-            <CardDescription className="text-yellow-600">
+            <CardDescription className="text-muted-foreground">
               This is taking longer than expected
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <Alert className="border-yellow-200 bg-yellow-50">
-                <AlertCircle className="h-4 w-4 text-yellow-600" />
-                <AlertDescription className="text-yellow-700">
+              <Alert className="border-accent/30 bg-accent/10">
+                <AlertCircle className="h-4 w-4 text-muted-foreground" />
+                <AlertDescription className="text-foreground">
                   The page is still loading. You can wait a bit longer or try refreshing.
                 </AlertDescription>
               </Alert>

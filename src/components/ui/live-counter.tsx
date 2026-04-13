@@ -60,17 +60,17 @@ export function LiveCounter({
       className={cn(
         'inline-block transition-all duration-200 font-bold text-2xl',
         isAnimating && 'scale-110',
-        hasIncreased && 'text-green-600 dark:text-green-400',
-        hasDecreased && 'text-red-600 dark:text-red-400',
+        hasIncreased && 'text-accent',
+        hasDecreased && 'text-destructive',
         className
       )}
     >
       {displayValue}
       {hasIncreased && isAnimating && (
-        <span className="ml-1 text-xs text-green-500 animate-bounce">↗</span>
+        <span className="ml-1 text-xs text-accent animate-bounce">↗</span>
       )}
       {hasDecreased && isAnimating && (
-        <span className="ml-1 text-xs text-red-500 animate-bounce">↘</span>
+        <span className="ml-1 text-xs text-destructive animate-bounce">↘</span>
       )}
     </span>
   )
@@ -91,17 +91,17 @@ export function LiveCounterCard({
   className
 }: LiveCounterCardProps) {
   return (
-    <div className={cn("p-4 bg-white dark:bg-gray-900 rounded-lg border", className)}>
+    <div className={cn("p-4 bg-card rounded-lg border", className)}>
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-gray-600 dark:text-gray-300">{title}</p>
-          <LiveCounter 
-            value={value} 
-            previousValue={previousValue} 
-            className="text-2xl" 
+          <p className="text-sm font-medium text-muted-foreground">{title}</p>
+          <LiveCounter
+            value={value}
+            previousValue={previousValue}
+            className="text-2xl"
           />
           {description && (
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               {description}
             </p>
           )}

@@ -164,9 +164,9 @@ export function WorkspaceFileTree({
   const getFileIcon = (file: DirectoryNode) => {
     if (file.type === 'directory') {
       return file.isExpanded ? (
-        <FolderOpen className="w-4 h-4 text-blue-500" />
+        <FolderOpen className="w-4 h-4 text-muted-foreground" />
       ) : (
-        <Folder className="w-4 h-4 text-blue-500" />
+        <Folder className="w-4 h-4 text-muted-foreground" />
       )
     }
 
@@ -174,26 +174,26 @@ export function WorkspaceFileTree({
     
     // Code files
     if (['js', 'ts', 'jsx', 'tsx', 'py', 'rb', 'go', 'rs', 'java', 'c', 'cpp', 'h'].includes(extension || '')) {
-      return <FileCode className="w-4 h-4 text-green-500" />
+      return <FileCode className="w-4 h-4 text-muted-foreground" />
     }
     
     // Text files
     if (['txt', 'md', 'json', 'yaml', 'yml', 'xml', 'csv', 'log'].includes(extension || '')) {
-      return <FileText className="w-4 h-4 text-gray-500" />
+      return <FileText className="w-4 h-4 text-muted-foreground" />
     }
     
     // Image files
     if (['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'].includes(extension || '')) {
-      return <Image className="w-4 h-4 text-purple-500" />
+      return <Image className="w-4 h-4 text-muted-foreground" />
     }
     
     // Archive files
     if (['zip', 'tar', 'gz', 'rar', '7z'].includes(extension || '')) {
-      return <Archive className="w-4 h-4 text-orange-500" />
+      return <Archive className="w-4 h-4 text-muted-foreground" />
     }
     
     // Default file icon
-    return <File className="w-4 h-4 text-gray-400" />
+    return <File className="w-4 h-4 text-muted-foreground" />
   }
 
   const renderNode = (node: DirectoryNode, depth = 0) => {

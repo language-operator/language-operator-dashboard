@@ -196,21 +196,21 @@ export default function OrganizationDashboard() {
                 {[1, 2, 3].map((i) => (
                   <div key={i} className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <div className="h-6 w-6 bg-gray-200 rounded animate-pulse" />
-                      <div className="h-4 bg-gray-200 rounded animate-pulse w-24" />
+                      <div className="h-6 w-6 bg-muted rounded animate-pulse" />
+                      <div className="h-4 bg-muted rounded animate-pulse w-24" />
                     </div>
-                    <div className="h-3 bg-gray-100 rounded animate-pulse w-16" />
+                    <div className="h-3 bg-muted/50 rounded animate-pulse w-16" />
                   </div>
                 ))}
               </div>
             ) : clustersError ? (
               <div className="text-center py-4">
-                <Boxes className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                <Boxes className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
                 <p className="text-sm text-stone-600 dark:text-stone-400">Failed to load clusters</p>
               </div>
             ) : !clustersData?.data || clustersData.data.length === 0 ? (
               <div className="text-center py-4">
-                <Boxes className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                <Boxes className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
                 <p className="text-sm text-stone-600 dark:text-stone-400">No clusters deployed</p>
                 <p className="text-xs text-stone-500 dark:text-stone-500 mt-1">Deploy your first cluster to get started</p>
               </div>
@@ -220,7 +220,7 @@ export default function OrganizationDashboard() {
                   <div key={cluster.metadata.name} className="flex items-center justify-between">
                     <div className="flex items-center space-x-3 min-w-0 flex-1">
                       <div className="min-w-0 flex-1">
-                        <Link href={`/clusters/${cluster.metadata.name}`} className="text-sm font-medium truncate hover:text-blue-600 hover:underline">
+                        <Link href={`/clusters/${cluster.metadata.name}`} className="text-sm font-medium truncate hover:text-foreground hover:underline">
                           {cluster.metadata.name}
                         </Link>
                         <div className="mt-1">
@@ -254,7 +254,7 @@ export default function OrganizationDashboard() {
                 ))}
                 {clustersData.data.length > 5 && (
                   <div className="pt-2 border-t">
-                    <Link href={'/clusters'} className="text-xs text-blue-600 hover:text-blue-800">
+                    <Link href={'/clusters'} className="text-xs text-muted-foreground hover:text-foreground">
                       View all {clustersData.data.length} clusters →
                     </Link>
                   </div>
@@ -280,21 +280,21 @@ export default function OrganizationDashboard() {
                 {[1, 2, 3].map((i) => (
                   <div key={i} className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <div className="h-6 w-6 bg-gray-200 rounded animate-pulse" />
-                      <div className="h-4 bg-gray-200 rounded animate-pulse w-24" />
+                      <div className="h-6 w-6 bg-muted rounded animate-pulse" />
+                      <div className="h-4 bg-muted rounded animate-pulse w-24" />
                     </div>
-                    <div className="h-3 bg-gray-100 rounded animate-pulse w-16" />
+                    <div className="h-3 bg-muted/50 rounded animate-pulse w-16" />
                   </div>
                 ))}
               </div>
             ) : agentsError ? (
               <div className="text-center py-4">
-                <Bot className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                <Bot className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
                 <p className="text-sm text-stone-600 dark:text-stone-400">Failed to load agents</p>
               </div>
             ) : !agentsData?.data || agentsData.data.length === 0 ? (
               <div className="text-center py-4">
-                <Bot className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                <Bot className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
                 <p className="text-sm text-stone-600 dark:text-stone-400">No agents deployed</p>
                 <p className="text-xs text-stone-500 dark:text-stone-500 mt-1">Create your first agent to get started</p>
               </div>
@@ -304,7 +304,7 @@ export default function OrganizationDashboard() {
                   <div key={agent.metadata.name} className="flex items-center justify-between">
                     <div className="flex items-center space-x-3 min-w-0 flex-1">
                       <div className="min-w-0 flex-1">
-                        <Link href={`/clusters/${agent.spec?.clusterRef || agent.metadata.namespace}/agents/${agent.metadata.name}`} className="text-sm font-medium truncate hover:text-blue-600 hover:underline">
+                        <Link href={`/clusters/${agent.spec?.clusterRef || agent.metadata.namespace}/agents/${agent.metadata.name}`} className="text-sm font-medium truncate hover:text-foreground hover:underline">
                           {agent.metadata.name}
                         </Link>
                         <div className="mt-1">
@@ -316,7 +316,7 @@ export default function OrganizationDashboard() {
                 ))}
                 {agentsData.data.length > 5 && (
                   <div className="pt-2 border-t">
-                    <Link href={'/agents'} className="text-xs text-blue-600 hover:text-blue-800">
+                    <Link href={'/agents'} className="text-xs text-muted-foreground hover:text-foreground">
                       View all {agentsData.data.length} agents →
                     </Link>
                   </div>
@@ -342,7 +342,7 @@ export default function OrganizationDashboard() {
               className="flex flex-col items-center p-6 border border-stone-200 hover:bg-stone-50 hover:border-amber-900/40 cursor-pointer transition-all dark:border-stone-600 dark:hover:bg-stone-800 dark:hover:border-amber-600/60"
               onClick={() => handleQuickAction('cluster')}
             >
-              <Boxes className="h-8 w-8 text-orange-500 mb-3" />
+              <Boxes className="h-8 w-8 text-muted-foreground mb-3" />
               <span className="text-sm font-light text-stone-900 dark:text-stone-300">Deploy Cluster</span>
               <span className="text-[11px] font-light text-stone-600 dark:text-stone-400 text-center mt-1">
                 Create cluster for agents
@@ -358,7 +358,7 @@ export default function OrganizationDashboard() {
               }`}
               onClick={() => handleQuickAction('agent')}
             >
-              <Bot className={`h-8 w-8 mb-3 ${hasClusters ? 'text-blue-500' : 'text-stone-400'}`} />
+              <Bot className={`h-8 w-8 mb-3 ${hasClusters ? 'text-muted-foreground' : 'text-stone-400'}`} />
               <span className={`text-sm font-light ${hasClusters ? 'text-stone-900 dark:text-stone-300' : 'text-stone-400'}`}>
                 Create Agent
               </span>
@@ -376,7 +376,7 @@ export default function OrganizationDashboard() {
               }`}
               onClick={() => handleQuickAction('model')}
             >
-              <Cpu className={`h-8 w-8 mb-3 ${hasClusters ? 'text-green-500' : 'text-stone-400'}`} />
+              <Cpu className={`h-8 w-8 mb-3 ${hasClusters ? 'text-muted-foreground' : 'text-stone-400'}`} />
               <span className={`text-sm font-light ${hasClusters ? 'text-stone-900 dark:text-stone-300' : 'text-stone-400'}`}>
                 Add Model
               </span>
@@ -394,7 +394,7 @@ export default function OrganizationDashboard() {
               }`}
               onClick={() => handleQuickAction('tool')}
             >
-              <Wrench className={`h-8 w-8 mb-3 ${hasClusters ? 'text-purple-500' : 'text-stone-400'}`} />
+              <Wrench className={`h-8 w-8 mb-3 ${hasClusters ? 'text-muted-foreground' : 'text-stone-400'}`} />
               <span className={`text-sm font-light ${hasClusters ? 'text-stone-900 dark:text-stone-300' : 'text-stone-400'}`}>
                 Configure Tool
               </span>

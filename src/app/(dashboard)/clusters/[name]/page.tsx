@@ -137,13 +137,13 @@ export default function ClusterDashboard() {
                 <dt className="text-sm font-medium text-stone-600 dark:text-stone-400">Proxy</dt>
                 <dd className="mt-1 flex items-center gap-2">
                   {cluster.status?.proxyReady === true ? (
-                    <span className="inline-flex items-center gap-1 text-xs text-green-700 dark:text-green-400">
-                      <span className="h-2 w-2 rounded-full bg-green-500 inline-block" />
+                    <span className="inline-flex items-center gap-1 text-xs text-status-ready-foreground">
+                      <span className="h-2 w-2 rounded-full bg-accent inline-block" />
                       Ready
                     </span>
                   ) : cluster.status?.proxyReady === false ? (
-                    <span className="inline-flex items-center gap-1 text-xs text-yellow-700 dark:text-yellow-400">
-                      <span className="h-2 w-2 rounded-full bg-yellow-500 inline-block" />
+                    <span className="inline-flex items-center gap-1 text-xs text-status-pending-foreground">
+                      <span className="h-2 w-2 rounded-full bg-status-pending-foreground inline-block" />
                       Not ready
                     </span>
                   ) : (
@@ -170,7 +170,7 @@ export default function ClusterDashboard() {
               <div className="grid grid-cols-2 gap-4">
                 <Link href={`/clusters/${clusterName}/models/new`}>
                   <div className="flex flex-col items-center p-6 border border-stone-200 hover:bg-stone-50 hover:border-amber-900/40 cursor-pointer transition-all dark:border-stone-600 dark:hover:bg-stone-800 dark:hover:border-amber-600/60">
-                    <Cpu className="h-8 w-8 text-green-500 mb-3" />
+                    <Cpu className="h-8 w-8 text-muted-foreground mb-3" />
                     <span className="text-sm font-light text-stone-900 dark:text-stone-300">Create Model</span>
                     <span className="text-[11px] font-light text-stone-600 dark:text-stone-400 text-center mt-1">
                       Connect to LLM provider
@@ -179,7 +179,7 @@ export default function ClusterDashboard() {
                 </Link>
                 <Link href={`/clusters/${clusterName}/tools`}>
                   <div className="flex flex-col items-center p-6 border border-stone-200 hover:bg-stone-50 hover:border-amber-900/40 cursor-pointer transition-all dark:border-stone-600 dark:hover:bg-stone-800 dark:hover:border-amber-600/60">
-                    <Wrench className="h-8 w-8 text-purple-500 mb-3" />
+                    <Wrench className="h-8 w-8 text-muted-foreground mb-3" />
                     <span className="text-sm font-light text-stone-900 dark:text-stone-300">Install Tool</span>
                     <span className="text-[11px] font-light text-stone-600 dark:text-stone-400 text-center mt-1">
                       Add capabilities to agents
@@ -188,7 +188,7 @@ export default function ClusterDashboard() {
                 </Link>
                 <Link href={`/clusters/${clusterName}/personas/new`}>
                   <div className="flex flex-col items-center p-6 border border-stone-200 hover:bg-stone-50 hover:border-amber-900/40 cursor-pointer transition-all dark:border-stone-600 dark:hover:bg-stone-800 dark:hover:border-amber-600/60">
-                    <Users className="h-8 w-8 text-rose-500 mb-3" />
+                    <Users className="h-8 w-8 text-muted-foreground mb-3" />
                     <span className="text-sm font-light text-stone-900 dark:text-stone-300">Create Persona</span>
                     <span className="text-[11px] font-light text-stone-600 dark:text-stone-400 text-center mt-1">
                       Define agent behavior
@@ -197,7 +197,7 @@ export default function ClusterDashboard() {
                 </Link>
                 <Link href={`/clusters/${clusterName}/agents/new`}>
                   <div className="flex flex-col items-center p-6 border border-stone-200 hover:bg-stone-50 hover:border-amber-900/40 cursor-pointer transition-all dark:border-stone-600 dark:hover:bg-stone-800 dark:hover:border-amber-600/60">
-                    <Bot className="h-8 w-8 text-blue-500 mb-3" />
+                    <Bot className="h-8 w-8 text-muted-foreground mb-3" />
                     <span className="text-sm font-light text-stone-900 dark:text-stone-300">Create Agent</span>
                     <span className="text-[11px] font-light text-stone-600 dark:text-stone-400 text-center mt-1">
                       Build a new AI agent
@@ -223,7 +223,7 @@ export default function ClusterDashboard() {
                     {countsLoading ? '-' : counts?.models || 0}
                   </div>
                   {isStale && (
-                    <div className="text-xs text-yellow-600 bg-yellow-100 px-2 py-1 rounded">
+                    <div className="text-xs text-muted-foreground bg-muted px-2 py-1">
                       Updating...
                     </div>
                   )}
@@ -246,7 +246,7 @@ export default function ClusterDashboard() {
                     {countsLoading ? '-' : counts?.tools || 0}
                   </div>
                   {isStale && (
-                    <div className="text-xs text-yellow-600 bg-yellow-100 px-2 py-1 rounded">
+                    <div className="text-xs text-muted-foreground bg-muted px-2 py-1">
                       Updating...
                     </div>
                   )}
@@ -269,7 +269,7 @@ export default function ClusterDashboard() {
                     {countsLoading ? '-' : counts?.personas || 0}
                   </div>
                   {isStale && (
-                    <div className="text-xs text-yellow-600 bg-yellow-100 px-2 py-1 rounded">
+                    <div className="text-xs text-muted-foreground bg-muted px-2 py-1">
                       Updating...
                     </div>
                   )}
@@ -292,7 +292,7 @@ export default function ClusterDashboard() {
                     {countsLoading ? '-' : counts?.agents || 0}
                   </div>
                   {isStale && (
-                    <div className="text-xs text-yellow-600 bg-yellow-100 px-2 py-1 rounded">
+                    <div className="text-xs text-muted-foreground bg-muted px-2 py-1">
                       Updating...
                     </div>
                   )}

@@ -66,27 +66,27 @@ export function EventsActivity({
     
     // First check event type for warnings/errors
     if (event.eventType === 'Warning' || event.action === 'failed') {
-      return <AlertCircle className={`${iconClass} text-red-500`} />
+      return <AlertCircle className={`${iconClass} text-destructive`} />
     }
 
     // Then check by resource type
     switch (event.type) {
       case 'agent':
-        return <Bot className={`${iconClass} text-blue-500`} />
+        return <Bot className={`${iconClass} text-muted-foreground`} />
       case 'model':
-        return <Cpu className={`${iconClass} text-green-500`} />
+        return <Cpu className={`${iconClass} text-muted-foreground`} />
       case 'tool':
-        return <Wrench className={`${iconClass} text-purple-500`} />
+        return <Wrench className={`${iconClass} text-muted-foreground`} />
       case 'persona':
-        return <Users className={`${iconClass} text-indigo-500`} />
+        return <Users className={`${iconClass} text-muted-foreground`} />
       case 'cluster':
-        return <Boxes className={`${iconClass} text-orange-500`} />
+        return <Boxes className={`${iconClass} text-muted-foreground`} />
       case 'pod':
-        return <Server className={`${iconClass} text-cyan-500`} />
+        return <Server className={`${iconClass} text-muted-foreground`} />
       case 'service':
-        return <Layers className={`${iconClass} text-teal-500`} />
+        return <Layers className={`${iconClass} text-muted-foreground`} />
       case 'deployment':
-        return <Zap className={`${iconClass} text-yellow-500`} />
+        return <Zap className={`${iconClass} text-muted-foreground`} />
       default:
         // Default based on event type
         if (event.eventType === 'Normal') {
@@ -104,10 +104,10 @@ export function EventsActivity({
       return <Badge variant="destructive" className="text-xs">Failed</Badge>
     }
     if (event.action === 'ready') {
-      return <Badge variant="default" className="text-xs bg-green-100 text-green-800">Ready</Badge>
+      return <Badge variant="default" className="text-xs bg-status-ready text-status-ready-foreground">Ready</Badge>
     }
     if (event.action === 'created') {
-      return <Badge variant="default" className="text-xs bg-blue-100 text-blue-800">Created</Badge>
+      return <Badge variant="default" className="text-xs bg-muted text-muted-foreground">Created</Badge>
     }
     return null
   }
@@ -151,8 +151,8 @@ export function EventsActivity({
                 <div className="flex items-center gap-1">
                   {isConnected ? (
                     <div className="flex items-center gap-1">
-                      <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" />
-                      {isRealtime && <span className="text-xs text-green-600 font-medium">Live</span>}
+                      <div className="h-2 w-2 bg-accent rounded-full animate-pulse" />
+                      {isRealtime && <span className="text-xs text-accent font-medium">Live</span>}
                     </div>
                   ) : (
                     <div className="h-2 w-2 bg-stone-400 dark:bg-stone-600 rounded-full" />
@@ -203,7 +203,7 @@ export function EventsActivity({
             <p className="text-sm text-stone-600 dark:text-stone-400">Failed to load events</p>
             <button 
               onClick={() => refetch()}
-              className="text-xs text-blue-600 hover:text-blue-800 mt-1"
+              className="text-xs text-muted-foreground hover:text-foreground mt-1"
             >
               Try again
             </button>
