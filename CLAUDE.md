@@ -66,7 +66,7 @@ Never run `npm run build` or `npm run dev` directly on the host for development.
 - **Database**: PostgreSQL with Prisma ORM (User/Account/Session only — no org tables; dev uses a standalone in-cluster Postgres pod)
 - **Auth**: NextAuth.js with email/password and OAuth
 - **State Management**: Zustand (`src/store/sidebar-state.ts` only)
-- **UI**: Radix UI + Tailwind CSS (custom Marfa design system — see `DESIGN_SYSTEM.md`)
+- **UI**: Radix UI + Tailwind CSS (custom Marfa design system — see `/styleguide` route or `src/app/styleguide/page.tsx`)
 - **Kubernetes**: @kubernetes/client-node for direct K8s API access
 
 ### Access Control Model
