@@ -39,9 +39,9 @@ export default function CreateClusterPage() {
       // Redirect to cluster details page
       const clusterName = result.data?.metadata?.name || formData.name
       router.push(`/clusters/${clusterName}`)
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error creating cluster:', err)
-      setError(err.message || 'Failed to create cluster')
+      setError(err instanceof Error ? err.message : 'Failed to create cluster')
     } finally {
       setIsLoading(false)
     }

@@ -202,10 +202,10 @@ export default function RuntimeDetailPage({
             <CardTitle>Resource Defaults</CardTitle>
           </CardHeader>
           <CardContent>
-            <SpecRow label="CPU Request" value={(dep.resources.requests as any)?.cpu} />
-            <SpecRow label="CPU Limit" value={(dep.resources.limits as any)?.cpu} />
-            <SpecRow label="Memory Request" value={(dep.resources.requests as any)?.memory} />
-            <SpecRow label="Memory Limit" value={(dep.resources.limits as any)?.memory} />
+            <SpecRow label="CPU Request" value={dep.resources.requests?.['cpu']} />
+            <SpecRow label="CPU Limit" value={dep.resources.limits?.['cpu']} />
+            <SpecRow label="Memory Request" value={dep.resources.requests?.['memory']} />
+            <SpecRow label="Memory Limit" value={dep.resources.limits?.['memory']} />
           </CardContent>
         </Card>
       )}

@@ -25,7 +25,10 @@ import { useAgent, useUpdateAgent } from '@/hooks/use-agents'
 import { useModels } from '@/hooks/use-models'
 import { useTools } from '@/hooks/use-tools'
 import { usePersonas } from '@/hooks/use-personas'
-import { LanguageAgentFormData } from '@/types/agent'
+import { LanguageAgentFormData, LanguageAgent } from '@/types/agent'
+import { LanguageModel } from '@/types/model'
+import { LanguageTool } from '@/types/tool'
+import { LanguagePersona } from '@/types/persona'
 import { useToast } from '@/hooks/use-toast'
 import { kubernetesNameValidation } from '@/lib/validation'
 
@@ -65,9 +68,9 @@ export default function EditClusterAgentPage() {
   const { data: personasResponse, isLoading: isLoadingPersonas } = usePersonas({ clusterName })
   
   // Extract data from API responses
-  const availableModels = modelsResponse?.data || []
-  const availableTools = toolsResponse?.data || []
-  const availablePersonas = personasResponse?.data || []
+  const availableModels: LanguageModel[] = modelsResponse?.data || []
+  const availableTools: LanguageTool[] = toolsResponse?.data || []
+  const availablePersonas: LanguagePersona[] = personasResponse?.data || []
   
   const form = useForm<AgentFormValues>({
     resolver: zodResolver(agentFormSchema),
@@ -117,7 +120,7 @@ export default function EditClusterAgentPage() {
           : undefined,
       }
 
-      await updateAgent.mutateAsync({ name: agentName, agent: formData as any })
+      await updateAgent.mutateAsync({ name: agentName, agent: formData as Partial<LanguageAgent> })
       
       toast({
         title: 'Agent updated successfully',
@@ -228,15 +231,15 @@ export default function EditClusterAgentPage() {
                               <div className="text-sm text-stone-600 dark:text-stone-400">Loading available models...</div>
                             ) : (
                               <div className="grid grid-cols-1 gap-2 mt-2">
-                                {availableModels.map((model: any) => (
+                                {availableModels.map((model) => (
                                   <div key={model.metadata.name} className="flex items-center space-x-2">
                                     <Checkbox
-                                      checked={field.value.includes(model.metadata.name)}
+                                      checked={field.value.includes(model.metadata.name!)}
                                       onCheckedChange={(checked) => {
                                         if (checked) {
-                                          field.onChange([...field.value, model.metadata.name])
+                                          field.onChange([...field.value, model.metadata.name!])
                                         } else {
-                                          field.onChange(field.value.filter(name => name !== model.metadata.name))
+                                          field.onChange(field.value.filter(name => name !== model.metadata.name!))
                                         }
                                       }}
                                     />
@@ -270,15 +273,15 @@ export default function EditClusterAgentPage() {
                               <div className="text-sm text-stone-600 dark:text-stone-400">Loading available tools...</div>
                             ) : (
                               <div className="grid grid-cols-2 gap-2 mt-2">
-                                {availableTools.map((tool: any) => (
+                                {availableTools.map((tool) => (
                                   <div key={tool.metadata.name} className="flex items-center space-x-2">
                                     <Checkbox
-                                      checked={field.value.includes(tool.metadata.name)}
+                                      checked={field.value.includes(tool.metadata.name!)}
                                       onCheckedChange={(checked) => {
                                         if (checked) {
-                                          field.onChange([...field.value, tool.metadata.name])
+                                          field.onChange([...field.value, tool.metadata.name!])
                                         } else {
-                                          field.onChange(field.value.filter(name => name !== tool.metadata.name))
+                                          field.onChange(field.value.filter(name => name !== tool.metadata.name!))
                                         }
                                       }}
                                     />
@@ -315,8 +318,8 @@ export default function EditClusterAgentPage() {
                                 {isLoadingPersonas ? (
                                   <SelectItem value="loading" disabled>Loading personas...</SelectItem>
                                 ) : (
-                                  availablePersonas.map((persona: any) => (
-                                    <SelectItem key={persona.metadata.name} value={persona.metadata.name}>
+                                  availablePersonas.map((persona) => (
+                                    <SelectItem key={persona.metadata.name} value={persona.metadata.name!}>
                                       {persona.metadata.name}
                                     </SelectItem>
                                   ))

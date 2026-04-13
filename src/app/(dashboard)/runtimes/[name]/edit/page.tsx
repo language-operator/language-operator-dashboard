@@ -100,10 +100,10 @@ export default function EditRuntimePage({
       workspaceSize: spec.workspace?.size || '',
       workspaceStorageClassName: spec.workspace?.storageClassName || '',
       workspaceMountPath: spec.workspace?.mountPath || '',
-      cpuRequest: (spec.deployment?.resources?.requests as any)?.cpu || '',
-      cpuLimit: (spec.deployment?.resources?.limits as any)?.cpu || '',
-      memoryRequest: (spec.deployment?.resources?.requests as any)?.memory || '',
-      memoryLimit: (spec.deployment?.resources?.limits as any)?.memory || '',
+      cpuRequest: spec.deployment?.resources?.requests?.['cpu'] || '',
+      cpuLimit: spec.deployment?.resources?.limits?.['cpu'] || '',
+      memoryRequest: spec.deployment?.resources?.requests?.['memory'] || '',
+      memoryLimit: spec.deployment?.resources?.limits?.['memory'] || '',
     })
   }, [data, reset])
 

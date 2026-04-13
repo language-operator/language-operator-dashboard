@@ -10,6 +10,8 @@ import { Bot, Cpu, Wrench, Users, Boxes, Activity, TrendingUp, Clock, ExternalLi
 import { useResourceCounts } from '@/hooks/useResourceCounts'
 import { useClusters } from '@/hooks/use-clusters'
 import { useAggregatedAgents } from '@/hooks/use-aggregated-agents'
+import { LanguageCluster } from '@/types/cluster'
+import { LanguageAgent } from '@/types/agent'
 import { ClusterStatusBadge, AgentStatusBadge } from '@/components/ui/resource-status-badge'
 import { useRouter } from 'next/navigation'
 
@@ -216,7 +218,7 @@ export default function OrganizationDashboard() {
               </div>
             ) : (
               <div className="space-y-3">
-                {clustersData.data.slice(0, 5).map((cluster: any) => (
+                {clustersData.data.slice(0, 5).map((cluster: LanguageCluster) => (
                   <div key={cluster.metadata.name} className="flex items-center justify-between">
                     <div className="flex items-center space-x-3 min-w-0 flex-1">
                       <div className="min-w-0 flex-1">
@@ -300,7 +302,7 @@ export default function OrganizationDashboard() {
               </div>
             ) : (
               <div className="space-y-3">
-                {agentsData.data.slice(0, 5).map((agent: any) => (
+                {agentsData.data.slice(0, 5).map((agent: LanguageAgent) => (
                   <div key={agent.metadata.name} className="flex items-center justify-between">
                     <div className="flex items-center space-x-3 min-w-0 flex-1">
                       <div className="min-w-0 flex-1">

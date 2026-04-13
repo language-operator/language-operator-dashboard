@@ -75,15 +75,15 @@ export default function ClusterAgents() {
       .catch(() => toast.error('Failed to delete agent. Please try again.'))
   }
 
-  const agents = agentsData?.data || []
+  const agents: LanguageAgent[] = agentsData?.data || []
   const error = agentsError ? (agentsError as Error).message : null
 
   // Filter agents based on search
   const filteredAgents = useMemo(() => {
-    return agents.filter((agent: any) => {
+    return agents.filter((agent) => {
       const searchQuery = search.toLowerCase()
       return !search ||
-        agent.metadata.name.toLowerCase().includes(searchQuery) ||
+        agent.metadata.name!.toLowerCase().includes(searchQuery) ||
         (agent.spec.instructions || '').toLowerCase().includes(searchQuery)
     })
   }, [agents, search])
@@ -194,7 +194,7 @@ export default function ClusterAgents() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {clusterAgents.map((agent: any) => (
+                      {clusterAgents.map((agent) => (
                         <TableRow key={agent.metadata.name}>
                           <TableCell className="font-light">
                             <Link
@@ -206,14 +206,14 @@ export default function ClusterAgents() {
                           </TableCell>
                           <TableCell>
                             <div className="flex flex-wrap gap-1">
-                              {(agent.spec.models || []).slice(0, 2).map((modelRef: any) => (
+                              {(agent.spec.models || []).slice(0, 2).map((modelRef) => (
                                 <Badge key={modelRef.name} variant="outline" className="text-xs">
                                   {modelRef.name}
                                 </Badge>
                               ))}
                               {(agent.spec.models?.length || 0) > 2 && (
                                 <Badge variant="outline" className="text-xs">
-                                  +{(agent.spec.models.length - 2)}
+                                  +{(agent.spec.models!.length - 2)}
                                 </Badge>
                               )}
                             </div>

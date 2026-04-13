@@ -32,6 +32,9 @@ import { useModels } from '@/hooks/use-models'
 import { useTools } from '@/hooks/use-tools'
 import { usePersonas } from '@/hooks/use-personas'
 import { LanguageAgentFormData, LanguageAgent } from '@/types/agent'
+import { LanguageModel } from '@/types/model'
+import { LanguageTool } from '@/types/tool'
+import { LanguagePersona } from '@/types/persona'
 import { useToast } from '@/hooks/use-toast'
 import { kubernetesNameValidation } from '@/lib/validation'
 
@@ -70,9 +73,9 @@ export default function CreateClusterAgentPage() {
   const { data: personasResponse, isLoading: isLoadingPersonas } = usePersonas({ clusterName })
   
   // Extract data from API responses
-  const availableModels = modelsResponse?.data || []
-  const availableTools = toolsResponse?.data || []
-  const availablePersonas = personasResponse?.data || []
+  const availableModels: LanguageModel[] = modelsResponse?.data || []
+  const availableTools: LanguageTool[] = toolsResponse?.data || []
+  const availablePersonas: LanguagePersona[] = personasResponse?.data || []
   
   const form = useForm<AgentFormValues>({
     resolver: zodResolver(agentFormSchema),
@@ -96,14 +99,14 @@ export default function CreateClusterAgentPage() {
   useEffect(() => {
     if (availableModels.length > 0 && form.getValues('selectedModels').length === 0) {
       // Select the first model by default
-      form.setValue('selectedModels', [availableModels[0].metadata.name])
+      form.setValue('selectedModels', [availableModels[0].metadata.name!])
     }
   }, [availableModels, form])
 
   useEffect(() => {
     if (availableTools.length > 0 && form.getValues('selectedTools').length === 0) {
       // Select all available tools by default
-      const allToolNames = availableTools.map((tool: any) => tool.metadata.name)
+      const allToolNames = availableTools.map((tool) => tool.metadata.name!)
       form.setValue('selectedTools', allToolNames)
     }
   }, [availableTools, form])
@@ -246,15 +249,15 @@ export default function CreateClusterAgentPage() {
                             <div className="text-sm text-muted-foreground">Loading available models...</div>
                           ) : (
                             <div className="grid grid-cols-1 gap-2 mt-2">
-                              {availableModels.map((model: any) => (
+                              {availableModels.map((model) => (
                                 <div key={model.metadata.name} className="flex items-center space-x-2">
                                   <Checkbox
-                                    checked={field.value.includes(model.metadata.name)}
+                                    checked={field.value.includes(model.metadata.name!)}
                                     onCheckedChange={(checked) => {
                                       if (checked) {
-                                        field.onChange([...field.value, model.metadata.name])
+                                        field.onChange([...field.value, model.metadata.name!])
                                       } else {
-                                        field.onChange(field.value.filter(name => name !== model.metadata.name))
+                                        field.onChange(field.value.filter(name => name !== model.metadata.name!))
                                       }
                                     }}
                                   />
@@ -333,8 +336,8 @@ export default function CreateClusterAgentPage() {
                               {isLoadingPersonas ? (
                                 <SelectItem value="loading" disabled>Loading personas...</SelectItem>
                               ) : (
-                                availablePersonas.map((persona: any) => (
-                                  <SelectItem key={persona.metadata.name} value={persona.metadata.name}>
+                                availablePersonas.map((persona) => (
+                                  <SelectItem key={persona.metadata.name} value={persona.metadata.name!}>
                                     {persona.metadata.name}
                                   </SelectItem>
                                 ))

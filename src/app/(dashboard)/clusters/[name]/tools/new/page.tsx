@@ -30,7 +30,7 @@ export default function CreateClusterToolPage() {
         requireApproval: formData.requireApproval,
         timeout: formData.timeout,
         retries: formData.retries,
-        egressRules: (formData as any).egressRules,
+        egressRules: (formData as typeof formData & { egressRules?: unknown }).egressRules,
       }
       
       console.log('Sending payload:', payload)
@@ -48,7 +48,8 @@ export default function CreateClusterToolPage() {
         console.error('API Error Response:', errorData)
         
         if (errorData.details && Array.isArray(errorData.details)) {
-          const detailMessages = errorData.details.map((d: any) => `${d.path}: ${d.message}`).join(', ')
+          interface ErrorDetail { path: string; message: string }
+          const detailMessages = (errorData.details as ErrorDetail[]).map((d) => `${d.path}: ${d.message}`).join(', ')
           throw new Error(`${errorData.error || 'Validation failed'}: ${detailMessages}`)
         }
         
@@ -60,9 +61,9 @@ export default function CreateClusterToolPage() {
       
       // Redirect to cluster tools list page
       router.push(`/clusters/${clusterName}/tools`)
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error creating tool:', err)
-      setError(err.message || 'Failed to create tool')
+      setError(err instanceof Error ? err.message : 'Failed to create tool')
     } finally {
       setIsLoading(false)
     }

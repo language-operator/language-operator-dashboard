@@ -31,6 +31,7 @@ import { useWatchModels } from '@/hooks/use-watch'
 import { EventsActivity } from '@/components/ui/events-activity'
 import { DeleteResourceDialog } from '@/components/ui/delete-resource-dialog'
 import { toast } from 'sonner'
+import { LanguageModel } from '@/types/model'
 
 function formatTimeAgo(timestamp?: string | Date) {
   if (!timestamp) return 'Unknown'
@@ -73,15 +74,15 @@ export default function ClusterModels() {
       .catch(() => toast.error('Failed to delete model. Please try again.'))
   }
 
-  const allModels = modelsResponse?.data || []
+  const allModels: LanguageModel[] = modelsResponse?.data || []
   
   
   
   // Filter models based on search and provider
-  const filteredModels = allModels.filter((model: any) => {
+  const filteredModels = allModels.filter((model) => {
     const searchQuery = search.toLowerCase()
     const matchesSearch = !search || 
-      model.metadata.name.toLowerCase().includes(searchQuery) ||
+      model.metadata.name!.toLowerCase().includes(searchQuery) ||
       (model.spec.provider || '').toLowerCase().includes(searchQuery) ||
       (model.spec.modelName || '').toLowerCase().includes(searchQuery)
     
@@ -97,7 +98,7 @@ export default function ClusterModels() {
   // Get unique providers for filter dropdown
   const providers = React.useMemo(() => {
     const uniqueProviders = Array.from(new Set(
-      allModels.map((model: any) => model.spec.provider).filter(Boolean)
+      allModels.map((model) => model.spec.provider).filter(Boolean)
     )) as string[]
     return uniqueProviders.sort()
   }, [allModels])
@@ -200,7 +201,7 @@ export default function ClusterModels() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {clusterModels.map((model: any) => (
+                  {clusterModels.map((model) => (
                     <TableRow key={model.metadata.name}>
                       <TableCell className="font-light">
                         <Link 

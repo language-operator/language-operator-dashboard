@@ -42,7 +42,8 @@ export default function CreateClusterPersonaPage() {
         const errorData = await response.json()
 
         if (errorData.details && Array.isArray(errorData.details)) {
-          const detailMessages = errorData.details.map((d: any) => `${d.path}: ${d.message}`).join(', ')
+          interface ErrorDetail { path: string; message: string }
+          const detailMessages = (errorData.details as ErrorDetail[]).map((d) => `${d.path}: ${d.message}`).join(', ')
           throw new Error(`${errorData.error || 'Validation failed'}: ${detailMessages}`)
         }
 
@@ -50,9 +51,9 @@ export default function CreateClusterPersonaPage() {
       }
 
       router.push(`/clusters/${clusterName}/personas`)
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error creating persona:', err)
-      setError(err.message || 'Failed to create persona')
+      setError(err instanceof Error ? err.message : 'Failed to create persona')
     } finally {
       setIsLoading(false)
     }

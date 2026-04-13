@@ -130,7 +130,7 @@ export default function ModelDetailLayout({ children }: ModelDetailLayoutProps) 
 
   if (error || !model) {
     // Determine if it's a 404 error or other error type
-    const is404Error = error && (error as any)?.status === 404
+    const is404Error = error && (error as Error & { status?: number })?.status === 404
     const errorMessage = error ? (error as Error).message : `Model "${modelName}" could not be found in cluster "${clusterName}".`
 
     return (

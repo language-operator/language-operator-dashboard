@@ -32,6 +32,7 @@ import { EventsActivity } from '@/components/ui/events-activity'
 import { useRouter } from 'next/navigation'
 import { DeleteResourceDialog } from '@/components/ui/delete-resource-dialog'
 import { toast } from 'sonner'
+import { LanguagePersona } from '@/types/persona'
 
 function formatTimeAgo(timestamp?: string | Date) {
   if (!timestamp) return 'Unknown'
@@ -63,14 +64,13 @@ export default function ClusterPersonas() {
   // Enable real-time updates via SSE watch
   useWatchPersonas()
 
-  const allPersonas = personasResponse?.data || []
+  const allPersonas: LanguagePersona[] = personasResponse?.data || []
   
   // Filter personas based on search and tone
-  const filteredPersonas = allPersonas.filter((persona: any) => {
+  const filteredPersonas = allPersonas.filter((persona: LanguagePersona) => {
     const searchQuery = search.toLowerCase()
     const matchesSearch = !search ||
-      persona.metadata.name.toLowerCase().includes(searchQuery) ||
-      (persona.spec.displayName || '').toLowerCase().includes(searchQuery)
+      persona.metadata.name!.toLowerCase().includes(searchQuery)
 
     const matchesTone = toneFilter === 'all' ||
       (persona.spec.tone || '').toLowerCase() === toneFilter.toLowerCase()
@@ -84,7 +84,7 @@ export default function ClusterPersonas() {
   // Get unique tones for filter dropdown
   const tones = React.useMemo(() => {
     const uniqueTones = Array.from(new Set(
-      allPersonas.map((persona: any) => persona.spec.tone).filter(Boolean)
+      allPersonas.map((persona: LanguagePersona) => persona.spec.tone).filter(Boolean)
     )) as string[]
     return uniqueTones.sort()
   }, [allPersonas])
@@ -214,14 +214,14 @@ export default function ClusterPersonas() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {clusterPersonas.map((persona: any) => (
+                      {clusterPersonas.map((persona: LanguagePersona) => (
                         <TableRow key={persona.metadata.name}>
                           <TableCell className="font-light">
                             <Link
                               href={`/clusters/${clusterName}/personas/${persona.metadata.name}`}
                               className="hover:underline"
                             >
-                              {persona.spec.displayName || persona.metadata.name}
+                              {persona.metadata.name}
                             </Link>
                           </TableCell>
                           <TableCell>

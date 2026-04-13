@@ -10,6 +10,7 @@ import { Wrench, Download, CheckCircle, Search, ExternalLink } from 'lucide-reac
 import Link from 'next/link'
 import { useEffect, useState, useMemo } from 'react'
 import { ToolCatalog, ToolCatalogEntry, InstalledTool, getToolDisplayName, getToolTags } from '@/types/tool-catalog'
+import { LanguageTool } from '@/types/tool'
 import { EventsActivity } from '@/components/ui/events-activity'
 import { useTools } from '@/hooks/use-tools'
 import { useWatchTools } from '@/hooks/use-watch'
@@ -34,9 +35,9 @@ export default function ClusterTools() {
 
   // Convert LanguageTool objects to InstalledTool format
   const installedTools = useMemo(() => {
-    return (toolsData?.data || []).map((tool: any) => ({
-      name: tool.metadata.name,
-      catalogName: tool.metadata.labels?.['langop.io/catalog-name'] || tool.metadata.name,
+    return ((toolsData?.data || []) as LanguageTool[]).map((tool) => ({
+      name: tool.metadata.name!,
+      catalogName: tool.metadata.labels?.['langop.io/catalog-name'] || tool.metadata.name!,
       status: {
         phase: tool.status?.phase || 'Unknown',
         message: tool.status?.conditions?.[0]?.message || ''
