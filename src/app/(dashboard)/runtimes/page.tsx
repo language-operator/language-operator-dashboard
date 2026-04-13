@@ -35,6 +35,8 @@ import {
 } from 'lucide-react'
 import { useRuntimes, useDeleteRuntime } from '@/hooks/use-runtimes'
 import { LanguageAgentRuntime, RuntimeType, inferRuntimeType } from '@/types/runtime'
+import { DeleteResourceDialog } from '@/components/ui/delete-resource-dialog'
+import { toast } from 'sonner'
 
 function formatTimeAgo(timestamp?: string | Date) {
   if (!timestamp) return 'Unknown'
@@ -75,17 +77,16 @@ export default function RuntimesPage() {
   })
 
   const deleteRuntime = useDeleteRuntime()
+  const [deletingRuntime, setDeletingRuntime] = useState<string | null>(null)
 
   const runtimes: LanguageAgentRuntime[] = runtimesResponse?.data || []
 
-  const handleDelete = async (name: string) => {
-    if (!confirm(`Are you sure you want to delete runtime "${name}"?`)) return
-    try {
-      await deleteRuntime.mutateAsync(name)
-    } catch (error) {
-      console.error('Failed to delete runtime:', error)
-      alert('Failed to delete runtime. Please try again.')
-    }
+  const handleConfirmDelete = () => {
+    if (!deletingRuntime) return
+    const name = deletingRuntime
+    deleteRuntime.mutateAsync(name)
+      .then(() => setDeletingRuntime(null))
+      .catch(() => toast.error('Failed to delete runtime. Please try again.'))
   }
 
   if (isLoading) {
@@ -212,7 +213,7 @@ export default function RuntimesPage() {
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           className="text-destructive"
-                          onClick={() => handleDelete(runtime.metadata.name!)}
+                          onClick={() => setDeletingRuntime(runtime.metadata.name!)}
                           disabled={deleteRuntime.isPending}
                         >
                           <Trash2 className="h-4 w-4 mr-2" />
@@ -243,6 +244,14 @@ export default function RuntimesPage() {
           )}
         </CardContent>
       </Card>
+      <DeleteResourceDialog
+        open={!!deletingRuntime}
+        onOpenChange={(open) => !open && setDeletingRuntime(null)}
+        resourceType="runtime"
+        resourceName={deletingRuntime ?? undefined}
+        isLoading={deleteRuntime.isPending}
+        onConfirm={handleConfirmDelete}
+      />
     </div>
   )
 }

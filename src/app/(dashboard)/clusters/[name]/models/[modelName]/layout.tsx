@@ -16,6 +16,8 @@ import { useModel, useDeleteModel } from '@/hooks/use-models'
 import { ResourceHeader } from '@/components/ui/resource-header'
 import { NotFound } from '@/components/ui/not-found'
 import { cn } from '@/lib/utils'
+import { DeleteResourceDialog } from '@/components/ui/delete-resource-dialog'
+import { toast } from 'sonner'
 
 function getCurrentTabValue(pathname: string, clusterName: string, modelName: string): string {
   // Check for organization-scoped paths and non-organization paths
@@ -58,28 +60,28 @@ export default function ModelDetailLayout({ children }: ModelDetailLayoutProps) 
   const [yamlContent, setYamlContent] = useState('')
   const [yamlLoading, setYamlLoading] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const { theme } = useTheme()
 
   const { data: modelResponse, isLoading, error } = useModel(modelName, clusterName)
   const deleteModel = useDeleteModel(clusterName)
 
   const model = modelResponse?.data
-  
+
   // Check if we're on the edit page
   const isEditPage = pathname.endsWith('/edit')
 
-  const handleDeleteModel = async () => {
-    if (!model || !model.metadata.name) return
+  const handleDeleteModel = () => {
+    if (!model?.metadata.name) return
+    setDeleteDialogOpen(true)
+  }
 
-    if (confirm(`Are you sure you want to delete model "${model.metadata.name}"?`)) {
-      try {
-        await deleteModel.mutateAsync(model.metadata.name)
-        router.push(`/clusters/${clusterName}/models`)
-      } catch (error) {
-        console.error('Failed to delete model:', error)
-        alert('Failed to delete model. Please try again.')
-      }
-    }
+  const handleConfirmDelete = () => {
+    if (!model?.metadata.name) return
+    const name = model.metadata.name
+    deleteModel.mutateAsync(name)
+      .then(() => router.push(`/clusters/${clusterName}/models`))
+      .catch(() => toast.error('Failed to delete model. Please try again.'))
   }
 
   const handleViewYaml = async () => {
@@ -316,6 +318,14 @@ export default function ModelDetailLayout({ children }: ModelDetailLayoutProps) 
           </div>
         </DialogContent>
       </Dialog>
+      <DeleteResourceDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        resourceType="model"
+        resourceName={model?.metadata.name}
+        isLoading={deleteModel.isPending}
+        onConfirm={handleConfirmDelete}
+      />
       </div>
   )
 }

@@ -35,6 +35,8 @@ import { useWatchClusters } from '@/hooks/use-watch'
 import { useResourceNotifications } from '@/components/ui/resource-notifications'
 import { LanguageCluster } from '@/types/cluster'
 import { Skeleton } from '@/components/ui/skeleton'
+import { DeleteResourceDialog } from '@/components/ui/delete-resource-dialog'
+import { toast } from 'sonner'
 
 function formatTimeAgo(timestamp?: string | Date) {
   if (!timestamp) return 'Unknown'
@@ -142,11 +144,7 @@ function ClusterTable({ clusters, onDelete, isDeleting }: ClusterTableProps) {
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         className="text-destructive"
-                        onClick={() => {
-                          if (confirm(`Are you sure you want to delete cluster "${cluster.metadata.name}"?`)) {
-                            onDelete(cluster.metadata.name!)
-                          }
-                        }}
+                        onClick={() => onDelete(cluster.metadata.name!)}
                         disabled={isDeleting}
                       >
                         <Trash2 className="h-4 w-4 mr-2" />
@@ -184,6 +182,7 @@ export default function ClustersPage() {
   const [phaseFilter, setPhaseFilter] = useState<string>('all')
   const [sortBy, setSortBy] = useState<'name' | 'domain' | 'agents' | 'status' | 'age'>('name')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
+  const [deletingCluster, setDeletingCluster] = useState<string | null>(null)
 
   const { 
     data: clustersResponse, 
@@ -222,14 +221,12 @@ export default function ClustersPage() {
   const readyClusters = clusters.filter((c: LanguageCluster) => c.status?.phase === 'Ready').length
   const totalAgents = clusters.reduce((sum: number, c: LanguageCluster) => sum + (c.status?.agentCount || 0), 0)
 
-  const handleDelete = async (name: string) => {
-    try {
-      await deleteCluster.mutateAsync(name)
-      refetch()
-    } catch (error) {
-      console.error('Failed to delete cluster:', error)
-      alert('Failed to delete cluster. Please try again.')
-    }
+  const handleConfirmDelete = () => {
+    if (!deletingCluster) return
+    const name = deletingCluster
+    deleteCluster.mutateAsync(name)
+      .then(() => { setDeletingCluster(null); refetch() })
+      .catch(() => toast.error('Failed to delete cluster. Please try again.'))
   }
 
   if (isLoading) {
@@ -348,8 +345,16 @@ export default function ClustersPage() {
         {/* Clusters Table */}
         <ClusterTable
           clusters={clusters}
-          onDelete={handleDelete}
+          onDelete={setDeletingCluster}
           isDeleting={deleteCluster.isPending}
+        />
+        <DeleteResourceDialog
+          open={!!deletingCluster}
+          onOpenChange={(open) => !open && setDeletingCluster(null)}
+          resourceType="cluster"
+          resourceName={deletingCluster ?? undefined}
+          isLoading={deleteCluster.isPending}
+          onConfirm={handleConfirmDelete}
         />
       </div>
     

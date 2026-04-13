@@ -17,6 +17,8 @@ import { fetchWithOrganization } from '@/lib/api-client'
 import { ResourceHeader } from '@/components/ui/resource-header'
 import { NotFound } from '@/components/ui/not-found'
 import { cn } from '@/lib/utils'
+import { DeleteResourceDialog } from '@/components/ui/delete-resource-dialog'
+import { toast } from 'sonner'
 
 function getCurrentTabValue(pathname: string, clusterName: string, toolName: string): string {
   const basePath = `/clusters/${clusterName}/tools/${toolName}`
@@ -43,28 +45,28 @@ export default function ToolDetailLayout({ children }: ToolDetailLayoutProps) {
   const [yamlContent, setYamlContent] = useState('')
   const [yamlLoading, setYamlLoading] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const { theme } = useTheme()
 
   const { data: toolResponse, isLoading, error } = useTool(toolName, clusterName)
   const deleteTool = useDeleteTool(clusterName)
 
   const tool = toolResponse?.data
-  
+
   // Check if we're on the edit page
   const isEditPage = pathname.endsWith('/edit')
 
-  const handleDeleteTool = async () => {
-    if (!tool || !tool.metadata.name) return
+  const handleDeleteTool = () => {
+    if (!tool?.metadata.name) return
+    setDeleteDialogOpen(true)
+  }
 
-    if (confirm(`Are you sure you want to delete tool "${tool.metadata.name}"?`)) {
-      try {
-        await deleteTool.mutateAsync(tool.metadata.name)
-        router.push(`/clusters/${clusterName}/tools`)
-      } catch (error) {
-        console.error('Failed to delete tool:', error)
-        alert('Failed to delete tool. Please try again.')
-      }
-    }
+  const handleConfirmDelete = () => {
+    if (!tool?.metadata.name) return
+    const name = tool.metadata.name
+    deleteTool.mutateAsync(name)
+      .then(() => router.push(`/clusters/${clusterName}/tools`))
+      .catch(() => toast.error('Failed to delete tool. Please try again.'))
   }
 
   const handleViewYaml = async () => {
@@ -295,6 +297,14 @@ export default function ToolDetailLayout({ children }: ToolDetailLayoutProps) {
           </div>
         </DialogContent>
       </Dialog>
+      <DeleteResourceDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        resourceType="tool"
+        resourceName={tool?.metadata.name}
+        isLoading={deleteTool.isPending}
+        onConfirm={handleConfirmDelete}
+      />
       </div>
   )
 }

@@ -26,8 +26,10 @@ import {
 import { Bot, Plus, MoreHorizontal, Eye, Edit, Trash2, Search } from 'lucide-react'
 import Link from 'next/link'
 import { LanguageAgent } from '@/types/agent'
-import { useAgents } from '@/hooks/use-agents'
+import { useAgents, useDeleteAgent } from '@/hooks/use-agents'
 import { useWatchAgents } from '@/hooks/use-watch'
+import { DeleteResourceDialog } from '@/components/ui/delete-resource-dialog'
+import { toast } from 'sonner'
 
 function formatTimeAgo(timestamp?: string | Date) {
   if (!timestamp) return 'Unknown'
@@ -50,6 +52,7 @@ export default function ClusterAgents() {
   const clusterName = params?.name as string
 
   const [search, setSearch] = useState('')
+  const [deletingAgent, setDeletingAgent] = useState<string | null>(null)
 
   // Use the agents hook for real-time updates
   const { data: agentsData, isLoading: loading, error: agentsError } = useAgents({
@@ -60,6 +63,16 @@ export default function ClusterAgents() {
 
   // Enable real-time updates via SSE watch
   useWatchAgents({ clusterName })
+
+  const deleteAgent = useDeleteAgent(clusterName)
+
+  const handleConfirmDelete = () => {
+    if (!deletingAgent) return
+    const name = deletingAgent
+    deleteAgent.mutateAsync(name)
+      .then(() => setDeletingAgent(null))
+      .catch(() => toast.error('Failed to delete agent. Please try again.'))
+  }
 
   const agents = agentsData?.data || []
   const error = agentsError ? (agentsError as Error).message : null
@@ -254,12 +267,8 @@ export default function ClusterAgents() {
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem
                                   className="text-destructive"
-                                  onClick={() => {
-                                    if (confirm(`Are you sure you want to delete agent "${agent.metadata.name}"?`)) {
-                                      // TODO: Add delete functionality
-                                      console.log('Delete agent:', agent.metadata.name)
-                                    }
-                                  }}
+                                  onClick={() => setDeletingAgent(agent.metadata.name!)}
+                                  disabled={deleteAgent.isPending}
                                 >
                                   <Trash2 className="h-4 w-4 mr-2" />
                                   Delete
@@ -288,6 +297,14 @@ export default function ClusterAgents() {
             )}
           </>
         )}
+        <DeleteResourceDialog
+          open={!!deletingAgent}
+          onOpenChange={(open) => !open && setDeletingAgent(null)}
+          resourceType="agent"
+          resourceName={deletingAgent ?? undefined}
+          isLoading={deleteAgent.isPending}
+          onConfirm={handleConfirmDelete}
+        />
     </div>
   )
 }
