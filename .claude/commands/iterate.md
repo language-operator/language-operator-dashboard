@@ -33,13 +33,13 @@ Follow these directions closely:
      - If no issue is found, report idle and stop.
      - If found, read its comments as well.
 2. Investigate if the issue is valid, or a mis-use of the intended feature.
-3. **Label and create worktree** in one step. Determine a short slug (2-4 words) from the issue title, then:
+3. **CRITICAL:** Switch to plan mode, and propose an implementation plan. Await my feedback before touching any files or creating any worktree.
+4. **Label and create worktree** in one step. Determine a short slug (2-4 words) from the issue title, then:
    ```bash
    bash .claude/commands/iterate/start-issue.sh <N> <short-slug> <queue-number>
    ```
    The script labels the issue `in-progress`, removes the queue label, and creates a worktree. It prints `worktree:<path>` — `cd` into that path. All subsequent work happens inside this worktree. Do not `cd` out of it.
-5. **CRITICAL:** Switch to plan mode, and propose an implementation plan. Await my feedback.
-6. Implement your plan inside the worktree.
+5. Implement your plan inside the worktree.
 7. Run existing tests and add new ones if necessary: `npm test`
 8. Commit with a semantic, ONE LINE message like `fix: remove executionMode dead code` and push the branch — run as two separate commands, do not use inline variable assignments:
    ```bash
