@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Layers, Box, RotateCcw } from 'lucide-react'
+import { formatTimeAgoCondensed } from '@/lib/format'
 
 export interface PodInfo {
   name: string
@@ -69,20 +70,6 @@ export function PodSelector({
       case 'Pending': return 'text-status-pending-foreground'
       default: return 'text-muted-foreground'
     }
-  }
-
-  const formatTimeAgoCondensed = (timestamp: string) => {
-    const date = new Date(timestamp)
-    const now = new Date()
-    const diff = now.getTime() - date.getTime()
-    const minutes = Math.floor(diff / 60000)
-    const hours = Math.floor(diff / 3600000)
-    const days = Math.floor(diff / 86400000)
-
-    if (days > 0) return `${days}d ago`
-    if (hours > 0) return `${hours}h ago`
-    if (minutes > 0) return `${minutes}m ago`
-    return 'Just now'
   }
 
   if (layout === 'horizontal') {

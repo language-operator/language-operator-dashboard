@@ -138,8 +138,8 @@ export function useResourceNotifications({
         icon: <Icon className="h-4 w-4" />,
         className: config.className,
       })
-    } catch (error) {
-      console.error('Error in resource notification handler:', error)
+    } catch {
+      // ignore notification errors
     }
   }
 

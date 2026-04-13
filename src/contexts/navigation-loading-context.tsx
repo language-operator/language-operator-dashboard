@@ -39,12 +39,10 @@ export function NavigationLoadingProvider({ children }: NavigationLoadingProvide
   // Handle navigation events using browser APIs and Next.js events
   useEffect(() => {
     const handleStart = () => {
-      console.log('%cNavigation started!', 'color: #22c55e; font-weight: bold;')
       setIsNavigating(true)
     }
 
     const handleComplete = () => {
-      console.log('%cNavigation completed!', 'color: #f59e0b; font-weight: bold;')
       // Small delay to ensure page has rendered
       setTimeout(() => setIsNavigating(false), 100)
     }

@@ -20,9 +20,7 @@ export function Header() {
 
   const watchStatus = useWatchClusters({
     enabled: true,
-    onEvent: (event) => {
-      console.log('Header received watch event:', event.type, event.resource)
-    }
+    onEvent: () => {}
   })
 
   const getInitials = (name: string | null | undefined) => {

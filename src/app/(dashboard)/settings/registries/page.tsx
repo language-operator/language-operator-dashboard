@@ -70,8 +70,7 @@ export default function RegistrySettingsPage() {
       
       const data = await response.json()
       setRegistries(data.registries || [])
-    } catch (error) {
-      console.error('Error fetching registries:', error)
+    } catch {
       toast.error('Failed to load registry settings')
     } finally {
       setIsLoading(false)
@@ -98,7 +97,6 @@ export default function RegistrySettingsPage() {
       setRegistries(updatedRegistries)
       toast.success('Registry settings updated successfully')
     } catch (error) {
-      console.error('Error updating registries:', error)
       toast.error(error instanceof Error ? error.message : 'Failed to update registries')
     } finally {
       setIsSaving(false)

@@ -60,8 +60,6 @@ export default function EditClusterToolPage() {
         }))
       }
 
-      console.log('Updating tool with payload:', normalizedFormData)
-
       const response = await fetch(`/api/clusters/${clusterName}/tools/${toolName}`, {
         method: 'PUT',
         headers: {
@@ -72,8 +70,6 @@ export default function EditClusterToolPage() {
 
       if (!response.ok) {
         const errorData = await response.json()
-        console.error('API Error Response:', errorData)
-        
         if (errorData.details && Array.isArray(errorData.details)) {
           const detailMessages = errorData.details.map((d: { path: string; message: string }) => `${d.path}: ${d.message}`).join(', ')
           throw new Error(`${errorData.error || 'Validation failed'}: ${detailMessages}`)
@@ -82,14 +78,12 @@ export default function EditClusterToolPage() {
         throw new Error(errorData.error || 'Failed to update tool')
       }
 
-      const result = await response.json()
-      console.log('Update tool result:', result)
-      
+      await response.json()
+
       // Redirect to tool detail page
       router.push(`/clusters/${clusterName}/tools/${toolName}`)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to update tool'
-      console.error('Error updating tool:', err)
       setError(errorMessage)
     } finally {
       setIsLoading(false)

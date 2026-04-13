@@ -52,7 +52,6 @@ export default function CreateClusterPersonaPage() {
 
       router.push(`/clusters/${clusterName}/personas`)
     } catch (err) {
-      console.error('Error creating persona:', err)
       setError(err instanceof Error ? err.message : 'Failed to create persona')
     } finally {
       setIsLoading(false)

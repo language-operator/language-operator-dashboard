@@ -25,8 +25,8 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
       if (stored !== null) {
         setIsCollapsed(JSON.parse(stored))
       }
-    } catch (error) {
-      console.error('Failed to load sidebar state:', error)
+    } catch {
+      // ignore
     } finally {
       setIsLoaded(true)
     }
@@ -39,8 +39,8 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
 
     try {
       localStorage.setItem(SIDEBAR_STORAGE_KEY, JSON.stringify(isCollapsed))
-    } catch (error) {
-      console.error('Failed to save sidebar state:', error)
+    } catch {
+      // ignore
     }
   }, [isCollapsed, isLoaded])
 

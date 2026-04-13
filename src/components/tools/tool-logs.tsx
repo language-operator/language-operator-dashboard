@@ -29,12 +29,10 @@ export function ToolLogs({ tool, clusterName }: ToolLogsProps) {
   // Placeholder streaming functions for UI consistency
   const startStreaming = () => {
     // TODO: Implement streaming for tool logs
-    console.log('Tool streaming not yet implemented')
   }
-  
+
   const stopStreaming = () => {
     // TODO: Implement streaming for tool logs
-    console.log('Tool streaming not yet implemented') 
   }
   const [selectedPod, setSelectedPod] = useState<string | null>(null)
   const [deploymentMode, setDeploymentMode] = useState<string>('service')
@@ -60,7 +58,6 @@ export function ToolLogs({ tool, clusterName }: ToolLogsProps) {
         setSelectedPod(data.recommendedPod)
       }
     } catch (err) {
-      console.error('Error fetching tool pods:', err)
       logs.setError(err instanceof Error ? err.message : 'Failed to load pods')
     } finally {
       setPodsLoading(false)
@@ -85,7 +82,6 @@ export function ToolLogs({ tool, clusterName }: ToolLogsProps) {
       const logLines = data.logs ? data.logs.split('\n').filter((line: string) => line.trim()) : []
       logs.setLogs(logLines)
     } catch (err) {
-      console.error('Error fetching tool logs:', err)
       logs.setError(err instanceof Error ? err.message : 'Failed to load logs')
     } finally {
       logs.setLoading(false)

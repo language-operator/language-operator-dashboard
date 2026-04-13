@@ -19,11 +19,6 @@ export function NavigationProgress({
   const [progress, setProgress] = useState(0)
   const [isVisible, setIsVisible] = useState(false)
   
-  // Debug logging
-  useEffect(() => {
-    console.log('%cNavigationProgress: isNavigating =', 'color: #a855f7;', isNavigating, 'isVisible =', isVisible, 'progress =', progress)
-  }, [isNavigating, isVisible, progress])
-
   useEffect(() => {
     let progressTimer: NodeJS.Timeout | undefined
 

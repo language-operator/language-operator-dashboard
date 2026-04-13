@@ -32,8 +32,8 @@ export default function ClusterEditModelPage() {
       })
 
       router.push(`/clusters/${clusterName}/models/${modelName}`)
-    } catch (err: unknown) {
-      console.error('Error updating model:', err)
+    } catch {
+      // ignore
     }
   }
 

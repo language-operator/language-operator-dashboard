@@ -33,8 +33,6 @@ export default function CreateClusterToolPage() {
         egressRules: (formData as typeof formData & { egressRules?: unknown }).egressRules,
       }
       
-      console.log('Sending payload:', payload)
-      
       const response = await fetch(`/api/clusters/${clusterName}/tools`, {
         method: 'POST',
         headers: {
@@ -45,8 +43,6 @@ export default function CreateClusterToolPage() {
 
       if (!response.ok) {
         const errorData = await response.json()
-        console.error('API Error Response:', errorData)
-        
         if (errorData.details && Array.isArray(errorData.details)) {
           interface ErrorDetail { path: string; message: string }
           const detailMessages = (errorData.details as ErrorDetail[]).map((d) => `${d.path}: ${d.message}`).join(', ')
@@ -56,13 +52,11 @@ export default function CreateClusterToolPage() {
         throw new Error(errorData.error || 'Failed to create tool')
       }
 
-      const result = await response.json()
-      console.log('Create tool result:', result)
-      
+      await response.json()
+
       // Redirect to cluster tools list page
       router.push(`/clusters/${clusterName}/tools`)
     } catch (err) {
-      console.error('Error creating tool:', err)
       setError(err instanceof Error ? err.message : 'Failed to create tool')
     } finally {
       setIsLoading(false)

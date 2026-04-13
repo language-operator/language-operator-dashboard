@@ -49,8 +49,8 @@ export function AddUserDialog({ open, onOpenChange, onSave }: AddUserDialogProps
       setEmail('')
       setPassword(generatePassword())
       onOpenChange(false)
-    } catch (error) {
-      console.error('Error creating user:', error)
+    } catch {
+      // ignore
     } finally {
       setIsLoading(false)
     }
@@ -63,8 +63,8 @@ export function AddUserDialog({ open, onOpenChange, onSave }: AddUserDialogProps
   const handleCopyPassword = async () => {
     try {
       await navigator.clipboard.writeText(password)
-    } catch (err) {
-      console.error('Failed to copy password:', err)
+    } catch {
+      // ignore
     }
   }
 

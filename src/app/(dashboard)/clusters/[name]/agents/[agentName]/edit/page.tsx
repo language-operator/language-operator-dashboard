@@ -130,7 +130,6 @@ export default function EditClusterAgentPage() {
       // Redirect to agent detail page
       router.push(`/clusters/${clusterName}/agents/${agentName}`)
     } catch (error) {
-      console.error('Failed to update agent:', error)
       toast({
         title: 'Failed to update agent',
         description: error instanceof Error ? error.message : 'An unexpected error occurred.',

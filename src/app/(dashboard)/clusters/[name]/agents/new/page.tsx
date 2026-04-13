@@ -128,7 +128,6 @@ export default function CreateClusterAgentPage() {
           : undefined,
       }
 
-      console.log('Submitting form data:', formData)
       await createAgent.mutateAsync(formData)
       
       toast({
@@ -139,7 +138,6 @@ export default function CreateClusterAgentPage() {
       // Redirect to cluster agents page
       router.push(`/clusters/${clusterName}/agents`)
     } catch (error) {
-      console.error('Failed to create agent:', error)
       toast({
         title: 'Failed to create agent',
         description: error instanceof Error ? error.message : 'An unexpected error occurred.',

@@ -168,8 +168,7 @@ export function PersonaAutofillDialog({
         setIdea('')
         setSelectedModel('')
       }
-    } catch (error) {
-      console.error('Failed to generate persona:', error)
+    } catch {
       // Error will be displayed by the ErrorDisplay component
     }
   }

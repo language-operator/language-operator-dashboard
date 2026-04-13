@@ -20,12 +20,10 @@ export function ModelLogs({ model, clusterName }: ModelLogsProps) {
   // Placeholder streaming functions for UI consistency
   const startStreaming = () => {
     // TODO: Implement streaming for model logs
-    console.log('Model streaming not yet implemented')
   }
-  
+
   const stopStreaming = () => {
-    // TODO: Implement streaming for model logs  
-    console.log('Model streaming not yet implemented')
+    // TODO: Implement streaming for model logs
   }
 
   const fetchPods = useCallback(async () => {
@@ -46,7 +44,6 @@ export function ModelLogs({ model, clusterName }: ModelLogsProps) {
         setSelectedPod(data.recommendedPod)
       }
     } catch (err) {
-      console.error('Error fetching pods:', err)
       logs.setError(err instanceof Error ? err.message : 'Failed to load pods')
     } finally {
       setPodsLoading(false)
@@ -71,7 +68,6 @@ export function ModelLogs({ model, clusterName }: ModelLogsProps) {
       const logLines = data.logs ? data.logs.split('\n').filter((line: string) => line.trim()) : []
       logs.setLogs(logLines)
     } catch (err) {
-      console.error('Error fetching model logs:', err)
       logs.setError(err instanceof Error ? err.message : 'Failed to load logs')
     } finally {
       logs.setLoading(false)

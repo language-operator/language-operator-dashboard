@@ -140,7 +140,6 @@ export default function EditClusterPage({ params }: { params: Promise<{ name: st
         }))
         networkForm.reset({ egressRules })
       } catch (err) {
-        console.error('Error fetching cluster:', err)
         setError(err instanceof Error ? err.message : 'Failed to load cluster')
       } finally {
         setIsLoadingCluster(false)
@@ -198,7 +197,6 @@ export default function EditClusterPage({ params }: { params: Promise<{ name: st
       // Redirect to cluster details page
       router.push(`/clusters/${clusterName}`)
     } catch (err) {
-      console.error('Error updating cluster:', err)
       setError(err instanceof Error ? err.message : 'Failed to update cluster')
     } finally {
       setIsLoading(false)

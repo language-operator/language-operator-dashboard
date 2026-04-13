@@ -49,7 +49,6 @@ export default function EditClusterPersonaPage() {
 
       router.push(`/clusters/${clusterName}/personas/${personaName}`)
     } catch (err) {
-      console.error('Error updating persona:', err)
       setSubmitError(err instanceof Error ? err.message : 'Failed to update persona')
     }
   }

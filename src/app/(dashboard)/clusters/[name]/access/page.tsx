@@ -30,6 +30,7 @@ import { Shield, Plus, Trash2, UserCircle } from 'lucide-react'
 import { useAccess, useGrantAccess, useRevokeAccess } from '@/hooks/use-access'
 import { DeleteResourceDialog } from '@/components/ui/delete-resource-dialog'
 import { toast } from 'sonner'
+import { formatTimeAgoCondensed } from '@/lib/format'
 
 const ROLE_LABELS: Record<string, string> = {
   'langop-cluster-admin': 'Admin',
@@ -41,19 +42,6 @@ const ROLE_COLORS: Record<string, string> = {
   'langop-cluster-viewer': 'bg-stone-100 text-stone-700 dark:bg-stone-800 dark:text-stone-300',
 }
 
-function formatTimeAgo(timestamp?: string) {
-  if (!timestamp) return 'Unknown'
-  const date = new Date(timestamp)
-  const now = new Date()
-  const diff = now.getTime() - date.getTime()
-  const days = Math.floor(diff / 86400000)
-  const hours = Math.floor(diff / 3600000)
-  const minutes = Math.floor(diff / 60000)
-  if (days > 0) return `${days}d ago`
-  if (hours > 0) return `${hours}h ago`
-  if (minutes > 0) return `${minutes}m ago`
-  return 'Just now'
-}
 
 function GrantAccessDialog({ clusterName }: { clusterName: string }) {
   const [open, setOpen] = React.useState(false)
@@ -224,7 +212,7 @@ export default function ClusterAccessPage() {
                       </TableCell>
                       <TableCell>
                         <span className="text-sm text-muted-foreground">
-                          {formatTimeAgo(binding.createdAt)}
+                          {formatTimeAgoCondensed(binding.createdAt)}
                         </span>
                       </TableCell>
                       <TableCell className="text-right">

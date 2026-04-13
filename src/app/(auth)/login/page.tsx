@@ -19,8 +19,7 @@ export default function LoginPage() {
         const response = await fetch('/api/auth/signup-enabled')
         const data = await response.json()
         setSignupEnabled(data.signupEnabled)
-      } catch (error) {
-        console.error('Error checking signup status:', error)
+      } catch {
         // Default to enabled on error
         setSignupEnabled(true)
       }

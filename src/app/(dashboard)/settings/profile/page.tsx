@@ -123,7 +123,6 @@ export default function ProfilePage() {
         description: 'Your profile information has been saved.',
       })
     } catch (error) {
-      console.error('Error updating profile:', error)
       toast({
         title: 'Error updating profile',
         description: error instanceof Error ? error.message : 'Please try again.',

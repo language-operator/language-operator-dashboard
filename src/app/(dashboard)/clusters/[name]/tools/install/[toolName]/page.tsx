@@ -54,7 +54,6 @@ export default function InstallToolPage() {
 
       setTool(toolData)
     } catch (err) {
-      console.error('Error fetching tool:', err)
       setError(err instanceof Error ? err.message : 'Failed to load tool details')
     } finally {
       setLoading(false)
@@ -91,7 +90,6 @@ export default function InstallToolPage() {
         router.push(`/clusters/${clusterName}/tools`)
       }, 2000)
     } catch (err) {
-      console.error('Error installing tool:', err)
       setError(err instanceof Error ? err.message : 'Failed to install tool')
     } finally {
       setInstalling(false)

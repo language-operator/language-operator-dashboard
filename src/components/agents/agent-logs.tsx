@@ -58,7 +58,6 @@ export function AgentLogs({ agent, clusterName }: AgentLogsProps) {
         setSelectedPod(data.recommendedPod)
       }
     } catch (err) {
-      console.error('Error fetching pods:', err)
       logs.setError(err instanceof Error ? err.message : 'Failed to load pods')
     } finally {
       setPodsLoading(false)
@@ -83,7 +82,6 @@ export function AgentLogs({ agent, clusterName }: AgentLogsProps) {
       const logLines = data.logs ? data.logs.split('\n').filter((line: string) => line.trim()) : []
       logs.setLogs(logLines)
     } catch (err) {
-      console.error('Error fetching initial logs:', err)
       logs.setError(err instanceof Error ? err.message : 'Failed to load logs')
     } finally {
       logs.setLoading(false)
@@ -112,8 +110,7 @@ export function AgentLogs({ agent, clusterName }: AgentLogsProps) {
       }
     }
 
-    eventSource.onerror = (error) => {
-      console.error('EventSource error:', error)
+    eventSource.onerror = () => {
       logs.setError('Connection lost. Click "Start Streaming" to reconnect.')
       setIsStreaming(false)
       eventSource.close()
