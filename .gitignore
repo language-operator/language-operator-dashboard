@@ -48,3 +48,7 @@ Thumbs.db
 
 # Playwright
 .playwright-mcp
+
+# Claude hooks
+.claude/hooks/node_modules/
+.claude/hooks/package-lock.json

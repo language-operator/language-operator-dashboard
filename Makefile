@@ -7,7 +7,7 @@ NAMESPACE  := language-operator
 # Dev Postgres connection (deployed by dev-postgres target)
 DEV_DB_URL := postgresql://dashboard:devpassword@dashboard-dev-postgres.$(NAMESPACE).svc.cluster.local:5432/dashboard
 
-.PHONY: dev dev-image dev-postgres dev-secrets dev-apply dev-forward dev-down dev-logs dev-rebuild
+.PHONY: dev dev-image dev-postgres dev-secrets dev-apply dev-forward dev-down dev-logs dev-rebuild dev-supervisor
 
 # Full dev startup: build image, deploy postgres, create secrets, apply manifests, port-forward
 dev: dev-image dev-postgres dev-secrets dev-apply dev-forward
@@ -62,3 +62,24 @@ dev-logs:
 
 # Rebuild image and redeploy (use after dependency changes)
 dev-rebuild: dev-image dev-apply
+
+dev-supervisor:
+	claude "/delegate"
+
+dev-worker-%:
+	claude "/watch $*"
+
+# Show help
+help:
+	@echo "Targets:"
+	@echo "  dev          - Full dev startup (build, postgres, secrets, deploy, port-forward)"
+	@echo "  dev-image    - Build dev image and load into k3s"
+	@echo "  dev-postgres - Deploy standalone Postgres for dev"
+	@echo "  dev-secrets  - Create/update dev config secret"
+	@echo "  dev-apply    - Apply RBAC and deployment manifests"
+	@echo "  dev-forward  - Port-forward dashboard to localhost:3000"
+	@echo "  dev-logs     - Tail logs from the dev pod"
+	@echo "  dev-down     - Remove dev resources from the cluster"
+	@echo "  dev-rebuild  - Rebuild image and redeploy (after dependency changes)"
+	@echo "  dev-supervisor   - Run the supervisor agent (triage issues into queues)"
+	@echo "  dev-worker-N     - Run worker agent for queue N (0, 1, or 2)"
