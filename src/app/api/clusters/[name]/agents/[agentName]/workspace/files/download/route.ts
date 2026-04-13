@@ -43,7 +43,7 @@ export async function GET(
           'Content-Length': fileBuffer.length.toString(),
         },
       })
-    } catch (error: any) {
+    } catch (error) {
       if (error instanceof WorkspaceError) {
         const statusCode = getStatusCodeForWorkspaceError(error.code)
         return NextResponse.json({ 
@@ -56,7 +56,7 @@ export async function GET(
       console.error('Workspace download error:', error)
       return NextResponse.json({ error: 'Failed to download file' }, { status: 500 })
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error('Workspace download API error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }

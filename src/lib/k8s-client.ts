@@ -1045,3 +1045,23 @@ class KubernetesClient {
 
 // Export singleton instance
 export const k8sClient = KubernetesClient.getInstance()
+
+/** Extract a list from any k8s client response shape (body.items / data.items / items). */
+export function extractItems<T>(response: unknown): T[] {
+  const r = response as Record<string, unknown>
+  return (
+    ((r?.body as Record<string, unknown>)?.items as T[]) ??
+    ((r?.data as Record<string, unknown>)?.items as T[]) ??
+    (r?.items as T[]) ??
+    []
+  )
+}
+
+/** Extract a single resource from any k8s client response shape (body / data / direct). */
+export function extractItem<T>(response: unknown): T | null {
+  const r = response as Record<string, unknown>
+  if (r?.body) return r.body as T
+  if (r?.data) return r.data as T
+  if (r) return r as T
+  return null
+}

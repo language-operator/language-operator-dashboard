@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthenticatedUser } from '@/lib/user-context'
-import { k8sClient } from '@/lib/k8s-client'
+import { k8sClient, extractItem } from '@/lib/k8s-client'
+import { LanguageModel } from '@/types/model'
 import yaml from 'js-yaml'
 
 // GET /api/clusters/[name]/models/[modelName]/yaml - Get model YAML
@@ -20,19 +21,11 @@ export async function GET(
     }
 
     // Fetch specific model from organization namespace
-    let model: any = null
-    
+    let model: LanguageModel | null = null
+
     try {
       const response = await k8sClient.getLanguageModel(clusterName, modelName)
-      
-      // Handle different response structures from k8s client
-      if ((response as any)?.body) {
-        model = (response as any).body
-      } else if ((response as any)?.data) {
-        model = (response as any).data
-      } else if (response) {
-        model = response as any
-      }
+      model = extractItem<LanguageModel>(response)
     } catch (k8sError) {
       // If model not found, return 404
       if (k8sError instanceof Error && k8sError.message.includes('404')) {

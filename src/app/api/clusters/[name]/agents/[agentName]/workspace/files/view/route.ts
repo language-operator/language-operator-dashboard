@@ -67,7 +67,7 @@ export async function GET(
         mimeType,
         isViewable: true,
       })
-    } catch (error: any) {
+    } catch (error) {
       if (error instanceof WorkspaceError) {
         const statusCode = getStatusCodeForWorkspaceError(error.code)
         return NextResponse.json({ 
@@ -80,7 +80,7 @@ export async function GET(
       console.error('Workspace view error:', error)
       return NextResponse.json({ error: 'Failed to view file' }, { status: 500 })
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error('Workspace view API error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }

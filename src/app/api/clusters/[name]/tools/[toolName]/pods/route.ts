@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { k8sClient } from '@/lib/k8s-client'
+import { k8sClient, extractItem, extractItems } from '@/lib/k8s-client'
 import { getAuthenticatedUser } from '@/lib/user-context'
+import type { V1Pod, V1Container, V1ContainerStatus } from '@kubernetes/client-node'
+import { LanguageTool } from '@/types/tool'
 
 interface RouteParams {
   params: Promise<{
@@ -20,15 +22,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     // First, get the tool to understand its deployment mode
     const toolResource = await k8sClient.getLanguageTool(clusterName, toolName)
-    
-    let toolData: any
-    if ((toolResource as any)?.body) {
-      toolData = (toolResource as any).body
-    } else if ((toolResource as any)?.data) {
-      toolData = (toolResource as any).data
-    } else {
-      toolData = toolResource
-    }
+    const toolData = extractItem<LanguageTool>(toolResource)
 
     if (!toolData) {
       return NextResponse.json({ error: 'Tool not found' }, { status: 404 })
@@ -36,7 +30,6 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     const deploymentMode = toolData.spec?.deploymentMode || 'service'
 
-    let pods: any[] = []
     let labelSelector = ''
     let podType = ''
 
@@ -58,53 +51,44 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     })
 
     // Handle different response structures from k8s client
-    let podList: any[] = []
-    if ((podsResponse as any)?.body?.items) {
-      podList = (podsResponse as any).body.items
-    } else if ((podsResponse as any)?.data?.items) {
-      podList = (podsResponse as any).data.items
-    } else if (Array.isArray(podsResponse)) {
-      podList = podsResponse
-    } else if ((podsResponse as any)?.items) {
-      podList = (podsResponse as any).items
-    }
+    const podList: V1Pod[] = extractItems<V1Pod>(podsResponse)
 
     console.log(`Found ${podList.length} ${podType} pods for tool ${toolName}`)
 
     // Transform pods into a more user-friendly format
-    const transformedPods = podList.map((pod) => {
+    const transformedPods = podList.map((pod: V1Pod) => {
       const status = pod.status?.phase || 'Unknown'
       const creationTimestamp = pod.metadata?.creationTimestamp
       const name = pod.metadata?.name || 'unknown'
-      
+
       // Determine if this is a running pod
       const isRunning = status === 'Running'
-      
+
       // Get container statuses for more detailed info
-      const containerStatuses = pod.status?.containerStatuses || []
-      const hasRunningContainers = containerStatuses.some((c: any) => c.state?.running)
-      
+      const containerStatuses: V1ContainerStatus[] = pod.status?.containerStatuses || []
+      const hasRunningContainers = containerStatuses.some((c: V1ContainerStatus) => c.state?.running)
+
       // For sidecar mode, check if this pod actually uses the tool
       let hasToolContainer = true
       if (deploymentMode === 'sidecar') {
         // Check if this agent pod has the tool as a sidecar container or init container
-        const containers = pod.spec?.containers || []
-        const initContainers = pod.spec?.initContainers || []
-        hasToolContainer = [...containers, ...initContainers].some((c: any) => 
+        const containers: V1Container[] = pod.spec?.containers || []
+        const initContainers: V1Container[] = pod.spec?.initContainers || []
+        hasToolContainer = [...containers, ...initContainers].some((c: V1Container) =>
           c.name?.includes(toolName) || c.image?.includes(toolName)
         )
       }
-      
+
       // Get available containers for log viewing (including init containers)
-      const containers = pod.spec?.containers || []
-      const initContainers = pod.spec?.initContainers || []
+      const containers: V1Container[] = pod.spec?.containers || []
+      const initContainers: V1Container[] = pod.spec?.initContainers || []
       const allContainers = [...containers, ...initContainers]
-      const availableContainers = allContainers.map((c: any) => ({
+      const availableContainers = allContainers.map((c: V1Container) => ({
         name: c.name,
         image: c.image,
-        isToolContainer: deploymentMode === 'sidecar' ? 
-          (c.name?.includes(toolName) || c.image?.includes(toolName)) : 
-          c.name === toolName || c.name === 'tool'
+        isToolContainer: deploymentMode === 'sidecar'
+          ? (c.name?.includes(toolName) || c.image?.includes(toolName))
+          : c.name === toolName || c.name === 'tool',
       }))
 
       return {
@@ -119,7 +103,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         availableContainers,
         // Additional metadata that might be useful
         labels: pod.metadata?.labels || {},
-        restartCount: containerStatuses.reduce((sum: number, c: any) => sum + (c.restartCount || 0), 0),
+        restartCount: containerStatuses.reduce((sum: number, c: V1ContainerStatus) => sum + (c.restartCount || 0), 0),
       }
     })
 
@@ -129,8 +113,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       transformedPods
 
     // Sort pods by creation timestamp (newest first)
-    const sortedPods = relevantPods.sort((a, b) => 
-      new Date(b.creationTimestamp).getTime() - new Date(a.creationTimestamp).getTime()
+    const sortedPods = relevantPods.sort((a, b) =>
+      new Date(b.creationTimestamp ?? 0).getTime() - new Date(a.creationTimestamp ?? 0).getTime()
     )
 
     // Determine the recommended pod (first running pod, or most recent if none running)
@@ -141,7 +125,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     let recommendedContainer = null
     if (recommendedPod && recommendedPod.availableContainers.length > 0) {
       // Prefer tool containers first, then any container
-      const toolContainers = recommendedPod.availableContainers.filter((c: any) => c.isToolContainer)
+      const toolContainers = recommendedPod.availableContainers.filter(c => c.isToolContainer)
       recommendedContainer = toolContainers.length > 0 ? 
         toolContainers[0].name : 
         recommendedPod.availableContainers[0].name

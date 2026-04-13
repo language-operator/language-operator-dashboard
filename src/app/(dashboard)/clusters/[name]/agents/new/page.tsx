@@ -289,15 +289,16 @@ export default function CreateClusterAgentPage() {
                             <div className="text-sm text-muted-foreground">Loading available tools...</div>
                           ) : (
                             <div className="grid grid-cols-2 gap-2 mt-2">
-                              {availableTools.map((tool: any) => (
-                                <div key={tool.metadata.name} className="flex items-center space-x-2">
+                              {availableTools.map((tool: LanguageTool) => (
+                                <div key={tool.metadata.name ?? ''} className="flex items-center space-x-2">
                                   <Checkbox
-                                    checked={field.value.includes(tool.metadata.name)}
+                                    checked={field.value.includes(tool.metadata.name ?? '')}
                                     onCheckedChange={(checked) => {
+                                      const toolName = tool.metadata.name ?? ''
                                       if (checked) {
-                                        field.onChange([...field.value, tool.metadata.name])
+                                        field.onChange([...field.value, toolName])
                                       } else {
-                                        field.onChange(field.value.filter(name => name !== tool.metadata.name))
+                                        field.onChange(field.value.filter(name => name !== toolName))
                                       }
                                     }}
                                   />

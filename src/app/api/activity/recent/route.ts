@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthenticatedUser } from '@/lib/user-context'
-import { k8sClient } from '@/lib/k8s-client'
+import { k8sClient, extractItems } from '@/lib/k8s-client'
+import type { CoreV1Event } from '@kubernetes/client-node'
 
 // GET /api/activity/recent - Get recent activity from Kubernetes events
 const NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
@@ -23,34 +24,31 @@ export async function GET(request: NextRequest) {
     })
 
     // Handle different response structures from k8s client
-    const allEvents = (eventsResponse as any)?.body?.items || 
-                     (eventsResponse as any)?.data?.items || 
-                     (eventsResponse as any)?.items || 
-                     []
+    const allEvents = extractItems<CoreV1Event>(eventsResponse)
 
     // Transform K8s events into activity format
     const activities = allEvents
-      .filter((event: any) => {
+      .filter((event: CoreV1Event) => {
         // Only show events related to Language Operator resources
         const involvedObject = event.involvedObject
         return involvedObject && 
                involvedObject.apiVersion === 'langop.io/v1alpha1' &&
-               ['LanguageAgent', 'LanguageModel', 'LanguageTool', 'LanguagePersona', 'LanguageCluster'].includes(involvedObject.kind)
+               ['LanguageAgent', 'LanguageModel', 'LanguageTool', 'LanguagePersona', 'LanguageCluster'].includes(involvedObject.kind ?? '')
       })
-      .sort((a: any, b: any) => {
+      .sort((a: CoreV1Event, b: CoreV1Event) => {
         // Sort by last timestamp (most recent first)
-        const aTime = new Date(a.lastTimestamp || a.firstTimestamp || a.metadata.creationTimestamp).getTime()
-        const bTime = new Date(b.lastTimestamp || b.firstTimestamp || b.metadata.creationTimestamp).getTime()
+        const aTime = new Date(a.lastTimestamp ?? a.firstTimestamp ?? a.metadata.creationTimestamp ?? 0).getTime()
+        const bTime = new Date(b.lastTimestamp ?? b.firstTimestamp ?? b.metadata.creationTimestamp ?? 0).getTime()
         return bTime - aTime
       })
       .slice(0, limit) // Apply final limit
-      .map((event: any) => {
+      .map((event: CoreV1Event) => {
         const involvedObject = event.involvedObject
-        const timestamp = event.lastTimestamp || event.firstTimestamp || event.metadata.creationTimestamp
-        
+        const timestamp = event.lastTimestamp ?? event.firstTimestamp ?? event.metadata.creationTimestamp ?? new Date(0)
+
         // Map K8s event to user-friendly activity
-        const resourceType = involvedObject.kind.replace('Language', '').toLowerCase()
-        const resourceName = involvedObject.name
+        const resourceType = (involvedObject.kind ?? '').replace('Language', '').toLowerCase()
+        const resourceName = involvedObject.name ?? ''
         const action = getActionFromEvent(event)
         const namespace = involvedObject.namespace || NAMESPACE
 
@@ -87,7 +85,7 @@ export async function GET(request: NextRequest) {
 }
 
 // Helper function to determine action from K8s event
-function getActionFromEvent(event: any): string {
+function getActionFromEvent(event: CoreV1Event): string {
   const reason = event.reason?.toLowerCase() || ''
   const type = event.type?.toLowerCase() || ''
   
@@ -105,7 +103,8 @@ function getActionFromEvent(event: any): string {
 }
 
 // Helper function to format activity messages
-function formatActivityMessage(resourceType: string, resourceName: string, action: string, event: any): string {
+function formatActivityMessage(resourceType: string, resourceName: string | undefined, action: string, _event: CoreV1Event): string {
+  if (!resourceName) resourceName = 'unknown'
   const capitalizedType = resourceType.charAt(0).toUpperCase() + resourceType.slice(1)
   
   switch (action) {

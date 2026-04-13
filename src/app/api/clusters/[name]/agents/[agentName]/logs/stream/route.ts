@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
-import { k8sClient } from '@/lib/k8s-client'
+import { k8sClient, extractItems } from '@/lib/k8s-client'
 import { getAuthenticatedUser } from '@/lib/user-context'
+import type { V1Pod } from '@kubernetes/client-node'
 
 
 interface RouteParams {
@@ -26,44 +27,35 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     })
 
     // Handle different response structures from k8s client
-    let podList: any[] = []
-    if ((pods as any)?.body?.items) {
-      podList = (pods as any).body.items
-    } else if ((pods as any)?.data?.items) {
-      podList = (pods as any).data.items
-    } else if (Array.isArray(pods)) {
-      podList = pods
-    } else if ((pods as any)?.items) {
-      podList = (pods as any).items
-    }
+    const podList: V1Pod[] = extractItems<V1Pod>(pods)
 
     if (podList.length === 0) {
       return new Response('No pods found for this agent', { status: 404 })
     }
 
     // Select the appropriate pod
-    let pod
+    let pod: V1Pod | undefined
+    const getTime = (p: V1Pod) => new Date(p.metadata?.creationTimestamp ?? 0).getTime()
     if (podName) {
-      pod = podList.find(p => p.metadata.name === podName)
+      pod = podList.find(p => p.metadata?.name === podName)
       if (!pod) {
         return new Response(`Pod "${podName}" not found for agent ${agentName}`, { status: 404 })
       }
     } else {
       const runningPods = podList.filter(p => p.status?.phase === 'Running')
       if (runningPods.length > 0) {
-        pod = runningPods.sort((a, b) =>
-          new Date(b.metadata.creationTimestamp).getTime() -
-          new Date(a.metadata.creationTimestamp).getTime()
-        )[0]
+        pod = runningPods.sort((a, b) => getTime(b) - getTime(a))[0]
       } else {
-        pod = podList.sort((a, b) =>
-          new Date(b.metadata.creationTimestamp).getTime() -
-          new Date(a.metadata.creationTimestamp).getTime()
-        )[0]
+        pod = podList.sort((a, b) => getTime(b) - getTime(a))[0]
       }
     }
 
-    console.log(`Streaming logs from pod: ${pod.metadata.name}`)
+    if (!pod) {
+      return new Response('No pods found for this agent', { status: 404 })
+    }
+
+    const podMetaName = pod.metadata?.name ?? ''
+    console.log(`Streaming logs from pod: ${podMetaName}`)
 
     // Create a readable stream for Server-Sent Events
     const stream = new ReadableStream({
@@ -72,7 +64,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
         const streamLogs = async () => {
           try {
-            const logStream = await k8sClient.streamPodLogs(clusterName, pod.metadata.name, {
+            const logStream = await k8sClient.streamPodLogs(clusterName, podMetaName, {
               follow: true,
               timestamps: true,
               tailLines: 10
@@ -90,7 +82,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
             } else {
               const pollLogs = async () => {
                 try {
-                  const logs = await k8sClient.getPodLogs(clusterName, pod.metadata.name, {
+                  const logs = await k8sClient.getPodLogs(clusterName, podMetaName, {
                     tailLines: 1,
                     timestamps: true,
                     sinceSeconds: 1
@@ -99,10 +91,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
                   let logContent = ''
                   if (typeof logs === 'string') {
                     logContent = logs
-                  } else if ((logs as any)?.body) {
-                    logContent = (logs as any).body
-                  } else if ((logs as any)?.data) {
-                    logContent = (logs as any).data
+                  } else if ((logs as { body?: string })?.body) {
+                    logContent = (logs as { body: string }).body
+                  } else if ((logs as { data?: string })?.data) {
+                    logContent = (logs as { data: string }).data
                   }
 
                   if (logContent && logContent.trim()) {
