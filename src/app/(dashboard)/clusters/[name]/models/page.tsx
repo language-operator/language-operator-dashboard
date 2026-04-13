@@ -154,7 +154,7 @@ export default function ClusterModels() {
         {clusterModels.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-16">
-              <Cpu className="h-16 w-16 text-gray-400 mb-4" />
+              <Cpu className="h-16 w-16 text-muted-foreground mb-4" />
               <CardTitle className="text-xl mb-2">No models yet</CardTitle>
               <CardDescription className="text-center max-w-md mb-6">
                 Language models define the AI capabilities available in this cluster. 

@@ -21,7 +21,7 @@ export default function AgentSelfConfigsPage() {
           <CardContent className="flex items-center justify-center py-16">
             <div className="text-center">
               <Spinner className="mx-auto mb-4" />
-              <p className="text-gray-600">Loading self-configs...</p>
+              <p className="text-muted-foreground">Loading self-configs...</p>
             </div>
           </CardContent>
         </Card>

@@ -247,7 +247,7 @@ export default function ClusterTools() {
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
             <Spinner className="mx-auto" />
-            <p className="mt-4 text-gray-600">Loading tools...</p>
+            <p className="mt-4 text-muted-foreground">Loading tools...</p>
           </div>
         </div>
     )
@@ -258,7 +258,7 @@ export default function ClusterTools() {
         <div className="space-y-6">
           <div>
             <h1 className="text-3xl font-light">Tools</h1>
-            <p className="text-gray-600 mt-1">
+            <p className="text-muted-foreground mt-1">
               Official tools for the {clusterName} cluster
             </p>
           </div>
@@ -286,7 +286,7 @@ export default function ClusterTools() {
 
         {/* Search */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             type="text"
             placeholder="Search tools by name or description..."
@@ -326,7 +326,7 @@ export default function ClusterTools() {
           {filteredTools.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-16">
-                <Wrench className="h-16 w-16 text-gray-400 mb-4" />
+                <Wrench className="h-16 w-16 text-muted-foreground mb-4" />
                 <CardTitle className="text-xl mb-2">No tools found</CardTitle>
                 <CardDescription className="text-center max-w-md">
                   {searchQuery
