@@ -102,7 +102,7 @@ export default function EditClusterPersonaPage() {
         {initialData ? (
           <>
             {submitError && (
-              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
+              <div className="mb-4 p-4 bg-destructive/10 border border-destructive/30">
                 <p className="text-sm text-red-800">{submitError}</p>
               </div>
             )}

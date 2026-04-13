@@ -980,7 +980,7 @@ export function PersonaForm({
         </CardHeader>
         <CardContent className="space-y-4">
           {formData.examples.map((example, index) => (
-            <div key={index} className="space-y-3 p-4 border rounded-lg">
+            <div key={index} className="space-y-3 p-4 border">
               <div className="flex items-center justify-between">
                 <Label>Example {index + 1}</Label>
                 {formData.examples.length > 1 && (
@@ -1069,7 +1069,7 @@ export function PersonaForm({
         </CardHeader>
         <CardContent className="space-y-4">
           {formData.knowledgeSources.map((source, index) => (
-            <div key={index} className="space-y-3 p-4 border rounded-lg">
+            <div key={index} className="space-y-3 p-4 border">
               <div className="flex items-center justify-between">
                 <Label>Knowledge Source {index + 1}</Label>
                 <Button
@@ -1325,7 +1325,7 @@ export function PersonaForm({
         </CardHeader>
         <CardContent className="space-y-4">
           {formData.rules.map((rule, index) => (
-            <div key={index} className="space-y-3 p-4 border rounded-lg">
+            <div key={index} className="space-y-3 p-4 border">
               <div className="flex items-center justify-between">
                 <Label>Rule {index + 1}</Label>
                 <Button

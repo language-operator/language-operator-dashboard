@@ -317,7 +317,7 @@ export default function EditClusterPage({ params }: { params: Promise<{ name: st
 
                 {/* Error Display */}
                 {activeTab === 'network' && error && (
-                  <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+                  <div className="border border-red-200 bg-red-50 p-4">
                     <p className="text-sm text-red-700">{error}</p>
                   </div>
                 )}

@@ -223,7 +223,7 @@ export function EnhancedNetworkPolicyForm<T extends FieldValues>({
                 </div>
                 
                 {(!watchedEgressRules || watchedEgressRules.length === 0) ? (
-                  <div className="text-center py-8 text-muted-foreground border-2 border-dashed rounded-lg">
+                  <div className="text-center py-8 text-muted-foreground border-2 border-dashed">
                     <ArrowRight className="h-8 w-8 mx-auto mb-2 opacity-50" />
                     <p>No egress rules configured</p>
                     <p className="text-sm">External access is blocked by default</p>
@@ -394,7 +394,7 @@ export function EnhancedNetworkPolicyForm<T extends FieldValues>({
                 </div>
                 
                 {(!watchedIngressRules || watchedIngressRules.length === 0) ? (
-                  <div className="text-center py-8 text-muted-foreground border-2 border-dashed rounded-lg">
+                  <div className="text-center py-8 text-muted-foreground border-2 border-dashed">
                     <ArrowLeft className="h-8 w-8 mx-auto mb-2 opacity-50" />
                     <p>No ingress rules configured</p>
                     <p className="text-sm">Inbound access is determined by default policies</p>
@@ -582,7 +582,7 @@ export function EnhancedNetworkPolicyForm<T extends FieldValues>({
               </div>
               
               {(!watchedEgressRules || watchedEgressRules.length === 0) ? (
-                <div className="text-center py-8 text-muted-foreground border-2 border-dashed rounded-lg">
+                <div className="text-center py-8 text-muted-foreground border-2 border-dashed">
                   <Network className="h-8 w-8 mx-auto mb-2 opacity-50" />
                   <p>No egress rules configured</p>
                   <p className="text-sm">External access is blocked by default</p>

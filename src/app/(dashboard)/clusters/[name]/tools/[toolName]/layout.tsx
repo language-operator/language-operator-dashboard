@@ -240,7 +240,7 @@ export default function ToolDetailLayout({ children }: ToolDetailLayoutProps) {
                 <Spinner size="sm" />
               </div>
             ) : (
-              <div className="border rounded-lg flex-1 min-h-0 flex flex-col">
+              <div className="border flex-1 min-h-0 flex flex-col">
                 <div className="bg-muted p-3 border-b flex justify-between items-center">
                   <span className="font-light text-sm">
                     {tool?.metadata.name || toolName}.yaml
