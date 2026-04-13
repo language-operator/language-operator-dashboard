@@ -37,21 +37,7 @@ import { LanguageCluster } from '@/types/cluster'
 import { Skeleton } from '@/components/ui/skeleton'
 import { DeleteResourceDialog } from '@/components/ui/delete-resource-dialog'
 import { toast } from 'sonner'
-
-function formatTimeAgo(timestamp?: string | Date) {
-  if (!timestamp) return 'Unknown'
-  const date = typeof timestamp === 'string' ? new Date(timestamp) : timestamp
-  const now = new Date()
-  const diff = now.getTime() - date.getTime()
-  const minutes = Math.floor(diff / 60000)
-  const hours = Math.floor(diff / 3600000)
-  const days = Math.floor(diff / 86400000)
-  
-  if (days > 0) return `${days} day${days !== 1 ? 's' : ''} ago`
-  if (hours > 0) return `${hours} hour${hours !== 1 ? 's' : ''} ago`
-  if (minutes > 0) return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`
-  return 'Just now'
-}
+import { formatTimeAgo } from '@/lib/format'
 
 interface ClusterTableProps {
   clusters: LanguageCluster[]
@@ -199,8 +185,7 @@ export default function ClustersPage() {
 
   // Enable real-time cluster updates with notifications
   const handleWatchEvent = useResourceNotifications({
-    onEvent: (event) => {
-      console.log('🔄 Cluster update:', event.type, event.data?.metadata?.name)
+    onEvent: () => {
       // React Query cache is automatically invalidated by the watch hook
     },
     enabled: true,

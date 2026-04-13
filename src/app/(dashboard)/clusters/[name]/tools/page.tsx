@@ -59,7 +59,6 @@ export default function ClusterTools() {
         const catalogData = await catalogResponse.json()
         setCatalog(catalogData)
       } catch (err) {
-        console.error('Error fetching catalog:', err)
         setCatalogError(err instanceof Error ? err.message : 'Failed to load tool catalog')
       } finally {
         setCatalogLoading(false)

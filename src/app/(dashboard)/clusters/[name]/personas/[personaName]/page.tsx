@@ -23,21 +23,7 @@ import { ResourceEventsActivity } from '@/components/ui/events-activity'
 import { DeleteResourceDialog } from '@/components/ui/delete-resource-dialog'
 import { toast } from 'sonner'
 import { AnimatedStatus } from '@/components/ui/animated-status'
-
-function formatTimeAgo(timestamp?: string | Date) {
-  if (!timestamp) return 'Unknown'
-  const date = typeof timestamp === 'string' ? new Date(timestamp) : timestamp
-  const now = new Date()
-  const diff = now.getTime() - date.getTime()
-  const minutes = Math.floor(diff / 60000)
-  const hours = Math.floor(diff / 3600000)
-  const days = Math.floor(diff / 86400000)
-
-  if (days > 0) return `${days} day${days !== 1 ? 's' : ''} ago`
-  if (hours > 0) return `${hours} hour${hours !== 1 ? 's' : ''} ago`
-  if (minutes > 0) return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`
-  return 'Just now'
-}
+import { formatTimeAgo } from '@/lib/format'
 
 export default function ClusterPersonaDetailPage() {
   const router = useRouter()
@@ -83,8 +69,7 @@ export default function ClusterPersonaDetailPage() {
       }
       const yaml = await response.text()
       setYamlContent(yaml)
-    } catch (error) {
-      console.error('Error fetching YAML:', error)
+    } catch {
       setYamlContent('Error loading YAML content')
     } finally {
       setYamlLoading(false)
@@ -96,8 +81,8 @@ export default function ClusterPersonaDetailPage() {
       await navigator.clipboard.writeText(yamlContent)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
-    } catch (error) {
-      console.error('Failed to copy YAML:', error)
+    } catch {
+      // ignore
     }
   }
 

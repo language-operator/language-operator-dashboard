@@ -79,8 +79,7 @@ export default function ToolDetailLayout({ children }: ToolDetailLayoutProps) {
       }
       const yaml = await response.text()
       setYamlContent(yaml)
-    } catch (error) {
-      console.error('Error fetching YAML:', error)
+    } catch {
       setYamlContent('Error loading YAML content')
     } finally {
       setYamlLoading(false)
@@ -92,8 +91,8 @@ export default function ToolDetailLayout({ children }: ToolDetailLayoutProps) {
       await navigator.clipboard.writeText(yamlContent)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
-    } catch (error) {
-      console.error('Failed to copy YAML:', error)
+    } catch {
+      // ignore
     }
   }
 
