@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter, useParams, usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { Bot, Edit, MoreVertical, FileCode, Trash2, Play, Home, FolderOpen, ScrollText, Copy, Check, MessageCircle } from 'lucide-react'
+import { Bot, Edit, MoreVertical, FileCode, Trash2, Play, Home, FolderOpen, ScrollText, Copy, Check, MessageCircle, Settings2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -28,8 +28,9 @@ function getCurrentTabValue(pathname: string, clusterName: string, agentName: st
     if (path === orgBasePath || path === `/clusters/${clusterName}/agents/${agentName}`) return 'overview'
     if (path.endsWith('/workspace')) return 'workspace'
     if (path.endsWith('/logs')) return 'logs'
+    if (path.endsWith('/selfconfigs')) return 'selfconfigs'
   }
-  
+
   return 'overview'
 }
 
@@ -279,6 +280,12 @@ export default function AgentDetailLayout({ children }: AgentDetailLayoutProps) 
               <Link href={`/clusters/${clusterName}/agents/${agentName}/logs`}>
                 <ScrollText className="w-4 h-4 mr-2" />
                 Logs
+              </Link>
+            </TabsTrigger>
+            <TabsTrigger value="selfconfigs" asChild>
+              <Link href={`/clusters/${clusterName}/agents/${agentName}/selfconfigs`}>
+                <Settings2 className="w-4 h-4 mr-2" />
+                Self-Configs
               </Link>
             </TabsTrigger>
           </TabsList>

@@ -763,6 +763,33 @@ class KubernetesClient {
     })
   }
 
+  // LanguageAgentSelfConfig methods (namespace-scoped)
+
+  async listLanguageAgentSelfConfigs(namespace: string) {
+    if (!this.customObjectsApi) {
+      throw new Error('Kubernetes API not available')
+    }
+    return await this.customObjectsApi.listNamespacedCustomObject({
+      group: 'langop.io',
+      version: 'v1alpha1',
+      namespace,
+      plural: 'languageagentselfconfigs',
+    })
+  }
+
+  async getLanguageAgentSelfConfig(namespace: string, name: string) {
+    if (!this.customObjectsApi) {
+      throw new Error('Kubernetes API not available')
+    }
+    return await this.customObjectsApi.getNamespacedCustomObject({
+      group: 'langop.io',
+      version: 'v1alpha1',
+      namespace,
+      plural: 'languageagentselfconfigs',
+      name,
+    })
+  }
+
   // LanguageAgentVersion methods
 
   async listLanguageAgentVersions(namespace: string) {
