@@ -14,6 +14,7 @@ import { LanguageTool } from '@/types/tool'
 import { EventsActivity } from '@/components/ui/events-activity'
 import { useTools } from '@/hooks/use-tools'
 import { useWatchTools } from '@/hooks/use-watch'
+import { Spinner } from '@/components/ui/spinner'
 
 export default function ClusterTools() {
   const params = useParams()
@@ -121,8 +122,8 @@ export default function ClusterTools() {
     return (
       <Card 
         className={`flex flex-col h-full ${
-          isInstalled && installedTool 
-            ? 'cursor-pointer hover:shadow-md hover:border-gray-300 transition-all' 
+          isInstalled && installedTool
+            ? 'cursor-pointer hover:shadow-md hover:border-border transition-all'
             : ''
         }`}
         onClick={handleCardClick}
@@ -245,7 +246,7 @@ export default function ClusterTools() {
     return (
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
+            <Spinner className="mx-auto" />
             <p className="mt-4 text-gray-600">Loading tools...</p>
           </div>
         </div>

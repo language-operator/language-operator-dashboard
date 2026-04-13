@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation'
 import { useAgent } from '@/hooks/use-agents'
 import { AgentSelfConfigs } from '@/components/agents/agent-selfconfigs'
 import { Card, CardContent } from '@/components/ui/card'
+import { Spinner } from '@/components/ui/spinner'
 
 export default function AgentSelfConfigsPage() {
   const params = useParams()
@@ -19,7 +20,7 @@ export default function AgentSelfConfigsPage() {
         <Card>
           <CardContent className="flex items-center justify-center py-16">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4" />
+              <Spinner className="mx-auto mb-4" />
               <p className="text-gray-600">Loading self-configs...</p>
             </div>
           </CardContent>

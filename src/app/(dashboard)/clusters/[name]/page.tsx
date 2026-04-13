@@ -124,12 +124,12 @@ export default function ClusterDashboard() {
                 <dd className="mt-1 flex items-center gap-2">
                   {cluster.status?.proxyReady === true ? (
                     <span className="inline-flex items-center gap-1 text-xs text-status-ready-foreground">
-                      <span className="h-2 w-2 rounded-full bg-accent inline-block" />
+                      <span className="h-2 w-2 bg-accent inline-block" />
                       Ready
                     </span>
                   ) : cluster.status?.proxyReady === false ? (
                     <span className="inline-flex items-center gap-1 text-xs text-status-pending-foreground">
-                      <span className="h-2 w-2 rounded-full bg-status-pending-foreground inline-block" />
+                      <span className="h-2 w-2 bg-status-pending-foreground inline-block" />
                       Not ready
                     </span>
                   ) : (

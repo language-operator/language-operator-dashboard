@@ -198,10 +198,10 @@ export default function OrganizationDashboard() {
                 {[1, 2, 3].map((i) => (
                   <div key={i} className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <div className="h-6 w-6 bg-muted rounded animate-pulse" />
-                      <div className="h-4 bg-muted rounded animate-pulse w-24" />
+                      <div className="h-6 w-6 bg-muted animate-pulse" />
+                      <div className="h-4 bg-muted animate-pulse w-24" />
                     </div>
-                    <div className="h-3 bg-muted/50 rounded animate-pulse w-16" />
+                    <div className="h-3 bg-muted/50 animate-pulse w-16" />
                   </div>
                 ))}
               </div>
@@ -282,10 +282,10 @@ export default function OrganizationDashboard() {
                 {[1, 2, 3].map((i) => (
                   <div key={i} className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <div className="h-6 w-6 bg-muted rounded animate-pulse" />
-                      <div className="h-4 bg-muted rounded animate-pulse w-24" />
+                      <div className="h-6 w-6 bg-muted animate-pulse" />
+                      <div className="h-4 bg-muted animate-pulse w-24" />
                     </div>
-                    <div className="h-3 bg-muted/50 rounded animate-pulse w-16" />
+                    <div className="h-3 bg-muted/50 animate-pulse w-16" />
                   </div>
                 ))}
               </div>

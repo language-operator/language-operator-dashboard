@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { AlertCircle, ChevronDown } from 'lucide-react'
 import { convertAnsiToHtml } from '../agents/utils'
 import type { UseLogViewerReturn } from '@/hooks/useLogViewer'
+import { Spinner } from '@/components/ui/spinner'
 
 interface PodLogViewerProps {
   logs: UseLogViewerReturn
@@ -116,7 +117,7 @@ export function PodLogViewer({
           >
             {logs.loading ? (
               <div className="flex items-center justify-center h-32 text-gray-500">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-500 mr-2"></div>
+                <Spinner size="sm" className="mr-2" />
                 Loading logs...
               </div>
             ) : logs.logs.length === 0 ? (

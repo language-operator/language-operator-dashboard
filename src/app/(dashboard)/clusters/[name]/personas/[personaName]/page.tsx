@@ -24,6 +24,7 @@ import { DeleteResourceDialog } from '@/components/ui/delete-resource-dialog'
 import { toast } from 'sonner'
 import { AnimatedStatus } from '@/components/ui/animated-status'
 import { formatTimeAgo } from '@/lib/format'
+import { Spinner } from '@/components/ui/spinner'
 
 export default function ClusterPersonaDetailPage() {
   const router = useRouter()
@@ -262,7 +263,7 @@ export default function ClusterPersonaDetailPage() {
           <div className="flex-1 min-h-0 flex flex-col">
             {yamlLoading ? (
               <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                <Spinner size="sm" />
               </div>
             ) : (
               <div className="border rounded-lg flex-1 min-h-0 flex flex-col">

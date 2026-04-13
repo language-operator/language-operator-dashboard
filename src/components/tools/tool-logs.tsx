@@ -8,6 +8,7 @@ import { LanguageTool } from '@/types/tool'
 import { useLogViewer } from '@/hooks/useLogViewer'
 import { PodLogViewer } from '@/components/ui/pod-log-viewer'
 import { PodSelector, type PodInfo } from '@/components/ui/pod-selector'
+import { Spinner } from '@/components/ui/spinner'
 
 interface ToolLogsProps {
   tool: LanguageTool
@@ -130,7 +131,7 @@ export function ToolLogs({ tool, clusterName }: ToolLogsProps) {
         <Card>
           <CardContent className="flex items-center justify-center py-16">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
+              <Spinner className="mx-auto mb-4" />
               <p className="text-gray-600">Loading pods...</p>
             </div>
           </CardContent>
