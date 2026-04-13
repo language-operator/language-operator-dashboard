@@ -19,6 +19,8 @@ import { ResourceHeader } from '@/components/ui/resource-header'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { ResourceEventsActivity } from '@/components/ui/events-activity'
+import { DeleteResourceDialog } from '@/components/ui/delete-resource-dialog'
+import { toast } from 'sonner'
 
 function formatTimeAgo(timestamp?: string | Date) {
   if (!timestamp) return 'Unknown'
@@ -44,6 +46,7 @@ export default function ClusterPersonaDetailPage() {
   const [yamlContent, setYamlContent] = useState('')
   const [yamlLoading, setYamlLoading] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const { theme } = useTheme()
 
   const { data: personaResponse, isLoading, error } = usePersona(personaName, clusterName)
@@ -79,18 +82,17 @@ export default function ClusterPersonaDetailPage() {
     }
   }
 
-  const handleDeletePersona = async () => {
-    if (!persona || !persona.metadata.name) return
+  const handleDeletePersona = () => {
+    if (!persona?.metadata.name) return
+    setDeleteDialogOpen(true)
+  }
 
-    if (confirm(`Are you sure you want to delete persona "${persona.metadata.name}"?`)) {
-      try {
-        await deletePersona.mutateAsync(persona.metadata.name)
-        router.push(`/clusters/${clusterName}/personas`)
-      } catch (error) {
-        console.error('Failed to delete persona:', error)
-        alert('Failed to delete persona. Please try again.')
-      }
-    }
+  const handleConfirmDelete = () => {
+    if (!persona?.metadata.name) return
+    const name = persona.metadata.name
+    deletePersona.mutateAsync(name)
+      .then(() => router.push(`/clusters/${clusterName}/personas`))
+      .catch(() => toast.error('Failed to delete persona. Please try again.'))
   }
 
   const handleBack = () => {
@@ -286,6 +288,15 @@ export default function ClusterPersonaDetailPage() {
           limit={15}
         />
       </div>
+
+      <DeleteResourceDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        resourceType="persona"
+        resourceName={persona?.metadata.name}
+        isLoading={deletePersona.isPending}
+        onConfirm={handleConfirmDelete}
+      />
 
       {/* YAML Modal */}
       <Dialog open={yamlModalOpen} onOpenChange={setYamlModalOpen}>

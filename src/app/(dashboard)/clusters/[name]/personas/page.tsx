@@ -29,6 +29,8 @@ import { usePersonas, useDeletePersona } from '@/hooks/use-personas'
 import { useWatchPersonas } from '@/hooks/use-watch'
 import { EventsActivity } from '@/components/ui/events-activity'
 import { useRouter } from 'next/navigation'
+import { DeleteResourceDialog } from '@/components/ui/delete-resource-dialog'
+import { toast } from 'sonner'
 
 function formatTimeAgo(timestamp?: string | Date) {
   if (!timestamp) return 'Unknown'
@@ -51,6 +53,7 @@ export default function ClusterPersonas() {
   const clusterName = params?.name as string
   const [search, setSearch] = React.useState('')
   const [toneFilter, setToneFilter] = React.useState<string>('all')
+  const [deletingPersona, setDeletingPersona] = React.useState<string | null>(null)
 
   // Fetch all personas with real-time updates
   const { data: personasResponse, isLoading, error } = usePersonas({ clusterName, limit: 100 })
@@ -118,17 +121,12 @@ export default function ClusterPersonas() {
     }
   }
 
-  const handleDeletePersona = async (persona: any) => {
-    if (!persona || !persona.metadata.name) return
-
-    if (confirm(`Are you sure you want to delete persona "${persona.spec.displayName || persona.metadata.name}"?`)) {
-      try {
-        await deletePersona.mutateAsync(persona.metadata.name)
-      } catch (error) {
-        console.error('Failed to delete persona:', error)
-        alert('Failed to delete persona. Please try again.')
-      }
-    }
+  const handleConfirmDelete = () => {
+    if (!deletingPersona) return
+    const name = deletingPersona
+    deletePersona.mutateAsync(name)
+      .then(() => setDeletingPersona(null))
+      .catch(() => toast.error('Failed to delete persona. Please try again.'))
   }
 
   return (
@@ -300,7 +298,8 @@ export default function ClusterPersonas() {
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem
                                   className="text-destructive"
-                                  onClick={() => handleDeletePersona(persona)}
+                                  onClick={() => setDeletingPersona(persona.metadata.name!)}
+                                  disabled={deletePersona.isPending}
                                 >
                                   <Trash2 className="h-4 w-4 mr-2" />
                                   Delete
@@ -326,6 +325,14 @@ export default function ClusterPersonas() {
           resourceType="persona"
           limit={10}
           showNamespace={false}
+        />
+        <DeleteResourceDialog
+          open={!!deletingPersona}
+          onOpenChange={(open) => !open && setDeletingPersona(null)}
+          resourceType="persona"
+          resourceName={deletingPersona ?? undefined}
+          isLoading={deletePersona.isPending}
+          onConfirm={handleConfirmDelete}
         />
     </div>
   )

@@ -28,6 +28,8 @@ import {
 } from '@/components/ui/dialog'
 import { Shield, Plus, Trash2, UserCircle } from 'lucide-react'
 import { useAccess, useGrantAccess, useRevokeAccess } from '@/hooks/use-access'
+import { DeleteResourceDialog } from '@/components/ui/delete-resource-dialog'
+import { toast } from 'sonner'
 
 const ROLE_LABELS: Record<string, string> = {
   'langop-cluster-admin': 'Admin',
@@ -138,11 +140,20 @@ function GrantAccessDialog({ clusterName }: { clusterName: string }) {
 export default function ClusterAccessPage() {
   const params = useParams()
   const clusterName = params?.name as string
+  const [revoking, setRevoking] = React.useState<{ bindingName: string; description: string } | null>(null)
 
   const { data: accessResponse, isLoading, error } = useAccess(clusterName)
-  const { mutate: revokeAccess } = useRevokeAccess(clusterName)
+  const revokeAccessMutation = useRevokeAccess(clusterName)
 
   const bindings = accessResponse?.data ?? []
+
+  const handleConfirmRevoke = () => {
+    if (!revoking) return
+    const { bindingName } = revoking
+    revokeAccessMutation.mutateAsync(bindingName)
+      .then(() => setRevoking(null))
+      .catch(() => toast.error('Failed to revoke access. Please try again.'))
+  }
 
   if (isLoading) {
     return (
@@ -221,11 +232,11 @@ export default function ClusterAccessPage() {
                           variant="ghost"
                           size="sm"
                           className="text-destructive hover:text-destructive"
-                          onClick={() => {
-                            if (confirm(`Revoke ${ROLE_LABELS[binding.role] ?? binding.role} access for ${subject.name}?`)) {
-                              revokeAccess(binding.name)
-                            }
-                          }}
+                          onClick={() => setRevoking({
+                            bindingName: binding.name,
+                            description: `Revoke ${ROLE_LABELS[binding.role] ?? binding.role} access for ${subject.name}? This action cannot be undone.`,
+                          })}
+                          disabled={revokeAccessMutation.isPending}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -238,6 +249,17 @@ export default function ClusterAccessPage() {
           </CardContent>
         </Card>
       )}
+      <DeleteResourceDialog
+        open={!!revoking}
+        onOpenChange={(open) => !open && setRevoking(null)}
+        resourceType="access"
+        resourceName={undefined}
+        title="Revoke Access"
+        description={revoking?.description}
+        actionLabel="Revoke"
+        isLoading={revokeAccessMutation.isPending}
+        onConfirm={handleConfirmRevoke}
+      />
     </div>
   )
 }

@@ -18,6 +18,8 @@ import { ResourceHeader } from '@/components/ui/resource-header'
 import { NotFound } from '@/components/ui/not-found'
 import { cn } from '@/lib/utils'
 import { getStatusIcon, getStatusColor } from '@/components/agents/utils'
+import { DeleteResourceDialog } from '@/components/ui/delete-resource-dialog'
+import { toast } from 'sonner'
 
 function getCurrentTabValue(pathname: string, clusterName: string, agentName: string): string {
   // Check for organization-scoped paths and non-organization paths
@@ -49,29 +51,28 @@ export default function AgentDetailLayout({ children }: AgentDetailLayoutProps) 
   const [yamlContent, setYamlContent] = useState('')
   const [yamlLoading, setYamlLoading] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const { theme } = useTheme()
 
   const { data: agentResponse, isLoading, error } = useAgent(agentName, clusterName)
   const deleteAgent = useDeleteAgent(clusterName)
 
   const agent = agentResponse?.data
-  
+
   // Check if we're on the edit page
   const isEditPage = pathname.endsWith('/edit')
 
+  const handleDeleteAgent = () => {
+    if (!agent?.metadata.name) return
+    setDeleteDialogOpen(true)
+  }
 
-  const handleDeleteAgent = async () => {
-    if (!agent || !agent.metadata.name) return
-
-    if (confirm(`Are you sure you want to delete agent "${agent.metadata.name}"?`)) {
-      try {
-        await deleteAgent.mutateAsync(agent.metadata.name)
-        router.push(`/clusters/${clusterName}/agents`)
-      } catch (error) {
-        console.error('Failed to delete agent:', error)
-        alert('Failed to delete agent. Please try again.')
-      }
-    }
+  const handleConfirmDelete = () => {
+    if (!agent?.metadata.name) return
+    const name = agent.metadata.name
+    deleteAgent.mutateAsync(name)
+      .then(() => router.push(`/clusters/${clusterName}/agents`))
+      .catch(() => toast.error('Failed to delete agent. Please try again.'))
   }
 
 
@@ -311,6 +312,14 @@ export default function AgentDetailLayout({ children }: AgentDetailLayoutProps) 
         </DialogContent>
       </Dialog>
 
+      <DeleteResourceDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        resourceType="agent"
+        resourceName={agent?.metadata.name}
+        isLoading={deleteAgent.isPending}
+        onConfirm={handleConfirmDelete}
+      />
       </div>
   )
 }

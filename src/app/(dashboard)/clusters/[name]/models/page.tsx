@@ -25,9 +25,11 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Cpu, Plus, ExternalLink, MoreHorizontal, Eye, Edit, Trash2, Search } from 'lucide-react'
 import Link from 'next/link'
-import { useModels } from '@/hooks/use-models'
+import { useModels, useDeleteModel } from '@/hooks/use-models'
 import { useWatchModels } from '@/hooks/use-watch'
 import { EventsActivity } from '@/components/ui/events-activity'
+import { DeleteResourceDialog } from '@/components/ui/delete-resource-dialog'
+import { toast } from 'sonner'
 
 function formatTimeAgo(timestamp?: string | Date) {
   if (!timestamp) return 'Unknown'
@@ -49,6 +51,7 @@ export default function ClusterModels() {
   const clusterName = params?.name as string
   const [search, setSearch] = React.useState('')
   const [providerFilter, setProviderFilter] = React.useState<string>('all')
+  const [deletingModel, setDeletingModel] = React.useState<string | null>(null)
 
   // Use cluster-specific API endpoint with real-time updates
   const { data: modelsResponse, isLoading, error } = useModels({
@@ -58,6 +61,16 @@ export default function ClusterModels() {
 
   // Enable real-time updates via SSE watch
   useWatchModels()
+
+  const deleteModel = useDeleteModel(clusterName)
+
+  const handleConfirmDelete = () => {
+    if (!deletingModel) return
+    const name = deletingModel
+    deleteModel.mutateAsync(name)
+      .then(() => setDeletingModel(null))
+      .catch(() => toast.error('Failed to delete model. Please try again.'))
+  }
 
   const allModels = modelsResponse?.data || []
   
@@ -250,12 +263,8 @@ export default function ClusterModels() {
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                               className="text-destructive"
-                              onClick={() => {
-                                if (confirm(`Are you sure you want to delete model "${model.metadata.name}"?`)) {
-                                  // TODO: Add delete functionality
-                                  console.log('Delete model:', model.metadata.name)
-                                }
-                              }}
+                              onClick={() => setDeletingModel(model.metadata.name!)}
+                              disabled={deleteModel.isPending}
                             >
                               <Trash2 className="h-4 w-4 mr-2" />
                               Delete
@@ -279,6 +288,14 @@ export default function ClusterModels() {
           resourceType="model"
           limit={10}
           showNamespace={false}
+        />
+        <DeleteResourceDialog
+          open={!!deletingModel}
+          onOpenChange={(open) => !open && setDeletingModel(null)}
+          resourceType="model"
+          resourceName={deletingModel ?? undefined}
+          isLoading={deleteModel.isPending}
+          onConfirm={handleConfirmDelete}
         />
     </div>
   )
