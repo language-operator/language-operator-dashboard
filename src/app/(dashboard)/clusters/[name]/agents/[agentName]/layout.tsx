@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter, useParams, usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { Bot, Edit, MoreVertical, FileCode, Trash2, Home, FolderOpen, ScrollText, Copy, Check, MessageCircle, Settings2 } from 'lucide-react'
+import { Bot, Edit, MoreVertical, FileCode, Trash2, Home, FolderOpen, ScrollText, Copy, Check, Settings2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -189,12 +189,6 @@ export default function AgentDetailLayout({ children }: AgentDetailLayoutProps) 
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem asChild>
-                    <Link href={`/clusters/${clusterName}/console?agent=${agentName}`}>
-                      <MessageCircle className="h-4 w-4 mr-2" />
-                      Open in Console
-                    </Link>
-                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleViewYaml}>
                     <FileCode className="h-4 w-4 mr-2" />
                     View YAML

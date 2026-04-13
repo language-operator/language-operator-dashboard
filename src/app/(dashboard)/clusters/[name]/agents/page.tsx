@@ -23,7 +23,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Bot, Plus, MoreHorizontal, Eye, Edit, Trash2, Search, MessageCircle } from 'lucide-react'
+import { Bot, Plus, MoreHorizontal, Eye, Edit, Trash2, Search } from 'lucide-react'
 import Link from 'next/link'
 import { LanguageAgent } from '@/types/agent'
 import { useAgents } from '@/hooks/use-agents'
@@ -239,13 +239,6 @@ export default function ClusterAgents() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <DropdownMenuItem asChild>
-                                  <Link href={`/clusters/${clusterName}/console?agent=${agent.metadata.name}`}>
-                                    <MessageCircle className="h-4 w-4 mr-2" />
-                                    Open in Console
-                                  </Link>
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
                                 <DropdownMenuItem asChild>
                                   <Link href={`/clusters/${clusterName}/agents/${agent.metadata.name}`}>
                                     <Eye className="h-4 w-4 mr-2" />
