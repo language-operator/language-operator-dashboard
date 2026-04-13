@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { k8sClient } from '@/lib/k8s-client'
+import { k8sClient, extractItems } from '@/lib/k8s-client'
 import { getAuthenticatedUser } from '@/lib/user-context'
+import { LanguageAgentSelfConfig } from '@/types/selfconfig'
 
 interface RouteParams {
   params: Promise<{ name: string; agentName: string }>
@@ -20,15 +21,11 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       )
     }
 
-    let allItems: any[] = []
+    let allItems: LanguageAgentSelfConfig[] = []
 
     try {
       const response = await k8sClient.listLanguageAgentSelfConfigs(clusterName)
-      allItems =
-        (response as any)?.body?.items ??
-        (response as any)?.data?.items ??
-        (response as any)?.items ??
-        []
+      allItems = extractItems<LanguageAgentSelfConfig>(response)
     } catch (k8sError) {
       console.error(
         'Error fetching self-configs from Kubernetes:',
@@ -40,7 +37,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     // Scope to the requesting agent
     const items = allItems.filter(
-      (item: any) => item?.spec?.instanceRef === agentName
+      (item: LanguageAgentSelfConfig) => item?.spec?.instanceRef === agentName
     )
 
     return NextResponse.json({ success: true, data: items })

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthenticatedUser } from '@/lib/user-context'
-import { k8sClient } from '@/lib/k8s-client'
+import { k8sClient, extractItems } from '@/lib/k8s-client'
 import { filterByClusterRef } from '@/lib/cluster-utils'
 import { validateClusterForResourceCreation, validateClusterExists, validateResourceBelongsToCluster } from '@/lib/cluster-validation'
 import { createErrorResponse, createSuccessResponse, handleKubernetesOperation, validateClusterNameFormat, ApiError, createAuthenticationRequiredError, createPermissionDeniedError } from '@/lib/api-error-handler'
@@ -32,8 +32,8 @@ export async function GET(
     const queryParams: LanguagePersonaListParams = {
       page: parseInt(url.searchParams.get('page') || '1'),
       limit: parseInt(url.searchParams.get('limit') || '50'),
-      sortBy: (url.searchParams.get('sortBy') as any) || 'name',
-      sortOrder: (url.searchParams.get('sortOrder') as any) || 'asc',
+      sortBy: (url.searchParams.get('sortBy') as LanguagePersonaListParams['sortBy']) || 'name',
+      sortOrder: (url.searchParams.get('sortOrder') as LanguagePersonaListParams['sortOrder']) || 'asc',
       search: url.searchParams.get('search') || undefined,
       tone: url.searchParams.getAll('tone') || undefined,
       phase: url.searchParams.getAll('phase') || undefined,
@@ -46,7 +46,7 @@ export async function GET(
     )
     
     // Handle different response structures from k8s client
-    const allPersonas = (response as any)?.items || (response.data as any)?.items || (response.body as any)?.items || []
+    const allPersonas = extractItems<LanguagePersona>(response)
 
     // Filter personas to only show those that belong to this specific cluster
     // Uses validation to handle orphaned resources gracefully

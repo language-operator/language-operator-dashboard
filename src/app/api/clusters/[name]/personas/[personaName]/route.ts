@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthenticatedUser } from '@/lib/user-context'
-import { k8sClient } from '@/lib/k8s-client'
+import { k8sClient, extractItem } from '@/lib/k8s-client'
 import { validateClusterExists } from '@/lib/cluster-validation'
 import {
   createErrorResponse,
@@ -8,6 +8,7 @@ import {
   handleKubernetesOperation,
   validateClusterNameFormat,
 } from '@/lib/api-error-handler'
+import { LanguagePersona } from '@/types/persona'
 
 // GET /api/clusters/[name]/personas/[personaName] - Get a specific persona in a cluster
 const NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
@@ -30,14 +31,7 @@ export async function GET(
       k8sClient.getLanguagePersona(clusterName, personaName)
     )
 
-    let persona = null
-    if (response.body && typeof response.body === 'object') {
-      persona = response.body
-    } else if (response.data && typeof response.data === 'object') {
-      persona = response.data
-    } else {
-      persona = response
-    }
+    const persona = extractItem<LanguagePersona>(response)
 
     if (!persona) {
       return createErrorResponse(
@@ -77,14 +71,7 @@ export async function PATCH(
       k8sClient.getLanguagePersona(clusterName, personaName)
     )
 
-    let existingPersona = null
-    if (existingResponse.body && typeof existingResponse.body === 'object') {
-      existingPersona = existingResponse.body
-    } else if (existingResponse.data && typeof existingResponse.data === 'object') {
-      existingPersona = existingResponse.data
-    } else {
-      existingPersona = existingResponse
-    }
+    const existingPersona = extractItem<LanguagePersona>(existingResponse)
 
     if (!existingPersona) {
       return createErrorResponse(

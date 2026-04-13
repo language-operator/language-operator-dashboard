@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { k8sClient } from '@/lib/k8s-client'
+import { k8sClient, extractItems } from '@/lib/k8s-client'
 import { getAuthenticatedUser } from '@/lib/user-context'
+import type { V1Pod, V1ContainerStatus } from '@kubernetes/client-node'
 
 
 interface RouteParams {
@@ -24,32 +25,23 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     })
 
     // Handle different response structures from k8s client
-    let podList: any[] = []
-    if ((pods as any)?.body?.items) {
-      podList = (pods as any).body.items
-    } else if ((pods as any)?.data?.items) {
-      podList = (pods as any).data.items
-    } else if (Array.isArray(pods)) {
-      podList = pods
-    } else if ((pods as any)?.items) {
-      podList = (pods as any).items
-    }
+    const podList: V1Pod[] = extractItems<V1Pod>(pods)
 
     console.log(`Found ${podList.length} pods for agent ${agentName}`)
 
     // Transform pods into a more user-friendly format
-    const transformedPods = podList.map((pod) => {
+    const transformedPods = podList.map((pod: V1Pod) => {
       const status = pod.status?.phase || 'Unknown'
       const creationTimestamp = pod.metadata?.creationTimestamp
       const name = pod.metadata?.name || 'unknown'
-      
+
       // Determine if this is a running pod
       const isRunning = status === 'Running'
-      
+
       // Get container statuses for more detailed info
-      const containerStatuses = pod.status?.containerStatuses || []
-      const hasRunningContainers = containerStatuses.some((c: any) => c.state?.running)
-      
+      const containerStatuses: V1ContainerStatus[] = pod.status?.containerStatuses || []
+      const hasRunningContainers = containerStatuses.some((c: V1ContainerStatus) => c.state?.running)
+
       return {
         name,
         status,
@@ -58,13 +50,13 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         hasRunningContainers,
         // Additional metadata that might be useful
         labels: pod.metadata?.labels || {},
-        restartCount: containerStatuses.reduce((sum: number, c: any) => sum + (c.restartCount || 0), 0),
+        restartCount: containerStatuses.reduce((sum: number, c: V1ContainerStatus) => sum + (c.restartCount || 0), 0),
       }
     })
 
     // Sort pods by creation timestamp (newest first)
-    const sortedPods = transformedPods.sort((a, b) => 
-      new Date(b.creationTimestamp).getTime() - new Date(a.creationTimestamp).getTime()
+    const sortedPods = transformedPods.sort((a, b) =>
+      new Date(b.creationTimestamp ?? 0).getTime() - new Date(a.creationTimestamp ?? 0).getTime()
     )
 
     // Determine the recommended pod (first running pod, or most recent if none running)

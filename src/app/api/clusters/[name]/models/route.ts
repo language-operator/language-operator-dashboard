@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthenticatedUser } from '@/lib/user-context'
-import { k8sClient } from '@/lib/k8s-client'
+import { k8sClient, extractItems } from '@/lib/k8s-client'
 import { filterByClusterRef } from '@/lib/cluster-utils'
 import { validateClusterExists, validateResourceBelongsToCluster } from '@/lib/cluster-validation'
 import { createErrorResponse, createSuccessResponse, handleKubernetesOperation, validateClusterNameFormat, createAuthenticationRequiredError, createPermissionDeniedError, KubernetesError } from '@/lib/api-error-handler'
@@ -34,8 +34,8 @@ export async function GET(
       namespace: clusterName,
       page: parseInt(url.searchParams.get('page') || '1'),
       limit: parseInt(url.searchParams.get('limit') || '50'),
-      sortBy: (url.searchParams.get('sortBy') as any) || 'name',
-      sortOrder: (url.searchParams.get('sortOrder') as any) || 'asc',
+      sortBy: (url.searchParams.get('sortBy') as LanguageModelListParams['sortBy']) || 'name',
+      sortOrder: (url.searchParams.get('sortOrder') as LanguageModelListParams['sortOrder']) || 'asc',
       search: url.searchParams.get('search') || undefined,
       provider: url.searchParams.getAll('provider') || undefined,
       phase: url.searchParams.getAll('phase') || undefined,
@@ -50,20 +50,7 @@ export async function GET(
     )
     
     // Handle different response structures
-    let rawItems = null
-    if (response.body && typeof response.body === 'object') {
-      rawItems = (response.body as any)?.items
-    } else if (response.data && typeof response.data === 'object') {
-      rawItems = (response.data as any)?.items
-    } else {
-      if (Array.isArray(response)) {
-        rawItems = response
-      } else if ((response as any)?.items) {
-        rawItems = (response as any).items
-      }
-    }
-    
-    const allModels = rawItems || []
+    const allModels = extractItems<LanguageModel>(response)
     
     // Filter models that belong to this specific cluster
     // Uses validation to handle orphaned resources gracefully
@@ -107,8 +94,8 @@ export async function GET(
 
     // Sort models
     filteredModels.sort((a: LanguageModel, b: LanguageModel) => {
-      let aValue: any, bValue: any
-      
+      let aValue: string | number, bValue: string | number
+
       switch (listParams.sortBy) {
         case 'name':
           aValue = a.metadata.name || ''

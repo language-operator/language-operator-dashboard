@@ -37,6 +37,22 @@ jest.mock('@/lib/k8s-client', () => ({
     listLanguagePersonas: jest.fn(),
     createLanguagePersona: jest.fn(),
   },
+  extractItems: (response: unknown) => {
+    const r = response as Record<string, unknown>
+    return (
+      ((r?.body as Record<string, unknown>)?.items as unknown[]) ??
+      ((r?.data as Record<string, unknown>)?.items as unknown[]) ??
+      (r?.items as unknown[]) ??
+      []
+    )
+  },
+  extractItem: (response: unknown) => {
+    const r = response as Record<string, unknown>
+    if (r?.body) return r.body
+    if (r?.data) return r.data
+    if (r) return r
+    return null
+  },
 }))
 
 // Validation mocks: let the route proceed to k8s without hitting the cluster

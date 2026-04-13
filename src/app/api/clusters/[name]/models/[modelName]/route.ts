@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { getAuthenticatedUser } from '@/lib/user-context'
-import { k8sClient } from '@/lib/k8s-client'
+import { k8sClient, extractItem } from '@/lib/k8s-client'
 import { validateClusterExists } from '@/lib/cluster-validation'
 import {
   createErrorResponse,
@@ -9,6 +9,7 @@ import {
   validateClusterNameFormat,
 } from '@/lib/api-error-handler'
 import { z } from 'zod'
+import { LanguageModel } from '@/types/model'
 
 // Validation schema — mirrors the 6-field LanguageModelSpec CRD exactly
 const updateModelSchema = z.object({
@@ -42,14 +43,7 @@ export async function GET(
       k8sClient.getLanguageModel(clusterName, modelName)
     )
 
-    let model = null
-    if (response.body && typeof response.body === 'object') {
-      model = response.body
-    } else if (response.data && typeof response.data === 'object') {
-      model = response.data
-    } else {
-      model = response
-    }
+    const model = extractItem<LanguageModel>(response)
 
     if (!model) {
       return createErrorResponse(
@@ -87,14 +81,7 @@ export async function PUT(
       k8sClient.getLanguageModel(clusterName, modelName)
     )
 
-    let existingModel: any = null
-    if (existingResponse.body && typeof existingResponse.body === 'object') {
-      existingModel = existingResponse.body
-    } else if (existingResponse.data && typeof existingResponse.data === 'object') {
-      existingModel = existingResponse.data
-    } else {
-      existingModel = existingResponse
-    }
+    const existingModel = extractItem<LanguageModel>(existingResponse)
 
     if (!existingModel) {
       return createErrorResponse(

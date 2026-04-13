@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthenticatedUser } from '@/lib/user-context'
-import { k8sClient } from '@/lib/k8s-client'
+import { k8sClient, extractItems } from '@/lib/k8s-client'
 import { LanguageCluster, LanguageClusterListParams, LanguageClusterFormData } from '@/types/cluster'
+import { LanguageAgent } from '@/types/agent'
 import { safeValidateLanguageCluster } from '@/lib/validation'
 
 const NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
@@ -18,8 +19,8 @@ export async function GET(request: NextRequest) {
     const params: LanguageClusterListParams = {
       page: parseInt(url.searchParams.get('page') || '1'),
       limit: parseInt(url.searchParams.get('limit') || '50'),
-      sortBy: (url.searchParams.get('sortBy') as any) || 'name',
-      sortOrder: (url.searchParams.get('sortOrder') as any) || 'asc',
+      sortBy: (url.searchParams.get('sortBy') as LanguageClusterListParams['sortBy']) || 'name',
+      sortOrder: (url.searchParams.get('sortOrder') as LanguageClusterListParams['sortOrder']) || 'asc',
       search: url.searchParams.get('search') || undefined,
       phase: url.searchParams.getAll('phase') || undefined,
       domain: url.searchParams.get('domain') || undefined,
@@ -33,25 +34,8 @@ export async function GET(request: NextRequest) {
       const response = await k8sClient.listLanguageClusters(NAMESPACE)
       
       // Handle different response structures from k8s client
-      // Live K8s mode: { body: { items: [...] } }
-      // Error fallback: { data: { items: [] } }
-      const responseBody = (response as any)?.body
-      const responseData = (response as any)?.data
-      const responseItems = (response as any)?.items
-      
-      if (responseBody?.items && Array.isArray(responseBody.items)) {
-        clusters = responseBody.items
-        console.log(`Found ${clusters.length} clusters from Kubernetes API`)
-      } else if (responseData?.items && Array.isArray(responseData.items)) {
-        clusters = responseData.items
-        console.log(`Found ${clusters.length} clusters from response data`)
-      } else if (responseItems && Array.isArray(responseItems)) {
-        clusters = responseItems
-        console.log(`Found ${clusters.length} clusters from direct items`)
-      } else {
-        console.warn('No clusters array found in response structure:', Object.keys(response))
-        clusters = []
-      }
+      clusters = extractItems<LanguageCluster>(response)
+      console.log(`Found ${clusters.length} clusters from Kubernetes API`)
     } catch (k8sError) {
       console.error('Error fetching clusters from Kubernetes:', k8sError instanceof Error ? k8sError.message : String(k8sError))
       // Graceful degradation - return empty list instead of failing
@@ -83,14 +67,11 @@ export async function GET(request: NextRequest) {
       const agentsResponse = await k8sClient.listLanguageAgents('')
       
       // Handle different response structures from k8s client
-      const allAgents = (agentsResponse as any)?.body?.items || 
-                       (agentsResponse as any)?.data?.items || 
-                       (agentsResponse as any)?.items || 
-                       []
-      
+      const allAgents = extractItems<LanguageAgent>(agentsResponse)
+
       // Group agents by cluster
-      agentCountsByCluster = allAgents.reduce((acc: Record<string, number>, agent: any) => {
-        const clusterRef = agent.spec?.clusterRef
+      agentCountsByCluster = allAgents.reduce((acc: Record<string, number>, agent: LanguageAgent) => {
+        const clusterRef = (agent.spec as Record<string, unknown>)?.clusterRef as string | undefined
         if (clusterRef) {
           acc[clusterRef] = (acc[clusterRef] || 0) + 1
         }

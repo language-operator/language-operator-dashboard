@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { k8sClient } from '@/lib/k8s-client'
+import { k8sClient, extractItems } from '@/lib/k8s-client'
 import { getAuthenticatedUser } from '@/lib/user-context'
 
 // GET /api/dashboard/counts - Get global resource counts across all accessible clusters
@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
 
     // List all clusters the user can see (cluster-scoped, impersonation filters by RBAC)
     const clustersRes = await client.listLanguageClusters('')
-    const clusters = (clustersRes as any)?.items ?? (clustersRes as any)?.body?.items ?? []
+    const clusters = extractItems(clustersRes)
 
     // List namespaced resources across all namespaces the user can access.
     // Each resource type is cluster-scoped in its listing (no namespace filter) so
@@ -24,8 +24,7 @@ export async function GET(request: NextRequest) {
 
     const extract = (res: PromiseSettledResult<unknown>) => {
       if (res.status === 'rejected') return []
-      const val = res.value as any
-      return val?.items ?? val?.body?.items ?? val?.data?.items ?? []
+      return extractItems(res.value)
     }
 
     return NextResponse.json({

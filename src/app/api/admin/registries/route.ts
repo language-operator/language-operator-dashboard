@@ -27,14 +27,14 @@ export async function GET(request: NextRequest) {
       }))
 
       return NextResponse.json({ registries })
-    } catch (k8sError: any) {
+    } catch (k8sError) {
       console.error('Error reading ConfigMap:', k8sError)
-      
-      if (k8sError.statusCode === 404) {
+
+      if ((k8sError as { statusCode?: number }).statusCode === 404) {
         // ConfigMap doesn't exist, return empty list
         return NextResponse.json({ registries: [] })
       }
-      
+
       throw k8sError
     }
   } catch (error) {
@@ -75,20 +75,19 @@ export async function POST(request: NextRequest) {
     try {
       // Try to read existing ConfigMap first
       let configMapExists = true
-      let existingConfigMap: any
+      let existingConfigMap: Awaited<ReturnType<typeof client.readConfigMap>> | undefined
 
       try {
-        const response = await client.readConfigMap(OPERATOR_NAMESPACE, CONFIG_MAP_NAME)
-        existingConfigMap = response
-      } catch (error: any) {
-        if (error.statusCode === 404) {
+        existingConfigMap = await client.readConfigMap(OPERATOR_NAMESPACE, CONFIG_MAP_NAME)
+      } catch (error) {
+        if ((error as { statusCode?: number }).statusCode === 404) {
           configMapExists = false
         } else {
           throw error
         }
       }
 
-      if (configMapExists) {
+      if (configMapExists && existingConfigMap) {
         // Update existing ConfigMap
         const updatedConfigMap = {
           ...existingConfigMap,
@@ -124,7 +123,7 @@ export async function POST(request: NextRequest) {
         success: true, 
         message: 'Registry configuration updated successfully' 
       })
-    } catch (k8sError: any) {
+    } catch (k8sError) {
       console.error('Error updating ConfigMap:', k8sError)
       return NextResponse.json(
         { error: 'Failed to update registry configuration' },

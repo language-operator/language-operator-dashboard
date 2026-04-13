@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthenticatedUser } from '@/lib/user-context'
-import { k8sClient } from '@/lib/k8s-client'
+import { k8sClient, extractItems } from '@/lib/k8s-client'
 import type { V1Pod } from '@kubernetes/client-node'
 
 interface RouteParams {
@@ -28,16 +28,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     })
 
     // Handle different response structures from k8s client
-    let podList: V1Pod[] = []
-    if ((pods as any)?.body?.items) {
-      podList = (pods as any).body.items
-    } else if ((pods as any)?.data?.items) {
-      podList = (pods as any).data.items
-    } else if (Array.isArray(pods)) {
-      podList = pods
-    } else if ((pods as any)?.items) {
-      podList = (pods as any).items
-    }
+    const podList: V1Pod[] = extractItems<V1Pod>(pods)
 
     console.log(`Found ${podList.length} proxy pod(s) for cluster ${clusterName}`)
 

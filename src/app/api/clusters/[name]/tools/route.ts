@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthenticatedUser } from '@/lib/user-context'
-import { k8sClient } from '@/lib/k8s-client'
+import { k8sClient, extractItems } from '@/lib/k8s-client'
 import { filterByClusterRef } from '@/lib/cluster-utils'
 import { validateClusterExists, validateResourceBelongsToCluster, validateClusterForResourceCreation } from '@/lib/cluster-validation'
 import { createErrorResponse, createSuccessResponse, handleKubernetesOperation, validateClusterNameFormat, createAuthenticationRequiredError, createPermissionDeniedError } from '@/lib/api-error-handler'
@@ -31,8 +31,8 @@ export async function GET(
     const queryParams: LanguageToolListParams = {
       page: parseInt(url.searchParams.get('page') || '1'),
       limit: parseInt(url.searchParams.get('limit') || '50'),
-      sortBy: (url.searchParams.get('sortBy') as any) || 'name',
-      sortOrder: (url.searchParams.get('sortOrder') as any) || 'asc',
+      sortBy: (url.searchParams.get('sortBy') as LanguageToolListParams['sortBy']) || 'name',
+      sortOrder: (url.searchParams.get('sortOrder') as LanguageToolListParams['sortOrder']) || 'asc',
       search: url.searchParams.get('search') || undefined,
       type: url.searchParams.getAll('type') || undefined,
       phase: url.searchParams.getAll('phase') || undefined,
@@ -45,7 +45,7 @@ export async function GET(
     )
     
     // Handle different response structures from k8s client
-    const allTools = (response as any)?.items || (response.data as any)?.items || (response.body as any)?.items || []
+    const allTools = extractItems<LanguageTool>(response)
 
     // Filter tools to only show those that belong to this specific cluster
     // Uses validation to handle orphaned resources gracefully

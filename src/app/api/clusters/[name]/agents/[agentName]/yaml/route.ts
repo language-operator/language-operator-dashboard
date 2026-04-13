@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { k8sClient } from '@/lib/k8s-client'
+import { k8sClient, extractItem } from '@/lib/k8s-client'
 import { getAuthenticatedUser } from '@/lib/user-context'
+import { LanguageAgent } from '@/types/agent'
 import yaml from 'js-yaml'
 
 
@@ -18,19 +19,11 @@ export async function GET(
     }
 
     // Fetch specific agent from namespace
-    let agent: any = null
+    let agent: LanguageAgent | null = null
 
     try {
       const response = await k8sClient.getLanguageAgent(clusterName, agentName)
-
-      // Handle different response structures from k8s client
-      if ((response as any)?.body) {
-        agent = (response as any).body
-      } else if ((response as any)?.data) {
-        agent = (response as any).data
-      } else if (response) {
-        agent = response as any
-      }
+      agent = extractItem<LanguageAgent>(response)
     } catch (k8sError) {
       if (k8sError instanceof Error && k8sError.message.includes('404')) {
         return NextResponse.json({

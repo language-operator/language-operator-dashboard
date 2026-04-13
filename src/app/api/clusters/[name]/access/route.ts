@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthenticatedUser } from '@/lib/user-context'
-import { k8sClient } from '@/lib/k8s-client'
+import { k8sClient, extractItems } from '@/lib/k8s-client'
 import { createErrorResponse, validateClusterNameFormat } from '@/lib/api-error-handler'
+import * as k8s from '@kubernetes/client-node'
+import type { RbacV1Subject } from '@kubernetes/client-node'
 import { validateClusterExists } from '@/lib/cluster-validation'
 
 const NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
@@ -17,15 +19,15 @@ export async function GET(
     await validateClusterExists(NAMESPACE, clusterName)
 
     const response = await k8sClient.listRoleBindings(clusterName)
-    const items: any[] = (response as any)?.items ?? []
+    const items = extractItems<k8s.V1RoleBinding>(response)
 
     // Normalise to a stable shape for the UI
     const bindings = items
-      .filter((b: any) => ['langop-cluster-admin', 'langop-cluster-viewer'].includes(b.roleRef?.name))
-      .map((b: any) => ({
+      .filter((b: k8s.V1RoleBinding) => ['langop-cluster-admin', 'langop-cluster-viewer'].includes(b.roleRef?.name ?? ''))
+      .map((b: k8s.V1RoleBinding) => ({
         name: b.metadata?.name,
         role: b.roleRef?.name,
-        subjects: (b.subjects ?? []).map((s: any) => ({ kind: s.kind, name: s.name })),
+        subjects: (b.subjects ?? []).map((s: RbacV1Subject) => ({ kind: s.kind, name: s.name })),
         createdAt: b.metadata?.creationTimestamp,
       }))
 

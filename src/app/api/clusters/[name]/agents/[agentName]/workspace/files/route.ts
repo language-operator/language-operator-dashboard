@@ -24,7 +24,7 @@ export async function GET(
       )
       
       return NextResponse.json(result)
-    } catch (error: any) {
+    } catch (error) {
       if (error instanceof WorkspaceError) {
         const statusCode = getStatusCodeForWorkspaceError(error.code)
         return NextResponse.json({ 
@@ -37,7 +37,7 @@ export async function GET(
       console.error('Workspace list error:', error)
       return NextResponse.json({ error: 'Failed to list workspace files' }, { status: 500 })
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error('Workspace API error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
@@ -79,7 +79,7 @@ export async function POST(
         path: filePath,
         size: fileBuffer.length
       })
-    } catch (error: any) {
+    } catch (error) {
       if (error instanceof WorkspaceError) {
         const statusCode = getStatusCodeForWorkspaceError(error.code)
         return NextResponse.json({ 
@@ -92,7 +92,7 @@ export async function POST(
       console.error('Workspace upload error:', error)
       return NextResponse.json({ error: 'Failed to upload file' }, { status: 500 })
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error('Workspace upload API error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
@@ -125,7 +125,7 @@ export async function DELETE(
         message: 'File deleted successfully',
         path 
       })
-    } catch (error: any) {
+    } catch (error) {
       if (error instanceof WorkspaceError) {
         const statusCode = getStatusCodeForWorkspaceError(error.code)
         return NextResponse.json({ 
@@ -138,7 +138,7 @@ export async function DELETE(
       console.error('Workspace delete error:', error)
       return NextResponse.json({ error: 'Failed to delete file' }, { status: 500 })
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error('Workspace delete API error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }

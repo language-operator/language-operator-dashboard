@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { k8sClient } from '@/lib/k8s-client'
+import { k8sClient, extractItem } from '@/lib/k8s-client'
 import { getAuthenticatedUser } from '@/lib/user-context'
-import { LanguageAgent, LanguageAgentFormData } from '@/types/agent'
+import { LanguageAgent, LanguageAgentFormData, LanguageAgentSpec } from '@/types/agent'
 
 
 // GET /api/clusters/[name]/agents/[agentName] - Get specific agent details
@@ -22,15 +22,7 @@ export async function GET(
 
     try {
       const response = await k8sClient.getLanguageAgent(clusterName, agentName)
-
-      // Handle different response structures from k8s client
-      if ((response as any)?.body) {
-        agent = (response as any).body
-      } else if ((response as any)?.data) {
-        agent = (response as any).data
-      } else if (response) {
-        agent = response as LanguageAgent
-      }
+      agent = extractItem<LanguageAgent>(response)
     } catch (k8sError) {
       if (k8sError instanceof Error && k8sError.message.includes('404')) {
         return NextResponse.json({
@@ -84,14 +76,7 @@ export async function PATCH(
     let currentAgent: LanguageAgent | null = null
     try {
       const response = await k8sClient.getLanguageAgent(clusterName, agentName)
-
-      if ((response as any)?.body) {
-        currentAgent = (response as any).body
-      } else if ((response as any)?.data) {
-        currentAgent = (response as any).data
-      } else if (response) {
-        currentAgent = response as LanguageAgent
-      }
+      currentAgent = extractItem<LanguageAgent>(response)
     } catch (k8sError) {
       if (k8sError instanceof Error && k8sError.message.includes('404')) {
         return NextResponse.json({
@@ -110,7 +95,7 @@ export async function PATCH(
     }
 
     // Build the updated agent spec
-    const updatedSpec: any = { ...currentAgent.spec }
+    const updatedSpec: LanguageAgentSpec = { ...currentAgent.spec }
 
     // Update basic fields
     if (body.instructions !== undefined) {
