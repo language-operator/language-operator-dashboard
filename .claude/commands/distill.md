@@ -1,12 +1,14 @@
-# Distill
+---
+description: Distill working memory in requirements/MEMORY.md — compact, remove stale content, preserve what matters
+---
 
-Compact and curate working memory in `requirements/SCRATCH.md`.
+Distill your working memory.
 
-## Instructions
+## Directions
 
-Review `requirements/SCRATCH.md` and ask yourself:
+Your working memory is in `requirements/MEMORY.md`. Reflect on its contents:
 - Is everything still relevant?
-- Can anything be condensed to save context space?
-- Is there anything important you might forget later?
+- Can it be compacted to save context space?
+- What might you forget in the future?
 
-Rewrite the file as needed. You have full creative control — shape it to be maximally useful to you in future sessions.
+You have complete creative control over this file. Cater it to your needs.
