@@ -4,10 +4,9 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { AnimatedStatus } from '@/components/ui/animated-status'
+import { ClusterStatusBadge } from '@/components/ui/resource-status-badge'
 import { ResourceHeader } from '@/components/ui/resource-header'
 import {
   Table,
@@ -46,12 +45,6 @@ interface ClusterTableProps {
 }
 
 function ClusterTable({ clusters, onDelete, isDeleting }: ClusterTableProps) {
-  const getStatusBadge = (cluster: LanguageCluster) => {
-    const phase = cluster.status?.phase || 'Unknown'
-    return <AnimatedStatus status={phase} size="sm" />
-  }
-
-
   return (
     <Card>
       <CardHeader>
@@ -100,7 +93,7 @@ function ClusterTable({ clusters, onDelete, isDeleting }: ClusterTableProps) {
                   </Link>
                 </TableCell>
                 <TableCell>
-                  {getStatusBadge(cluster)}
+                  <ClusterStatusBadge cluster={cluster} size="sm" />
                 </TableCell>
                 <TableCell>
                   <span className="text-sm text-muted-foreground">
