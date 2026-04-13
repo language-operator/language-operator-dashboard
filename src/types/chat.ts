@@ -24,7 +24,6 @@ export interface ChatConversation {
 
 export interface AgentChatInfo {
   instructions?: string
-  executionMode?: string
   modelRefs: Array<{ name: string; namespace?: string; role?: string }>
   toolRefs: Array<{ name: string; namespace?: string; enabled?: boolean }>
   personaRefs: Array<{ name: string; namespace?: string }>

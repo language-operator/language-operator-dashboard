@@ -10,17 +10,14 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { 
-  Bot, 
-  MessageCircle, 
-  X, 
-  Trash2, 
-  Cpu, 
-  Wrench, 
-  Users, 
-  Zap,
-  Activity,
-  Clock
+import {
+  Bot,
+  MessageCircle,
+  X,
+  Trash2,
+  Cpu,
+  Wrench,
+  Users
 } from 'lucide-react'
 import { useAgentChat } from '@/hooks/use-agent-chat'
 import { AgentConnectionStatus } from './agent-connection-status'
@@ -36,18 +33,6 @@ interface AgentChatDialogProps {
   agentDisplayName?: string
 }
 
-function getExecutionModeIcon(mode?: string) {
-  switch (mode) {
-    case 'autonomous':
-      return <Zap className="h-3 w-3" />
-    case 'interactive':
-      return <Activity className="h-3 w-3" />
-    case 'scheduled':
-      return <Clock className="h-3 w-3" />
-    default:
-      return <Bot className="h-3 w-3" />
-  }
-}
 
 export function AgentChatDialog({
   isOpen,
@@ -156,12 +141,6 @@ export function AgentChatDialog({
           {/* Agent Info */}
           {agentStatus?.agentInfo && (
             <div className="flex flex-wrap gap-2 mt-3">
-              {/* Execution Mode */}
-              <Badge variant="outline" className="text-xs flex items-center gap-1">
-                {getExecutionModeIcon(agentStatus.agentInfo.executionMode)}
-                {agentStatus.agentInfo.executionMode || 'autonomous'}
-              </Badge>
-
               {/* Models */}
               {agentStatus.agentInfo.modelRefs.slice(0, 2).map((model, index) => (
                 <Badge key={index} variant="outline" className="text-xs flex items-center gap-1">

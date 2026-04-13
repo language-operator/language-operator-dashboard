@@ -3,12 +3,12 @@
 import { useState } from 'react'
 import { useRouter, useParams, usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { Bot, Edit, MoreVertical, FileCode, Trash2, Play, Home, FolderOpen, ScrollText, Copy, Check, MessageCircle, Settings2 } from 'lucide-react'
+import { Bot, Edit, MoreVertical, FileCode, Trash2, Home, FolderOpen, ScrollText, Copy, Check, MessageCircle, Settings2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { oneLight, oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
@@ -49,8 +49,6 @@ export default function AgentDetailLayout({ children }: AgentDetailLayoutProps) 
   const [yamlContent, setYamlContent] = useState('')
   const [yamlLoading, setYamlLoading] = useState(false)
   const [copied, setCopied] = useState(false)
-  const [isExecuting, setIsExecuting] = useState(false)
-  const [showExecuteDialog, setShowExecuteDialog] = useState(false)
   const { theme } = useTheme()
 
   const { data: agentResponse, isLoading, error } = useAgent(agentName, clusterName)
@@ -102,43 +100,6 @@ export default function AgentDetailLayout({ children }: AgentDetailLayoutProps) 
       setTimeout(() => setCopied(false), 2000)
     } catch (error) {
       console.error('Failed to copy YAML:', error)
-    }
-  }
-
-  const handleRunManually = () => {
-    setShowExecuteDialog(true)
-  }
-
-  const handleExecuteConfirm = async () => {
-    if (!agent || !agent.metadata.name) return
-
-    try {
-      setIsExecuting(true)
-      setShowExecuteDialog(false)
-
-      const response = await fetch(`/api/clusters/${clusterName}/agents/${agentName}/execute`, {
-        method: 'POST',
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || 'Failed to execute agent')
-      }
-
-      const result = await response.json()
-      console.log('Manual execution started:', result)
-
-      // Wait a moment for the job to start
-      setTimeout(() => {
-        // Navigate to logs page
-        router.push(`/clusters/${clusterName}/agents/${agentName}/logs`)
-        setIsExecuting(false)
-      }, 2000)
-
-    } catch (error) {
-      console.error('Failed to execute agent manually:', error)
-      alert('Failed to execute agent. Please try again.')
-      setIsExecuting(false)
     }
   }
 
@@ -234,15 +195,6 @@ export default function AgentDetailLayout({ children }: AgentDetailLayoutProps) 
                       Open in Console
                     </Link>
                   </DropdownMenuItem>
-                  {agent?.spec?.executionMode === 'scheduled' && (
-                    <DropdownMenuItem
-                      onClick={handleRunManually}
-                      disabled={isExecuting}
-                    >
-                      <Play className="h-4 w-4 mr-2" />
-                      {isExecuting ? 'Executing...' : 'Run Manually'}
-                    </DropdownMenuItem>
-                  )}
                   <DropdownMenuItem onClick={handleViewYaml}>
                     <FileCode className="h-4 w-4 mr-2" />
                     View YAML
@@ -365,34 +317,6 @@ export default function AgentDetailLayout({ children }: AgentDetailLayoutProps) 
         </DialogContent>
       </Dialog>
 
-      {/* Manual Execution Confirmation Dialog */}
-      <Dialog open={showExecuteDialog} onOpenChange={setShowExecuteDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Run Agent Manually</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <p className="text-sm text-stone-600 dark:text-stone-400">
-              This will create a one-time job to execute the agent "{agentName}" immediately.
-              The execution will be independent of the scheduled runs.
-            </p>
-          </div>
-          <DialogFooter className="flex justify-end space-x-2">
-            <Button
-              variant="outline"
-              onClick={() => setShowExecuteDialog(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleExecuteConfirm}
-              disabled={isExecuting}
-            >
-              {isExecuting ? 'Starting...' : 'Run Now'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
       </div>
   )
 }
