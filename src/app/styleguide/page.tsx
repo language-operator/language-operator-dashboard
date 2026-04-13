@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -10,10 +11,31 @@ import { Separator } from '@/components/ui/separator'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { AnimatedStatus } from '@/components/ui/animated-status'
+import { ResourceStatusBadge } from '@/components/ui/resource-status-badge'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
+import { LoadingSkeleton, ResourceLoadingSkeleton } from '@/components/ui/loading-boundary'
+import { NotFound } from '@/components/ui/not-found'
+import { ResourceHeader } from '@/components/ui/resource-header'
+import { LiveCounter } from '@/components/ui/live-counter'
+import { ConnectionStatus } from '@/components/ui/connection-status'
+import { Bot } from 'lucide-react'
 import { useTheme } from 'next-themes'
 
 export default function StyleGuidePage() {
   const { theme, setTheme } = useTheme()
+  const [counterValue, setCounterValue] = useState(3)
+  const [counterPrev, setCounterPrev] = useState<number | undefined>(undefined)
 
   return (
     <div className="max-w-6xl mx-auto space-y-12">
@@ -908,6 +930,279 @@ export default function StyleGuidePage() {
             </Table>
           </div>
 
+        </CardContent>
+      </Card>
+
+      {/* AnimatedStatus */}
+      <Card>
+        <CardHeader>
+          <CardTitle>AnimatedStatus</CardTitle>
+          <CardDescription>Animated phase badge — use for resource status in list pages. Never roll a custom getStatusColor() function.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-3">
+            <h3 className="text-[11px] tracking-wider uppercase font-light text-muted-foreground">Phase States</h3>
+            <div className="flex flex-wrap gap-3">
+              <AnimatedStatus status="Ready" />
+              <AnimatedStatus status="Pending" />
+              <AnimatedStatus status="Failed" />
+              <AnimatedStatus status="Unknown" />
+            </div>
+          </div>
+          <div className="space-y-3">
+            <h3 className="text-[11px] tracking-wider uppercase font-light text-muted-foreground">Size Variants</h3>
+            <div className="flex flex-wrap items-center gap-3">
+              <AnimatedStatus status="Ready" size="sm" />
+              <AnimatedStatus status="Ready" size="md" />
+              <AnimatedStatus status="Ready" size="lg" />
+            </div>
+          </div>
+          <div className="bg-muted p-4 border text-xs font-mono space-y-1">
+            <p className="text-foreground">{'import { AnimatedStatus } from \'@/components/ui/animated-status\''}</p>
+            <p className="text-foreground mt-2">{'<AnimatedStatus status="Ready" />'}</p>
+            <p className="text-foreground">{'<AnimatedStatus status="Pending" size="sm" />'}</p>
+            <p className="text-foreground">{'<AnimatedStatus status="Failed" size="lg" />'}</p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ResourceStatusBadge */}
+      <Card>
+        <CardHeader>
+          <CardTitle>ResourceStatusBadge</CardTitle>
+          <CardDescription>Wraps AnimatedStatus — prefer phase prop over status; falls back to Unknown. Use in headers and tight spaces.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-3">
+            <h3 className="text-[11px] tracking-wider uppercase font-light text-muted-foreground">status vs phase prop</h3>
+            <div className="flex flex-wrap gap-3">
+              <ResourceStatusBadge status="Ready" />
+              <ResourceStatusBadge phase="Pending" />
+              <ResourceStatusBadge phase="Failed" size="sm" />
+              <ResourceStatusBadge />
+            </div>
+          </div>
+          <div className="bg-muted p-4 border text-xs font-mono space-y-1">
+            <p className="text-foreground">{'import { ResourceStatusBadge } from \'@/components/ui/resource-status-badge\''}</p>
+            <p className="text-foreground mt-2">{'// phase takes priority over status'}</p>
+            <p className="text-foreground">{'<ResourceStatusBadge status="Ready" />'}</p>
+            <p className="text-foreground">{'<ResourceStatusBadge phase="Pending" size="sm" />'}</p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* AlertDialog */}
+      <Card>
+        <CardHeader>
+          <CardTitle>AlertDialog</CardTitle>
+          <CardDescription>Destructive confirmation dialogs. Always use this — never confirm() or alert() for delete/revoke flows.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive">Delete Agent</Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete my-agent?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will permanently delete the agent and all associated resources. This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction>Delete</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+          <div className="bg-muted p-4 border text-xs font-mono space-y-1">
+            <p className="text-foreground">{'import { AlertDialog, AlertDialogTrigger, AlertDialogContent,'}</p>
+            <p className="text-foreground">{'  AlertDialogHeader, AlertDialogTitle, AlertDialogDescription,'}</p>
+            <p className="text-foreground">{'  AlertDialogFooter, AlertDialogCancel, AlertDialogAction'}</p>
+            <p className="text-foreground">{"} from '@/components/ui/alert-dialog'"}</p>
+            <p className="text-foreground mt-2">{'<AlertDialog>'}</p>
+            <p className="text-foreground">{'  <AlertDialogTrigger asChild><Button variant="destructive">Delete</Button></AlertDialogTrigger>'}</p>
+            <p className="text-foreground">{'  <AlertDialogContent>'}</p>
+            <p className="text-foreground">{'    <AlertDialogHeader><AlertDialogTitle>Delete?</AlertDialogTitle>'}</p>
+            <p className="text-foreground">{'      <AlertDialogDescription>Cannot be undone.</AlertDialogDescription>'}</p>
+            <p className="text-foreground">{'    </AlertDialogHeader>'}</p>
+            <p className="text-foreground">{'    <AlertDialogFooter>'}</p>
+            <p className="text-foreground">{'      <AlertDialogCancel>Cancel</AlertDialogCancel>'}</p>
+            <p className="text-foreground">{'      <AlertDialogAction>Delete</AlertDialogAction>'}</p>
+            <p className="text-foreground">{'    </AlertDialogFooter>'}</p>
+            <p className="text-foreground">{'  </AlertDialogContent>'}</p>
+            <p className="text-foreground">{'</AlertDialog>'}</p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* LoadingBoundary */}
+      <Card>
+        <CardHeader>
+          <CardTitle>LoadingBoundary</CardTitle>
+          <CardDescription>Error boundary + Suspense wrapper with built-in skeleton fallbacks. Use LoadingSkeleton and ResourceLoadingSkeleton directly for loading states.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-3">
+            <h3 className="text-[11px] tracking-wider uppercase font-light text-muted-foreground">LoadingSkeleton — basic card</h3>
+            <LoadingSkeleton />
+          </div>
+          <div className="space-y-3">
+            <h3 className="text-[11px] tracking-wider uppercase font-light text-muted-foreground">ResourceLoadingSkeleton — 4-column grid</h3>
+            <ResourceLoadingSkeleton />
+          </div>
+          <div className="bg-muted p-4 border text-xs font-mono space-y-1">
+            <p className="text-foreground">{'import { LoadingSkeleton, ResourceLoadingSkeleton } from \'@/components/ui/loading-boundary\''}</p>
+            <p className="text-foreground mt-2">{'// Wrap async segments:'}</p>
+            <p className="text-foreground">{'<LoadingBoundary><AsyncComponent /></LoadingBoundary>'}</p>
+            <p className="text-foreground mt-2">{'// Use skeletons directly as fallback:'}</p>
+            <p className="text-foreground">{'<Suspense fallback={<ResourceLoadingSkeleton />}>'}</p>
+            <p className="text-foreground">{'  <ResourceList />'}</p>
+            <p className="text-foreground">{'</Suspense>'}</p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* NotFound */}
+      <Card>
+        <CardHeader>
+          <CardTitle>NotFound</CardTitle>
+          <CardDescription>Empty state and 404 component. Always use this — never write inline h3+p with custom copy and gray icons.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-3">
+            <h3 className="text-[11px] tracking-wider uppercase font-light text-muted-foreground">Without onBack (plain empty state)</h3>
+            <div className="border">
+              <NotFound title="Agent Not Found" message="The agent you are looking for does not exist in this cluster." />
+            </div>
+          </div>
+          <div className="space-y-3">
+            <h3 className="text-[11px] tracking-wider uppercase font-light text-muted-foreground">With onBack prop (shows back button)</h3>
+            <div className="border">
+              <NotFound
+                title="Agent Not Found"
+                message="The agent you are looking for does not exist in this cluster."
+                onBack={() => {}}
+                backLabel="Back to Agents"
+              />
+            </div>
+          </div>
+          <div className="bg-muted p-4 border text-xs font-mono space-y-1">
+            <p className="text-foreground">{"import { NotFound } from '@/components/ui/not-found'"}</p>
+            <p className="text-foreground mt-2">{'<NotFound'}</p>
+            <p className="text-foreground">{'  title="Agent Not Found"'}</p>
+            <p className="text-foreground">{'  message="The resource does not exist."'}</p>
+            <p className="text-foreground">{'  onBack={() => router.back()}'}</p>
+            <p className="text-foreground">{'  backLabel="Back to Agents"'}</p>
+            <p className="text-foreground">{'/>'}  </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ResourceHeader */}
+      <Card>
+        <CardHeader>
+          <CardTitle>ResourceHeader</CardTitle>
+          <CardDescription>Title bar for all resource detail pages. Includes icon, title, subtitle, back navigation, and actions slot.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="border p-4">
+            <ResourceHeader
+              icon={Bot}
+              title="my-agent"
+              subtitle="LanguageAgent"
+              backHref="#"
+              backLabel="Agents"
+              actions={
+                <Button variant="destructive" size="sm">Delete</Button>
+              }
+            />
+          </div>
+          <div className="bg-muted p-4 border text-xs font-mono space-y-1">
+            <p className="text-foreground">{"import { ResourceHeader } from '@/components/ui/resource-header'"}</p>
+            <p className="text-foreground">{"import { Bot } from 'lucide-react'"}</p>
+            <p className="text-foreground mt-2">{'<ResourceHeader'}</p>
+            <p className="text-foreground">{'  icon={Bot}'}</p>
+            <p className="text-foreground">{'  title="my-agent"'}</p>
+            <p className="text-foreground">{'  subtitle="LanguageAgent"'}</p>
+            <p className="text-foreground">{'  backHref={`/clusters/${name}/agents`}'}</p>
+            <p className="text-foreground">{'  backLabel="Agents"'}</p>
+            <p className="text-foreground">{'  actions={<Button variant="destructive">Delete</Button>}'}</p>
+            <p className="text-foreground">{'/>'}  </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* LiveCounter */}
+      <Card>
+        <CardHeader>
+          <CardTitle>LiveCounter</CardTitle>
+          <CardDescription>Animated stat counter that transitions between values. Use for dashboard overview metrics — value changes trigger a smooth count animation.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="flex items-center gap-6">
+            <div className="space-y-1">
+              <p className="text-[11px] tracking-wider uppercase font-light text-muted-foreground">Agents</p>
+              <LiveCounter value={counterValue} previousValue={counterPrev} />
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setCounterPrev(counterValue)
+                setCounterValue(v => v + 1)
+              }}
+            >
+              Increment
+            </Button>
+          </div>
+          <div className="bg-muted p-4 border text-xs font-mono space-y-1">
+            <p className="text-foreground">{"import { LiveCounter } from '@/components/ui/live-counter'"}</p>
+            <p className="text-foreground mt-2">{'const [value, setValue] = useState(3)'}</p>
+            <p className="text-foreground">{'const [prev, setPrev] = useState<number | undefined>(undefined)'}</p>
+            <p className="text-foreground mt-2">{'<LiveCounter value={value} previousValue={prev} />'}</p>
+            <p className="text-foreground mt-2">{'// On update:'}</p>
+            <p className="text-foreground">{'setPrev(value); setValue(newCount)'}</p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ConnectionStatus */}
+      <Card>
+        <CardHeader>
+          <CardTitle>ConnectionStatus</CardTitle>
+          <CardDescription>Live/disconnected indicator dot for SSE watch connections. Renders a small colored dot — no text.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-3 gap-6">
+            <div className="space-y-2">
+              <p className="text-[11px] tracking-wider uppercase font-light text-muted-foreground">Connected</p>
+              <div className="flex items-center gap-2">
+                <ConnectionStatus isConnected={true} />
+                <span className="text-sm font-light">Live</span>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <p className="text-[11px] tracking-wider uppercase font-light text-muted-foreground">Disconnected</p>
+              <div className="flex items-center gap-2">
+                <ConnectionStatus isConnected={false} />
+                <span className="text-sm font-light">Reconnecting</span>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <p className="text-[11px] tracking-wider uppercase font-light text-muted-foreground">Error</p>
+              <div className="flex items-center gap-2">
+                <ConnectionStatus isConnected={false} connectionError="Connection refused" />
+                <span className="text-sm font-light">Error</span>
+              </div>
+            </div>
+          </div>
+          <div className="bg-muted p-4 border text-xs font-mono space-y-1">
+            <p className="text-foreground">{"import { ConnectionStatus } from '@/components/ui/connection-status'"}</p>
+            <p className="text-foreground mt-2">{'<ConnectionStatus isConnected={true} />'}</p>
+            <p className="text-foreground">{'<ConnectionStatus isConnected={false} />'}</p>
+            <p className="text-foreground">{'<ConnectionStatus isConnected={false} connectionError="Connection refused" />'}</p>
+          </div>
         </CardContent>
       </Card>
 
