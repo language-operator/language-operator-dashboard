@@ -53,7 +53,7 @@ export default function ClusterDashboard() {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="text-lg text-red-600">Cluster not found</div>
-          <div className="text-sm text-gray-500 mt-2">
+          <div className="text-sm text-muted-foreground mt-2">
             The cluster "{clusterName}" could not be loaded.
           </div>
         </div>

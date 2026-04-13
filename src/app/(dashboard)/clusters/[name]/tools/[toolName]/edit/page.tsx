@@ -106,7 +106,7 @@ export default function EditClusterToolPage() {
     return (
       <div className="space-y-6">
         <div className="text-center py-6">
-          <p className="text-gray-600">Tool not found</p>
+          <p className="text-muted-foreground">Tool not found</p>
         </div>
       </div>
     )

@@ -64,7 +64,7 @@ export default function ClusterEditModelPage() {
     return (
       <div className="space-y-6">
         <div className="text-center py-6">
-          <p className="text-gray-600">Model not found</p>
+          <p className="text-muted-foreground">Model not found</p>
         </div>
       </div>
     )

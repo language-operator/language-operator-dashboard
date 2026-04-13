@@ -22,7 +22,7 @@ export default function AgentWorkspacePage() {
           <CardContent className="flex items-center justify-center py-16">
             <div className="text-center">
               <Spinner className="mx-auto mb-4" />
-              <p className="text-gray-600">Loading workspace...</p>
+              <p className="text-muted-foreground">Loading workspace...</p>
             </div>
           </CardContent>
         </Card>

@@ -120,8 +120,8 @@ export default function ClusterAgents() {
           <Card>
             <CardContent className="flex items-center justify-center py-16">
               <div className="text-center">
-                <Bot className="h-8 w-8 animate-pulse mx-auto mb-4 text-gray-400" />
-                <p className="text-gray-600">Loading agents...</p>
+                <Bot className="h-8 w-8 animate-pulse mx-auto mb-4 text-muted-foreground" />
+                <p className="text-muted-foreground">Loading agents...</p>
               </div>
             </CardContent>
           </Card>
@@ -134,7 +134,7 @@ export default function ClusterAgents() {
               <div className="text-center">
                 <Bot className="h-8 w-8 mx-auto mb-4 text-red-400" />
                 <p className="text-red-600 mb-2">Failed to load agents</p>
-                <p className="text-gray-600 text-sm">{error}</p>
+                <p className="text-muted-foreground text-sm">{error}</p>
               </div>
             </CardContent>
           </Card>
@@ -147,7 +147,7 @@ export default function ClusterAgents() {
               /* Empty State */
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-16">
-                  <Bot className="h-16 w-16 text-gray-400 mb-4" />
+                  <Bot className="h-16 w-16 text-muted-foreground mb-4" />
                   <CardTitle className="text-xl mb-2">No agents yet</CardTitle>
                   <CardDescription className="text-center max-w-md mb-6">
                     Agents combine models, personas, and tools to create intelligent 

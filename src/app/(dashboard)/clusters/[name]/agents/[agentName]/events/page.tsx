@@ -21,7 +21,7 @@ export default function AgentEventsPage() {
           <CardContent className="flex items-center justify-center py-16">
             <div className="text-center">
               <Spinner className="mx-auto mb-4" />
-              <p className="text-gray-600">Loading events...</p>
+              <p className="text-muted-foreground">Loading events...</p>
             </div>
           </CardContent>
         </Card>

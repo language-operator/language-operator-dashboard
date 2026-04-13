@@ -141,8 +141,8 @@ export default function ClusterPersonas() {
           <Card>
             <CardContent className="flex items-center justify-center py-16">
               <div className="text-center">
-                <Users className="h-8 w-8 animate-pulse mx-auto mb-4 text-gray-400" />
-                <p className="text-gray-600">Loading personas...</p>
+                <Users className="h-8 w-8 animate-pulse mx-auto mb-4 text-muted-foreground" />
+                <p className="text-muted-foreground">Loading personas...</p>
               </div>
             </CardContent>
           </Card>
@@ -155,7 +155,7 @@ export default function ClusterPersonas() {
               <div className="text-center">
                 <Users className="h-8 w-8 mx-auto mb-4 text-red-400" />
                 <p className="text-red-600 mb-2">Failed to load personas</p>
-                <p className="text-gray-600 text-sm">{error.message}</p>
+                <p className="text-muted-foreground text-sm">{error.message}</p>
               </div>
             </CardContent>
           </Card>
@@ -168,7 +168,7 @@ export default function ClusterPersonas() {
               /* Empty State */
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-16">
-                  <Users className="h-16 w-16 text-gray-400 mb-4" />
+                  <Users className="h-16 w-16 text-muted-foreground mb-4" />
                   <CardTitle className="text-xl mb-2">No personas yet</CardTitle>
                   <CardDescription className="text-center max-w-md mb-6">
                     Personas define the behavior, knowledge, and communication style 

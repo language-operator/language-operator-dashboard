@@ -132,7 +132,7 @@ export function ToolLogs({ tool, clusterName }: ToolLogsProps) {
           <CardContent className="flex items-center justify-center py-16">
             <div className="text-center">
               <Spinner className="mx-auto mb-4" />
-              <p className="text-gray-600">Loading pods...</p>
+              <p className="text-muted-foreground">Loading pods...</p>
             </div>
           </CardContent>
         </Card>
