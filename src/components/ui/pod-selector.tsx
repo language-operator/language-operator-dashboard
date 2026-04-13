@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Badge } from '@/components/ui/badge'
+import { AnimatedStatus } from '@/components/ui/animated-status'
 import { Layers, Box, RotateCcw } from 'lucide-react'
 import { formatTimeAgoCondensed } from '@/lib/format'
 
@@ -62,16 +62,6 @@ export function PodSelector({
     return pod?.availableContainers || []
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Running': return 'text-status-ready-foreground'
-      case 'Succeeded': return 'text-muted-foreground'
-      case 'Failed': return 'text-destructive'
-      case 'Pending': return 'text-status-pending-foreground'
-      default: return 'text-muted-foreground'
-    }
-  }
-
   if (layout === 'horizontal') {
     return (
       <Card className={`flex-shrink-0 ${className}`}>
@@ -96,9 +86,7 @@ export function PodSelector({
                           <span className="font-mono text-sm">{pod.name}</span>
                         </div>
                         <div className="flex items-center gap-2 ml-4">
-                          <Badge variant="outline" className={`${getStatusColor(pod.status)} text-xs`}>
-                            {pod.status}
-                          </Badge>
+                          <AnimatedStatus status={pod.status} size="sm" />
                           {pod.creationTimestamp && (
                             <span className="text-xs text-muted-foreground">
                               {formatTimeAgoCondensed(pod.creationTimestamp)}
@@ -220,9 +208,7 @@ export function PodSelector({
                         <span className="font-mono text-sm">{pod.name}</span>
                       </div>
                       <div className="flex items-center gap-2 ml-4">
-                        <Badge variant="outline" className={`${getStatusColor(pod.status)} text-xs`}>
-                          {pod.status}
-                        </Badge>
+                        <AnimatedStatus status={pod.status} size="sm" />
                         {pod.creationTimestamp && (
                           <span className="text-xs text-muted-foreground">
                             {formatTimeAgoCondensed(pod.creationTimestamp)}
