@@ -208,9 +208,7 @@ export function PodSelector({
                         <span className="font-mono text-sm">{pod.name}</span>
                       </div>
                       <div className="flex items-center gap-2 ml-4">
-                        <Badge variant="outline" className={`${getStatusColor(pod.status)} text-xs`}>
-                          {pod.status}
-                        </Badge>
+                        <AnimatedStatus status={pod.status} size="sm" />
                         {pod.creationTimestamp && (
                           <span className="text-xs text-muted-foreground">
                             {formatTimeAgoCondensed(pod.creationTimestamp)}
