@@ -2,6 +2,7 @@
 
 import { useParams, useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { EmptyState } from '@/components/ui/empty-state'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -321,14 +322,14 @@ export default function ClusterTools() {
           <h2 className="text-xl font-light mb-4">Available Tools</h2>
           {filteredTools.length === 0 ? (
             <Card>
-              <CardContent className="flex flex-col items-center justify-center py-16">
-                <Wrench className="h-16 w-16 text-muted-foreground mb-4" />
-                <CardTitle className="text-xl mb-2">No tools found</CardTitle>
-                <CardDescription className="text-center max-w-md">
-                  {searchQuery
+              <CardContent>
+                <EmptyState
+                  icon={Wrench}
+                  title="No tools found"
+                  description={searchQuery
                     ? `No tools match your search "${searchQuery}"`
                     : 'No tools available in the catalog'}
-                </CardDescription>
+                />
               </CardContent>
             </Card>
           ) : (

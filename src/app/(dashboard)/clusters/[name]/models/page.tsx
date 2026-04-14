@@ -3,6 +3,7 @@
 import React from 'react'
 import { useParams } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { EmptyState } from '@/components/ui/empty-state'
 import { FilterBar } from '@/components/ui/filter-bar'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -147,19 +148,20 @@ export default function ClusterModels() {
         {/* Models List or Empty State */}
         {clusterModels.length === 0 ? (
           <Card>
-            <CardContent className="flex flex-col items-center justify-center py-16">
-              <Cpu className="h-16 w-16 text-muted-foreground mb-4" />
-              <CardTitle className="text-xl mb-2">No models yet</CardTitle>
-              <CardDescription className="text-center max-w-md mb-6">
-                Language models define the AI capabilities available in this cluster. 
-                Add your first model to get started.
-              </CardDescription>
-              <Button asChild>
-                <Link href={`/clusters/${clusterName}/models/new`}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Your First Model
-                </Link>
-              </Button>
+            <CardContent>
+              <EmptyState
+                icon={Cpu}
+                title="No models yet"
+                description="Language models define the AI capabilities available in this cluster. Add your first model to get started."
+                action={
+                  <Button asChild>
+                    <Link href={`/clusters/${clusterName}/models/new`}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Your First Model
+                    </Link>
+                  </Button>
+                }
+              />
             </CardContent>
           </Card>
         ) : (

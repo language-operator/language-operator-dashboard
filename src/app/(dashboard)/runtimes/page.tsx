@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { EmptyState } from '@/components/ui/empty-state'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { ResourceHeader } from '@/components/ui/resource-header'
@@ -214,19 +215,19 @@ export default function RuntimesPage() {
           </Table>
 
           {runtimes.length === 0 && (
-            <div className="text-center py-8">
-              <Cpu className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-light mb-2">No runtimes found</h3>
-              <p className="text-muted-foreground mb-4">
-                Create a runtime preset to provide default configuration for agent deployments.
-              </p>
-              <Link href="/runtimes/new">
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Runtime
-                </Button>
-              </Link>
-            </div>
+            <EmptyState
+              icon={Cpu}
+              title="No runtimes found"
+              description="Create a runtime preset to provide default configuration for agent deployments."
+              action={
+                <Link href="/runtimes/new">
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Runtime
+                  </Button>
+                </Link>
+              }
+            />
           )}
         </CardContent>
       </Card>

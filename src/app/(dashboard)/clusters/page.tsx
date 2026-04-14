@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { EmptyState } from '@/components/ui/empty-state'
 import { FilterBar } from '@/components/ui/filter-bar'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -138,19 +139,19 @@ function ClusterTable({ clusters, onDelete, isDeleting }: ClusterTableProps) {
           </TableBody>
         </Table>
         {clusters.length === 0 && (
-          <div className="text-center py-8">
-            <Boxes className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-light mb-2">No clusters found</h3>
-            <p className="text-muted-foreground mb-4">
-              Create your first language cluster to get started.
-            </p>
-            <Link href={'/clusters/new'}>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Create Cluster
-              </Button>
-            </Link>
-          </div>
+          <EmptyState
+            icon={Boxes}
+            title="No clusters found"
+            description="Create your first language cluster to get started."
+            action={
+              <Link href="/clusters/new">
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Cluster
+                </Button>
+              </Link>
+            }
+          />
         )}
       </CardContent>
     </Card>
