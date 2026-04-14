@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
+import { ToolStatusBadge } from '@/components/ui/resource-status-badge'
 import { ResourceHeader } from '@/components/ui/resource-header'
 import { Wrench, Download, CheckCircle, Search, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
@@ -164,12 +165,7 @@ export default function ClusterTools() {
             {isInstalled && installedTool ? (
               <>
                 <div className="flex-1 flex items-center gap-2">
-                  <Badge 
-                    variant={['Ready', 'Running'].includes(installedTool.status.phase) ? 'default' : 'secondary'}
-                    className={`text-xs ${['Ready', 'Running'].includes(installedTool.status.phase) ? 'bg-status-ready text-status-ready-foreground' : ''}`}
-                  >
-                    {['Ready', 'Running'].includes(installedTool.status.phase) ? 'Installed' : installedTool.status.phase}
-                  </Badge>
+                  <ToolStatusBadge tool={installedTool} />
                   {installedTool.status.message && (
                     <span className="text-xs text-muted-foreground truncate">
                       {installedTool.status.message.replace('Image registry is in whitelist', 'approved registry')}

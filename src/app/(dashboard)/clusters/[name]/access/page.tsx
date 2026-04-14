@@ -37,9 +37,9 @@ const ROLE_LABELS: Record<string, string> = {
   'langop-cluster-viewer': 'Viewer',
 }
 
-const ROLE_COLORS: Record<string, string> = {
-  'langop-cluster-admin': 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
-  'langop-cluster-viewer': 'bg-stone-100 text-stone-700 dark:bg-stone-800 dark:text-stone-300',
+const ROLE_VARIANTS: Record<string, 'role-admin' | 'role-viewer'> = {
+  'langop-cluster-admin': 'role-admin',
+  'langop-cluster-viewer': 'role-viewer',
 }
 
 
@@ -206,7 +206,7 @@ export default function ClusterAccessPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge className={ROLE_COLORS[binding.role] ?? ''}>
+                        <Badge variant={ROLE_VARIANTS[binding.role] ?? 'secondary'}>
                           {ROLE_LABELS[binding.role] ?? binding.role}
                         </Badge>
                       </TableCell>

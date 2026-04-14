@@ -49,6 +49,22 @@ export function AnimatedStatus({
           iconClass: 'text-status-error-foreground',
           animation: ''
         }
+      case 'applied':
+        return {
+          variant: 'default' as const,
+          icon: CheckCircle,
+          className: 'bg-status-ready text-status-ready-foreground',
+          iconClass: 'text-status-ready-foreground',
+          animation: ''
+        }
+      case 'denied':
+        return {
+          variant: 'secondary' as const,
+          icon: XCircle,
+          className: 'bg-status-unknown text-status-unknown-foreground',
+          iconClass: 'text-status-unknown-foreground',
+          animation: ''
+        }
       default:
         return {
           variant: 'outline' as const,

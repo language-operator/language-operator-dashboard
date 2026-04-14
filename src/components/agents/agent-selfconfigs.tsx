@@ -2,9 +2,9 @@
 
 import { useAgentSelfConfigs } from '@/hooks/use-selfconfigs'
 import { LanguageAgent } from '@/types/agent'
-import { LanguageAgentSelfConfigSpec, SelfConfigPhase } from '@/types/selfconfig'
+import { LanguageAgentSelfConfigSpec } from '@/types/selfconfig'
 import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import { AnimatedStatus } from '@/components/ui/animated-status'
 import {
   Table,
   TableBody,
@@ -15,20 +15,6 @@ import {
 } from '@/components/ui/table'
 import { formatTimeAgo } from '@/components/agents/utils'
 import { Spinner } from '@/components/ui/spinner'
-
-function phaseBadgeClass(phase?: SelfConfigPhase): string {
-  switch (phase) {
-    case 'Applied':
-      return 'border-status-ready text-status-ready-foreground'
-    case 'Failed':
-      return 'border-destructive text-destructive'
-    case 'Denied':
-      return 'border-muted-foreground text-muted-foreground'
-    case 'Pending':
-    default:
-      return 'border-status-pending text-status-pending-foreground'
-  }
-}
 
 function summarizeChanges(spec: LanguageAgentSelfConfigSpec): string {
   const parts: string[] = []
@@ -106,9 +92,7 @@ export function AgentSelfConfigs({ agent, clusterName }: AgentSelfConfigsProps) 
                   {formatTimeAgo(item.metadata.creationTimestamp)}
                 </TableCell>
                 <TableCell>
-                  <Badge variant="outline" className={phaseBadgeClass(item.status?.phase)}>
-                    {item.status?.phase ?? 'Pending'}
-                  </Badge>
+                  <AnimatedStatus status={item.status?.phase ?? 'Pending'} />
                 </TableCell>
                 <TableCell className="max-w-sm whitespace-normal">
                   {summarizeChanges(item.spec)}
