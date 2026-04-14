@@ -108,7 +108,7 @@ export async function PATCH(
         ...(validatedData.spec?.apiKey !== undefined && { apiKey: validatedData.spec.apiKey }),
         ...(validatedData.spec?.egress !== undefined && { egress: validatedData.spec.egress }),
       }
-    })
+    } as import('@/types/model').LanguageModel)
 
     // Log the update for audit trail
     console.log(`Model updated: ${name} by ${email} in ${namespace}`)
@@ -174,7 +174,7 @@ export async function PUT(
         ...(validatedData.spec?.apiKey !== undefined && { apiKey: validatedData.spec.apiKey }),
         ...(validatedData.spec?.egress !== undefined && { egress: validatedData.spec.egress }),
       }
-    })
+    } as import('@/types/model').LanguageModel)
 
     // Log the update for audit trail
     console.log(`Model updated via PUT: ${name} by ${email} in ${namespace}`)

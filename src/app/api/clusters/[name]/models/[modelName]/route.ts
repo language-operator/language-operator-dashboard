@@ -145,7 +145,7 @@ export async function PUT(
 
     const response = await handleKubernetesOperation(
       'update model',
-      k8sClient.replaceLanguageModel(clusterName, modelName, updatedModel)
+      k8sClient.replaceLanguageModel(clusterName, modelName, updatedModel as unknown as import('@/types/model').LanguageModel)
     )
 
     console.log(`Successfully updated model ${modelName} for cluster ${clusterName}`)

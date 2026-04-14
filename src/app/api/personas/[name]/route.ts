@@ -101,7 +101,7 @@ export async function PATCH(
     console.log('Update payload:', JSON.stringify(updatePayload, null, 2))
 
     // Update the persona
-    const updatedPersona = await k8sClient.updateLanguagePersona(namespace, name, updatePayload)
+    const updatedPersona = await k8sClient.updateLanguagePersona(namespace, name, updatePayload as import('@/types/persona').LanguagePersona)
 
     // Log the update for audit trail
     console.log(`Persona updated: ${name} by ${email} in ${namespace}`)

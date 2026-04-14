@@ -61,10 +61,10 @@ export function WorkspaceToolbar({
 
       onUploadComplete()
       setUploadDialogOpen(false)
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Upload failed',
-        description: error.message,
+        description: error instanceof Error ? error.message : String(error),
         variant: 'destructive',
       })
     } finally {

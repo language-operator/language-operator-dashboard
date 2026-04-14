@@ -131,24 +131,26 @@ export class KubernetesWatchService {
       const stream = await watch.watch(
         fullPath,
         {},
-        (type: string, apiObj: any, watchObj: any) => {
+        (type: string, apiObj: T) => {
           if (!this.activeStreams.has(watchKey)) {
             // Stream was cancelled, ignore events
             return
           }
 
+          const apiObjRecord = apiObj as Record<string, unknown>
+          const metadata = apiObjRecord?.metadata as Record<string, unknown> | undefined
           const event: WatchEvent<T> = {
             type: type as WatchEvent<T>['type'],
             object: apiObj,
-            resourceVersion: apiObj?.metadata?.resourceVersion
+            resourceVersion: metadata?.resourceVersion as string | undefined
           }
 
           // Handle ERROR type specifically
           if (type === 'ERROR') {
-            const errorMessage = apiObj?.message || apiObj?.reason || 'Unknown watch error'
+            const errorMessage = (apiObjRecord?.message ?? apiObjRecord?.reason ?? 'Unknown watch error') as string
             event.error = errorMessage
             console.error(`Watch error for ${plural}:`, errorMessage)
-            
+
             if (onError) {
               onError(new Error(errorMessage))
             }
@@ -156,12 +158,12 @@ export class KubernetesWatchService {
 
           onEvent(event)
         },
-        (error: any) => {
+        (error: unknown) => {
           console.error(`Watch stream ended for ${plural}:`, error)
           this.activeStreams.delete(watchKey)
 
           if (onError) {
-            onError(error || new Error('Watch stream ended'))
+            onError(error instanceof Error ? error : new Error('Watch stream ended'))
           }
 
           // Note: Reconnection is now handled by the route layer
@@ -311,22 +313,24 @@ export class KubernetesWatchService {
       await watch.watch(
         fullPath,
         {},
-        (type: string, apiObj: any) => {
+        (type: string, apiObj: T) => {
           if (!this.activeStreams.has(watchKey)) {
             return
           }
 
+          const apiObjRecord = apiObj as Record<string, unknown>
+          const metadata = apiObjRecord?.metadata as Record<string, unknown> | undefined
           const event: WatchEvent<T> = {
             type: type as WatchEvent<T>['type'],
             object: apiObj,
-            resourceVersion: apiObj?.metadata?.resourceVersion
+            resourceVersion: metadata?.resourceVersion as string | undefined
           }
 
           if (type === 'ERROR') {
-            const errorMessage = apiObj?.message || apiObj?.reason || 'Unknown watch error'
+            const errorMessage = (apiObjRecord?.message ?? apiObjRecord?.reason ?? 'Unknown watch error') as string
             event.error = errorMessage
             console.error(`Watch error for ${resource}:`, errorMessage)
-            
+
             if (onError) {
               onError(new Error(errorMessage))
             }
@@ -334,12 +338,12 @@ export class KubernetesWatchService {
 
           onEvent(event)
         },
-        (error: any) => {
+        (error: unknown) => {
           console.error(`Watch stream ended for ${resource}:`, error)
           this.activeStreams.delete(watchKey)
 
           if (onError) {
-            onError(error || new Error('Watch stream ended'))
+            onError(error instanceof Error ? error : new Error('Watch stream ended'))
           }
 
           // Note: Reconnection is now handled by the route layer

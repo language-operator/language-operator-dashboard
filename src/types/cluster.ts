@@ -1,6 +1,6 @@
 // Generated TypeScript types for LanguageCluster CRD
 
-import { V1ObjectMeta, V1Condition } from '@kubernetes/client-node'
+import { V1ObjectMeta, V1Condition, V1LabelSelector } from '@kubernetes/client-node'
 
 // LanguageCluster CRD Types
 export interface LanguageCluster {
@@ -74,8 +74,8 @@ export interface NetworkPeer {
   cidr?: string
   dns?: string[]
   service?: ServiceReference
-  namespaceSelector?: any
-  podSelector?: any
+  namespaceSelector?: V1LabelSelector
+  podSelector?: V1LabelSelector
 }
 
 export interface NetworkPort {
@@ -121,13 +121,13 @@ export interface LanguageClusterStatus {
   proxyReady?: boolean
   ingress?: {
     ready?: boolean
-    dnsRecords?: any[]
-    [key: string]: any
+    dnsRecords?: unknown[]
+    [key: string]: unknown
   }
-  agents?: any[]
+  agents?: unknown[]
   agentCount?: number
   capacity?: ClusterCapacityStatus
-  [key: string]: any
+  [key: string]: unknown
 }
 
 // Frontend-specific types

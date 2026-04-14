@@ -12,6 +12,9 @@ import { useTools } from '@/hooks/use-tools'
 import { usePersonas } from '@/hooks/use-personas'
 import { ResourceEventsActivity } from '@/components/ui/events-activity'
 import { LanguageAgent } from '@/types/agent'
+import type { LanguageModel } from '@/types/model'
+import type { LanguageTool } from '@/types/tool'
+import type { LanguagePersona } from '@/types/persona'
 import { formatTimeAgo } from './utils'
 
 interface AgentOverviewProps {
@@ -25,9 +28,9 @@ export function AgentOverview({ agent, clusterName }: AgentOverviewProps) {
   const { data: toolsResponse } = useTools({ clusterName })
   const { data: personasResponse } = usePersonas({ clusterName })
 
-  const allModels = modelsResponse?.data || []
-  const allTools = toolsResponse?.data || []
-  const allPersonas = personasResponse?.data || []
+  const allModels: LanguageModel[] = modelsResponse?.data || []
+  const allTools: LanguageTool[] = toolsResponse?.data || []
+  const allPersonas: LanguagePersona[] = personasResponse?.data || []
 
   return (
     <div className="space-y-6">
@@ -105,7 +108,7 @@ export function AgentOverview({ agent, clusterName }: AgentOverviewProps) {
             {agent.spec.models && agent.spec.models.length > 0 ? (
               <div className="flex flex-wrap gap-2">
                 {agent.spec.models.map((modelRef, index) => {
-                  const found = allModels.find((m: any) => m.metadata.name === modelRef.name)
+                  const found = allModels.find((m) => m.metadata?.name === modelRef.name)
                   return (
                     <div key={index}>
                       {found ? (
@@ -138,7 +141,7 @@ export function AgentOverview({ agent, clusterName }: AgentOverviewProps) {
             {agent.spec.tools && agent.spec.tools.length > 0 ? (
               <div className="flex flex-wrap gap-2">
                 {agent.spec.tools.map((toolRef, index) => {
-                  const found = allTools.find((t: any) => t.metadata.name === toolRef.name)
+                  const found = allTools.find((t) => t.metadata?.name === toolRef.name)
                   return (
                     <div key={index}>
                       {found ? (
@@ -168,7 +171,7 @@ export function AgentOverview({ agent, clusterName }: AgentOverviewProps) {
             {agent.spec.persona ? (
               <div className="flex flex-wrap gap-2">
                 {(() => {
-                  const found = allPersonas.find((p: any) => p.metadata.name === agent.spec.persona)
+                  const found = allPersonas.find((p) => p.metadata?.name === agent.spec.persona)
                   return found ? (
                     <Link href={`/clusters/${clusterName}/personas/${agent.spec.persona}`}>
                       <Badge variant="outline" className="hover:bg-primary/10 cursor-pointer">

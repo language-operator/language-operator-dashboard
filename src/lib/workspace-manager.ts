@@ -103,23 +103,28 @@ class WorkspaceManager {
         namespace,
       })
       console.log(`Workspace Manager - Deleted expired pod: ${podName}`)
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Check for 404 - pod already deleted
-      const is404 = error.response?.statusCode === 404 || 
-                   error.statusCode === 404 ||
-                   error.response?.status === 404 ||
-                   error.status === 404 ||
-                   error.code === 404 ||
-                   (error.response?.body && error.response.body.code === 404) ||
-                   (error.body && error.body.code === 404)
-      
+      const e = error as Record<string, unknown>
+      const eResponse = e?.response as Record<string, unknown> | undefined
+      const eBody = e?.body as Record<string, unknown> | undefined
+      const eRespBody = eResponse?.body as Record<string, unknown> | undefined
+      const is404 = eResponse?.statusCode === 404 ||
+                   e?.statusCode === 404 ||
+                   eResponse?.status === 404 ||
+                   e?.status === 404 ||
+                   e?.code === 404 ||
+                   eRespBody?.code === 404 ||
+                   eBody?.code === 404
+
       if (is404) {
         console.log(`Workspace Manager - Pod ${podName} already deleted`)
         return
       }
-      
-      console.error(`Workspace Manager - Failed to delete pod ${podName}:`, error.message)
-      throw new WorkspaceError('POD_ERROR', `Failed to delete expired pod: ${error.message}`)
+
+      const message = error instanceof Error ? error.message : String(error)
+      console.error(`Workspace Manager - Failed to delete pod ${podName}:`, message)
+      throw new WorkspaceError('POD_ERROR', `Failed to delete expired pod: ${message}`)
     }
   }
 
@@ -136,9 +141,12 @@ class WorkspaceManager {
         namespace,
       })
 
-      const pod = (existingPod as any).body || existingPod
+      const pod = (existingPod as { body?: k8s.V1Pod } & k8s.V1Pod).body ?? (existingPod as k8s.V1Pod)
       const phase = pod.status?.phase
-      const createdAt = pod.metadata?.creationTimestamp || new Date().toISOString()
+      const rawCreatedAt = pod.metadata?.creationTimestamp
+      const createdAt = rawCreatedAt instanceof Date
+        ? rawCreatedAt.toISOString()
+        : (rawCreatedAt as string | undefined) ?? new Date().toISOString()
       const age = Date.now() - Date.parse(createdAt)
       const maxAge = WORKSPACE_LIMITS.POD_TIMEOUT_MINUTES * 60 * 1000
 
@@ -152,7 +160,7 @@ class WorkspaceManager {
       // Pod exists and is still valid
       const expiresAt = new Date(Date.parse(createdAt) + WORKSPACE_LIMITS.POD_TIMEOUT_MINUTES * 60 * 1000).toISOString()
       console.log(`Workspace Manager - Using existing pod ${podName} (phase: ${phase})`)
-      
+
       return {
         name: podName,
         namespace,
@@ -160,25 +168,30 @@ class WorkspaceManager {
         createdAt,
         expiresAt,
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Check for 404 in multiple possible locations based on k8s client error structure
-      const is404 = error.response?.statusCode === 404 || 
-                   error.statusCode === 404 ||
-                   error.response?.status === 404 ||
-                   error.status === 404 ||
-                   error.code === 404 ||
-                   (error.response?.body && error.response.body.code === 404) ||
-                   (error.body && error.body.code === 404)
-      
+      const e = error as Record<string, unknown>
+      const eResponse = e?.response as Record<string, unknown> | undefined
+      const eBody = e?.body as Record<string, unknown> | undefined
+      const eRespBody = eResponse?.body as Record<string, unknown> | undefined
+      const is404 = eResponse?.statusCode === 404 ||
+                   e?.statusCode === 404 ||
+                   eResponse?.status === 404 ||
+                   e?.status === 404 ||
+                   e?.code === 404 ||
+                   eRespBody?.code === 404 ||
+                   eBody?.code === 404
+
       if (!is404) {
+        const message = error instanceof Error ? error.message : String(error)
         console.error('Workspace Manager - Pod check error:', {
-          message: error.message,
-          statusCode: error.statusCode,
-          responseStatusCode: error.response?.statusCode,
-          responseStatus: error.response?.status,
+          message,
+          statusCode: e?.statusCode,
+          responseStatusCode: eResponse?.statusCode,
+          responseStatus: eResponse?.status,
           errorStructure: JSON.stringify(error, null, 2)
         })
-        throw new WorkspaceError('POD_ERROR', `Failed to check pod status: ${error.message}`)
+        throw new WorkspaceError('POD_ERROR', `Failed to check pod status: ${message}`)
       }
       console.log('Workspace Manager - Pod not found (404), will create it')
       // Pod doesn't exist (404), continue to create it
@@ -281,8 +294,11 @@ class WorkspaceManager {
         body: podSpec,
       })
 
-      const pod = (response as any).body || response
-      const createdAt = pod.metadata?.creationTimestamp || new Date().toISOString()
+      const pod = (response as { body?: k8s.V1Pod } & k8s.V1Pod).body ?? (response as k8s.V1Pod)
+      const rawCreatedAt = pod.metadata?.creationTimestamp
+      const createdAt = rawCreatedAt instanceof Date
+        ? rawCreatedAt.toISOString()
+        : (rawCreatedAt as string | undefined) ?? new Date().toISOString()
       const expiresAt = new Date(Date.parse(createdAt) + WORKSPACE_LIMITS.POD_TIMEOUT_MINUTES * 60 * 1000).toISOString()
 
       return {
@@ -292,8 +308,9 @@ class WorkspaceManager {
         createdAt,
         expiresAt,
       }
-    } catch (error: any) {
-      throw new WorkspaceError('POD_ERROR', `Failed to create file manager pod: ${error.message}`)
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error)
+      throw new WorkspaceError('POD_ERROR', `Failed to create file manager pod: ${message}`)
     }
   }
 
@@ -315,11 +332,12 @@ class WorkspaceManager {
           setTimeout(() => reject(new WorkspaceError('TIMEOUT', 'Command execution timeout')), timeoutMs)
         )
       ])
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof WorkspaceError) {
         throw error
       }
-      throw new WorkspaceError('POD_ERROR', `Command execution failed: ${error.message}`)
+      const message = error instanceof Error ? error.message : String(error)
+      throw new WorkspaceError('POD_ERROR', `Command execution failed: ${message}`)
     }
   }
 
@@ -332,14 +350,14 @@ class WorkspaceManager {
 
       // Create writable streams to capture output
       const stdout = new Writable({
-        write(chunk: any, encoding: any, callback: any) {
+        write(chunk: Buffer | string, _encoding: BufferEncoding, callback: (error?: Error | null) => void) {
           output += chunk.toString()
           callback()
         }
       })
 
       const stderr = new Writable({
-        write(chunk: any, encoding: any, callback: any) {
+        write(chunk: Buffer | string, _encoding: BufferEncoding, callback: (error?: Error | null) => void) {
           errorOutput += chunk.toString()
           callback()
         }
@@ -354,7 +372,7 @@ class WorkspaceManager {
         stderr,
         process.stdin,
         true,
-        (status: any) => {
+        (status: { status?: string; message?: string }) => {
           if (status.status === 'Success') {
             resolve(output.trim())
           } else {
@@ -393,11 +411,12 @@ class WorkspaceManager {
       }
 
       return this.parseDirectoryListing(output, path)
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof WorkspaceError) {
         throw error
       }
-      throw new WorkspaceError('POD_ERROR', `Failed to list directory: ${error.message}`)
+      const message = error instanceof Error ? error.message : String(error)
+      throw new WorkspaceError('POD_ERROR', `Failed to list directory: ${message}`)
     }
   }
 
@@ -437,8 +456,9 @@ class WorkspaceManager {
         ['cat', fullPath]
       )
       return content
-    } catch (error: any) {
-      throw new WorkspaceError('POD_ERROR', `Failed to read file: ${error.message}`)
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error)
+      throw new WorkspaceError('POD_ERROR', `Failed to read file: ${message}`)
     }
   }
 
@@ -462,8 +482,9 @@ class WorkspaceManager {
       )
       
       return Buffer.from(base64Output.trim(), 'base64')
-    } catch (error: any) {
-      throw new WorkspaceError('POD_ERROR', `Failed to download file: ${error.message}`)
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error)
+      throw new WorkspaceError('POD_ERROR', `Failed to download file: ${message}`)
     }
   }
 
@@ -506,8 +527,9 @@ class WorkspaceManager {
         podInfo.name,
         ['sh', '-c', `echo '${base64Content}' | base64 -d > "${fullPath}"`]
       )
-    } catch (error: any) {
-      throw new WorkspaceError('POD_ERROR', `Failed to upload file: ${error.message}`)
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error)
+      throw new WorkspaceError('POD_ERROR', `Failed to upload file: ${message}`)
     }
   }
 
@@ -537,7 +559,7 @@ class WorkspaceManager {
     while (Date.now() - startTime < timeoutMs) {
       try {
         const pod = await this.coreV1Api.readNamespacedPod({ name: podName, namespace })
-        const podData = (pod as any).body || pod
+        const podData = (pod as { body?: k8s.V1Pod } & k8s.V1Pod).body ?? (pod as k8s.V1Pod)
         const phase = podData.status?.phase
         
         if (phase === 'Running') {
@@ -550,8 +572,9 @@ class WorkspaceManager {
         
         // Wait 1 second before checking again
         await new Promise(resolve => setTimeout(resolve, 1000))
-      } catch (error: any) {
-        throw new WorkspaceError('POD_ERROR', `Pod status check failed: ${error.message}`)
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error)
+        throw new WorkspaceError('POD_ERROR', `Pod status check failed: ${message}`)
       }
     }
     
@@ -621,9 +644,9 @@ class WorkspaceManager {
         labelSelector: 'app.kubernetes.io/name=workspace-manager',
       })
 
-      const podsData = (pods as any).body || pods
+      const podsData = (pods as { body?: k8s.V1PodList } & k8s.V1PodList).body ?? (pods as k8s.V1PodList)
       const now = Date.now()
-      const expiredPods = podsData.items.filter((pod: any) => {
+      const expiredPods = (podsData.items ?? []).filter((pod: k8s.V1Pod) => {
         const expiresAt = pod.metadata?.annotations?.['langop.io/expires-at']
         return expiresAt && Date.parse(expiresAt) < now
       })
@@ -636,13 +659,15 @@ class WorkspaceManager {
               namespace,
             })
             console.log(`Cleaned up expired workspace pod: ${pod.metadata.name}`)
-          } catch (error: any) {
-            console.error(`Failed to cleanup pod ${pod.metadata.name}:`, error.message)
+          } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : String(error)
+            console.error(`Failed to cleanup pod ${pod.metadata?.name}:`, message)
           }
         }
       }
-    } catch (error: any) {
-      console.error('Failed to cleanup expired workspace pods:', error.message)
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error)
+      console.error('Failed to cleanup expired workspace pods:', message)
     }
   }
 }

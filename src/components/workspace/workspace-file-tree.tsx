@@ -77,8 +77,8 @@ export function WorkspaceFileTree({
         isLoading: false,
       }))
       setTree(rootNodes)
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : String(err))
     } finally {
       setLoading(false)
     }
@@ -132,7 +132,7 @@ export function WorkspaceFileTree({
           }
           return updateWithChildren(nodes)
         })
-      } catch (err: any) {
+      } catch (err: unknown) {
         // Handle error loading children
         setTree(nodes => {
           const updateWithError = (nodes: DirectoryNode[]): DirectoryNode[] => {

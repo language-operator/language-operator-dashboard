@@ -1,5 +1,11 @@
 import * as k8s from '@kubernetes/client-node'
 import { existsSync } from 'fs'
+import type { LanguageAgent } from '@/types/agent'
+import type { LanguageModel } from '@/types/model'
+import type { LanguageTool } from '@/types/tool'
+import type { LanguagePersona } from '@/types/persona'
+import type { LanguageCluster } from '@/types/cluster'
+import type { LanguageAgentRuntime } from '@/types/runtime'
 
 interface RequestOptions {
   timeout?: number
@@ -292,7 +298,7 @@ class KubernetesClient {
     })
   }
 
-  async createLanguageAgent(namespace: string, spec: any) {
+  async createLanguageAgent(namespace: string, spec: LanguageAgent) {
     if (!this.customObjectsApi) {
       throw new Error('Kubernetes API not available')
     }
@@ -305,7 +311,7 @@ class KubernetesClient {
     })
   }
 
-  async updateLanguageAgent(namespace: string, name: string, spec: any) {
+  async updateLanguageAgent(namespace: string, name: string, spec: LanguageAgent) {
     if (!this.customObjectsApi) {
       throw new Error('Kubernetes API not available')
     }
@@ -370,7 +376,7 @@ class KubernetesClient {
     })
   }
 
-  async createLanguageModel(namespace: string, spec: any) {
+  async createLanguageModel(namespace: string, spec: LanguageModel) {
     if (!this.customObjectsApi) {
       throw new Error('Kubernetes API not available')
     }
@@ -383,7 +389,7 @@ class KubernetesClient {
     })
   }
 
-  async updateLanguageModel(namespace: string, name: string, spec: any) {
+  async updateLanguageModel(namespace: string, name: string, spec: LanguageModel) {
     if (!this.customObjectsApi) {
       throw new Error('Kubernetes API not available')
     }
@@ -403,25 +409,19 @@ class KubernetesClient {
     })
   }
 
-  async replaceLanguageModel(namespace: string, name: string, model: any) {
+  async replaceLanguageModel(namespace: string, name: string, model: LanguageModel) {
     if (!this.customObjectsApi) {
       throw new Error('Kubernetes API not available')
     }
-    
-    // For replaceNamespacedCustomObject, we need to include kind and apiVersion
-    const completeModel = {
-      kind: 'LanguageModel',
-      apiVersion: 'langop.io/v1alpha1',
-      ...model,
-    }
-    
+
+    // LanguageModel already has kind and apiVersion as required literal fields
     return await this.customObjectsApi.replaceNamespacedCustomObject({
       group: 'langop.io',
       version: 'v1alpha1',
       namespace,
       plural: 'languagemodels',
       name,
-      body: completeModel,
+      body: model,
     })
   }
 
@@ -475,7 +475,7 @@ class KubernetesClient {
     })
   }
 
-  async createLanguageTool(namespace: string, spec: any) {
+  async createLanguageTool(namespace: string, spec: LanguageTool) {
     if (!this.customObjectsApi) {
       throw new Error('Kubernetes API not available')
     }
@@ -488,7 +488,7 @@ class KubernetesClient {
     })
   }
 
-  async updateLanguageTool(namespace: string, name: string, spec: any) {
+  async updateLanguageTool(namespace: string, name: string, spec: LanguageTool) {
     if (!this.customObjectsApi) {
       throw new Error('Kubernetes API not available')
     }
@@ -502,7 +502,7 @@ class KubernetesClient {
     })
   }
 
-  async replaceLanguageTool(namespace: string, name: string, tool: any) {
+  async replaceLanguageTool(namespace: string, name: string, tool: LanguageTool) {
     if (!this.customObjectsApi) {
       throw new Error('Kubernetes API not available')
     }
@@ -566,7 +566,7 @@ class KubernetesClient {
     })
   }
 
-  async createLanguagePersona(namespace: string, spec: any) {
+  async createLanguagePersona(namespace: string, spec: LanguagePersona) {
     if (!this.customObjectsApi) {
       throw new Error('Kubernetes API not available')
     }
@@ -579,25 +579,19 @@ class KubernetesClient {
     })
   }
 
-  async updateLanguagePersona(namespace: string, name: string, persona: any) {
+  async updateLanguagePersona(namespace: string, name: string, persona: LanguagePersona) {
     if (!this.customObjectsApi) {
       throw new Error('Kubernetes API not available')
     }
     
-    // For replaceNamespacedCustomObject, we need to include kind and apiVersion
-    const completePersona = {
-      kind: 'LanguagePersona',
-      apiVersion: 'langop.io/v1alpha1',
-      ...persona,
-    }
-    
+    // LanguagePersona already has kind and apiVersion as required literal fields
     return await this.customObjectsApi.replaceNamespacedCustomObject({
       group: 'langop.io',
       version: 'v1alpha1',
       namespace,
       plural: 'languagepersonas',
       name,
-      body: completePersona,
+      body: persona,
     })
   }
 
@@ -652,7 +646,7 @@ class KubernetesClient {
     )
   }
 
-  async createLanguageCluster(namespace: string, spec: any) {
+  async createLanguageCluster(namespace: string, spec: LanguageCluster) {
     if (!this.customObjectsApi) {
       throw new Error('Kubernetes API not available')
     }
@@ -664,23 +658,18 @@ class KubernetesClient {
     })
   }
 
-  async updateLanguageCluster(namespace: string, name: string, updatedResource: any) {
+  async updateLanguageCluster(namespace: string, name: string, updatedResource: LanguageCluster) {
     if (!this.customObjectsApi) {
       throw new Error('Kubernetes API not available')
     }
 
-    const body = {
-      apiVersion: 'langop.io/v1alpha1',
-      kind: 'LanguageCluster',
-      ...updatedResource
-    }
-
+    // LanguageCluster already has kind and apiVersion as required literal fields
     return await this.customObjectsApi.replaceClusterCustomObject({
       group: 'langop.io',
       version: 'v1alpha1',
       plural: 'languageclusters',
       name,
-      body,
+      body: updatedResource,
     })
   }
 
@@ -721,7 +710,7 @@ class KubernetesClient {
     })
   }
 
-  async createLanguageAgentRuntime(spec: any) {
+  async createLanguageAgentRuntime(spec: LanguageAgentRuntime) {
     if (!this.customObjectsApi) {
       throw new Error('Kubernetes API not available')
     }
@@ -733,21 +722,17 @@ class KubernetesClient {
     })
   }
 
-  async updateLanguageAgentRuntime(name: string, updatedResource: any) {
+  async updateLanguageAgentRuntime(name: string, updatedResource: LanguageAgentRuntime) {
     if (!this.customObjectsApi) {
       throw new Error('Kubernetes API not available')
     }
-    const body = {
-      apiVersion: 'langop.io/v1alpha1',
-      kind: 'LanguageAgentRuntime',
-      ...updatedResource,
-    }
+    // LanguageAgentRuntime already has kind and apiVersion as required literal fields
     return await this.customObjectsApi.replaceClusterCustomObject({
       group: 'langop.io',
       version: 'v1alpha1',
       plural: 'languageagentruntimes',
       name,
-      body,
+      body: updatedResource,
     })
   }
 
@@ -818,7 +803,7 @@ class KubernetesClient {
     })
   }
 
-  async createLanguageAgentVersion(namespace: string, spec: any) {
+  async createLanguageAgentVersion(namespace: string, spec: Record<string, unknown>) {
     if (!this.customObjectsApi) {
       throw new Error('Kubernetes API not available')
     }
@@ -831,7 +816,7 @@ class KubernetesClient {
     })
   }
 
-  async updateLanguageAgentVersion(namespace: string, name: string, spec: any) {
+  async updateLanguageAgentVersion(namespace: string, name: string, spec: Record<string, unknown>) {
     if (!this.customObjectsApi) {
       throw new Error('Kubernetes API not available')
     }
@@ -887,7 +872,7 @@ class KubernetesClient {
     })
   }
 
-  async createConfigMap(namespace: string, configMap: any) {
+  async createConfigMap(namespace: string, configMap: k8s.V1ConfigMap) {
     if (!this.coreV1Api) {
       throw new Error('Kubernetes API not available')
     }
@@ -897,7 +882,7 @@ class KubernetesClient {
     })
   }
 
-  async replaceConfigMap(namespace: string, name: string, configMap: any) {
+  async replaceConfigMap(namespace: string, name: string, configMap: k8s.V1ConfigMap) {
     if (!this.coreV1Api) {
       throw new Error('Kubernetes API not available')
     }
@@ -926,7 +911,7 @@ class KubernetesClient {
   }
 
   // Jobs management
-  async createJob(namespace: string, job: any) {
+  async createJob(namespace: string, job: k8s.V1Job) {
     if (!this.batchV1Api) {
       throw new Error('Kubernetes client not initialized')
     }
@@ -936,10 +921,10 @@ class KubernetesClient {
         namespace,
         body: job,
       })
-      console.log(`✅ Job created successfully: ${job.metadata.name}`)
+      console.log(`✅ Job created successfully: ${job.metadata?.name}`)
       return response
     } catch (error) {
-      console.error(`❌ Failed to create Job ${job.metadata.name}:`, error)
+      console.error(`❌ Failed to create Job ${job.metadata?.name}:`, error)
       throw error
     }
   }
@@ -969,7 +954,8 @@ class KubernetesClient {
     try {
       // Get the existing CronJob
       const cronJobResponse = await this.getCronJob(namespace, cronJobName)
-      const cronJob = (cronJobResponse as any)?.body || (cronJobResponse as any)?.data || cronJobResponse
+      const r = cronJobResponse as { body?: k8s.V1CronJob; data?: k8s.V1CronJob } | k8s.V1CronJob
+      const cronJob = (r as { body?: k8s.V1CronJob }).body ?? (r as { data?: k8s.V1CronJob }).data ?? (r as k8s.V1CronJob)
       
       if (!cronJob?.spec?.jobTemplate) {
         throw new Error(`CronJob ${cronJobName} does not have a valid job template`)

@@ -65,13 +65,13 @@ Guidelines:
     console.log(`Generating persona with model ${modelName} for idea: "${idea}"`)
 
     // Fetch the LanguageModel resource to get the actual model name and cluster ref
-    let actualModelName: string
+    let actualModelName: string = ''
     let clusterRef: string | undefined
     let modelStatus: string | undefined
     try {
       const modelResource = await k8sClient.getLanguageModel(NAMESPACE, modelName)
-      const modelBody = (modelResource as any)?.body || modelResource
-      actualModelName = modelBody.spec?.modelName
+      const modelBody = (modelResource as { body?: { spec?: { modelName?: string; clusterRef?: string }; status?: { phase?: string } } })?.body ?? modelResource as { spec?: { modelName?: string; clusterRef?: string }; status?: { phase?: string } }
+      actualModelName = modelBody.spec?.modelName ?? ''
       clusterRef = modelBody.spec?.clusterRef
       modelStatus = modelBody.status?.phase
 
@@ -89,19 +89,20 @@ Guidelines:
       }
 
       console.log(`Resolved model name: ${modelName} -> ${actualModelName} (status: ${modelStatus})`)
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to fetch LanguageModel:', error)
-      
+
       // Check if it's a 404 error (model not found)
-      if (error?.response?.statusCode === 404 || error?.statusCode === 404) {
+      const asRecord = error as Record<string, unknown>
+      if ((asRecord?.response as Record<string, unknown>)?.statusCode === 404 || asRecord?.statusCode === 404) {
         throw new ModelNotAvailableError(modelName, NAMESPACE, 'not_found')
       }
-      
+
       // Re-throw our custom errors
       if (error instanceof ModelNotAvailableError) {
         throw error
       }
-      
+
       // For other errors, wrap in a generic model availability error
       throw new ModelNotAvailableError(modelName, NAMESPACE, 'fetch_failed')
     }
@@ -134,16 +135,16 @@ Guidelines:
         }),
         signal: controller.signal
       })
-    } catch (error: any) {
+    } catch (error: unknown) {
       clearTimeout(timeoutId)
       console.error('Model endpoint error:', error)
-      
-      if (error.name === 'AbortError') {
+
+      if (error instanceof Error && error.name === 'AbortError') {
         throw new GenerationTimeoutError(modelName, timeoutSeconds)
       }
-      
+
       // Map different network errors to specific error types
-      const errorMessage = error.message || ''
+      const errorMessage = error instanceof Error ? error.message : ''
       throw new ModelEndpointError(modelName, modelEndpoint, errorMessage)
     }
 
@@ -155,7 +156,7 @@ Guidelines:
       throw new ModelResponseError(modelName, response.status, errorData)
     }
 
-    let data: any
+    let data: { choices?: Array<{ message?: { content?: string } }> }
     try {
       data = await response.json()
     } catch (error) {
@@ -199,9 +200,9 @@ Guidelines:
       data: personaData,
     })
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error generating persona:', error)
-    
+
     // Our custom errors already have detailed messages, pass them through
     if (error instanceof ModelNotAvailableError ||
         error instanceof ModelEndpointError ||
@@ -210,8 +211,11 @@ Guidelines:
         error instanceof GenerationTimeoutError) {
       return createErrorResponse(error)
     }
-    
+
     // For unexpected errors, provide a generic fallback
-    return createErrorResponse(error, 'Failed to generate persona due to an unexpected error')
+    return createErrorResponse(
+      error instanceof Error ? error : new Error(String(error)),
+      'Failed to generate persona due to an unexpected error'
+    )
   }
 }
