@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthenticatedUser } from '@/lib/user-context'
-import { k8sClient } from '@/lib/k8s-client'
+import { k8sClient, extractItem } from '@/lib/k8s-client'
+import type { LanguagePersona } from '@/types/persona'
 import { validateClusterExists } from '@/lib/cluster-validation'
 import {
   createErrorResponse,
@@ -35,28 +36,12 @@ export async function GET(
       k8sClient.getLanguagePersona(clusterName, personaName)
     )
 
-    // Handle different response structures from k8s client
-    let persona: any = null
-    if ((response as any)?.body) {
-      persona = (response as any).body
-    } else if ((response as any)?.data) {
-      persona = (response as any).data
-    } else if (response) {
-      persona = response as any
-    }
+    const persona = extractItem<LanguagePersona>(response)
 
     if (!persona) {
       return createErrorResponse(
         new Error(`Persona '${personaName}' not found`),
         'Persona not found'
-      )
-    }
-
-    // Verify the persona belongs to this cluster (check clusterRef)
-    if (persona.spec?.clusterRef !== clusterName) {
-      return createErrorResponse(
-        new Error(`Persona '${personaName}' does not belong to cluster '${clusterName}'`),
-        'Persona not found in cluster'
       )
     }
 
