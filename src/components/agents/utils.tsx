@@ -1,6 +1,3 @@
-import { AlertCircle, CheckCircle, Clock } from 'lucide-react'
-import { LanguageAgent } from '@/types/agent'
-
 export { formatTimeAgo } from '@/lib/format'
 
 // Simple ANSI code converter
@@ -40,30 +37,4 @@ export function convertAnsiToHtml(text: string): string {
   return result;
 }
 
-export function getStatusIcon(agent: LanguageAgent) {
-  const phase = agent.status?.phase || 'Unknown'
 
-  if (phase === 'Running') {
-    return <CheckCircle className="h-5 w-5 text-status-ready-foreground" />
-  } else if (phase === 'Pending') {
-    return <Clock className="h-5 w-5 text-status-pending-foreground" />
-  } else if (phase === 'Failed') {
-    return <AlertCircle className="h-5 w-5 text-destructive" />
-  } else {
-    return <AlertCircle className="h-5 w-5 text-muted-foreground" />
-  }
-}
-
-export function getStatusColor(agent: LanguageAgent) {
-  const phase = agent.status?.phase || 'Unknown'
-
-  if (phase === 'Running') {
-    return 'text-status-ready-foreground'
-  } else if (phase === 'Pending') {
-    return 'text-status-pending-foreground'
-  } else if (phase === 'Failed') {
-    return 'text-destructive'
-  } else {
-    return 'text-muted-foreground'
-  }
-}
