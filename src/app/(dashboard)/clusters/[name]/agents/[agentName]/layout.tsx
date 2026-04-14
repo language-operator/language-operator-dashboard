@@ -17,8 +17,8 @@ import { useAgent, useDeleteAgent } from '@/hooks/use-agents'
 import { ResourceHeader } from '@/components/ui/resource-header'
 import { NotFound } from '@/components/ui/not-found'
 import { cn } from '@/lib/utils'
-import { getStatusIcon, getStatusColor } from '@/components/agents/utils'
 import { DeleteResourceDialog } from '@/components/ui/delete-resource-dialog'
+import { ResourceStatusBadge } from '@/components/ui/resource-status-badge'
 import { toast } from 'sonner'
 import { Spinner } from '@/components/ui/spinner'
 
@@ -166,10 +166,7 @@ export default function AgentDetailLayout({ children }: AgentDetailLayoutProps) 
             <div className="flex items-center space-x-3">
               <span>{agent.metadata.name}</span>
               <div className="flex items-center space-x-2">
-                {getStatusIcon(agent)}
-                <span className={`text-[10px] tracking-wider uppercase font-light ${getStatusColor(agent)}`}>
-                  {agent.status?.phase || 'Unknown'}
-                </span>
+                <ResourceStatusBadge status={agent.status?.phase} size="sm" />
               </div>
             </div>
           }
