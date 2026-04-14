@@ -3,6 +3,7 @@
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
+import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -58,17 +59,17 @@ export default function LoginPage() {
       {/* Judd-inspired geometric container */}
       <div className="w-full max-w-[480px]">
         {/* Precise rectangular form */}
-        <div className="bg-white/95 backdrop-blur-sm border border-stone-800/90 shadow-[0_8px_32px_rgba(120,53,15,0.08)] dark:bg-stone-900/95 dark:border-stone-700/90 dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
+        <Card className="gap-0 py-0">
           {/* Header - stark typography */}
-          <div className="border-b border-stone-800/80 dark:border-stone-600/80 p-12">
+          <CardHeader className="border-b border-stone-800/80 dark:border-stone-600/80 p-12">
             <h1 className="text-[13px] font-light tracking-[0.2em] uppercase text-stone-900 dark:text-stone-300 flex items-center gap-1">
               Language Operator
               <span className="inline-block w-2 h-3.5 bg-stone-900 dark:bg-amber-400 animate-pulse" />
             </h1>
-          </div>
+          </CardHeader>
 
           {/* Content area - generous spacing */}
-          <div className="p-12">
+          <CardContent className="p-12">
             {/* Form - vertical rhythm */}
             <form onSubmit={handleEmailLogin} className="space-y-6">
               <div className="space-y-2">
@@ -119,20 +120,20 @@ export default function LoginPage() {
                 {isLoading ? 'Processing' : 'Sign In'}
               </button>
             </form>
-          </div>
+          </CardContent>
 
           {/* Footer */}
           {signupEnabled && (
-            <div className="border-t border-stone-800/80 dark:border-stone-600/80 p-12">
+            <CardFooter className="border-t border-stone-800/80 dark:border-stone-600/80 p-12">
               <a
                 href="/signup"
                 className="block text-[11px] tracking-[0.15em] uppercase font-light text-stone-600 hover:text-amber-900 dark:text-stone-400 dark:hover:text-amber-500 transition-colors"
               >
                 Create Account
               </a>
-            </div>
+            </CardFooter>
           )}
-        </div>
+        </Card>
       </div>
     </div>
   )
