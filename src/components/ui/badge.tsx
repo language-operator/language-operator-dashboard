@@ -17,6 +17,8 @@ const badgeVariants = cva(
           "border-red-800/90 bg-red-100 text-red-900 [a&]:hover:bg-red-200 dark:border-red-700/90 dark:bg-red-900 dark:text-red-300 dark:[a&]:hover:bg-red-800",
         outline:
           "border-stone-800/90 text-stone-900 [a&]:hover:bg-stone-100 dark:border-stone-700/90 dark:text-stone-300 dark:[a&]:hover:bg-stone-800",
+        'role-admin': 'border-amber-800/90 bg-amber-100 text-amber-900 dark:border-amber-700/90 dark:bg-amber-900/30 dark:text-amber-400',
+        'role-viewer': 'border-stone-200 bg-stone-50 text-stone-600 dark:border-stone-600 dark:bg-stone-900 dark:text-stone-400',
       },
     },
     defaultVariants: {
