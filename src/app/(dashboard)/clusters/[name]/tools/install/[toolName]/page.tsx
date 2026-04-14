@@ -199,7 +199,7 @@ export default function InstallToolPage() {
           {tool.spec?.image && (
             <div>
               <h3 className="font-light mb-3">Container</h3>
-              <div className="flex items-center gap-2 p-3 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md">
+              <div className="flex items-center gap-2 p-3 bg-muted border">
                 <Server className="h-4 w-4 text-stone-600 dark:text-stone-400" />
                 <code className="text-sm flex-1 font-mono">{tool.spec.image}</code>
               </div>
