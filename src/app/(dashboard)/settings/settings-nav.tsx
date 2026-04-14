@@ -23,7 +23,7 @@ export function SettingsNav() {
             key={item.name}
             href={item.href}
             className={cn(
-              'flex flex-col items-center gap-1 rounded-lg px-2 py-3 text-xs font-light transition-colors',
+              'flex flex-col items-center gap-1 px-2 py-3 text-xs font-light transition-colors',
               isActive
                 ? 'text-amber-600 dark:text-amber-400'
                 : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900 dark:text-stone-400 dark:hover:bg-stone-800 dark:hover:text-stone-300'

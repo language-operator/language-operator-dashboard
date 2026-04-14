@@ -120,7 +120,7 @@ function ErrorDisplay({ error, onRetry, clusterName }: ErrorDisplayProps) {
   }
   
   return (
-    <div className="rounded-lg bg-red-50 border border-red-200 p-3">
+    <div className="bg-destructive/10 border border-destructive/20 p-3">
       <div className="flex items-start gap-2">
         {icon}
         <div className="flex-1 min-w-0">
