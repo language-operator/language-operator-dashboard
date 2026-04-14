@@ -221,7 +221,7 @@ class KubernetesClient {
         plural: 'languageagents'
       })
       
-      return (response.body as any).items || []
+      return (response.body as { items: LanguageAgent[] }).items || []
     } catch (error) {
       console.error('Error fetching language agents:', error)
       return []
@@ -236,8 +236,8 @@ class KubernetesClient {
         namespace,
         plural: 'languagemodels'
       })
-      
-      return (response.body as any).items || []
+
+      return (response.body as { items: LanguageModel[] }).items || []
     } catch (error) {
       console.error('Error fetching language models:', error)
       return []
@@ -270,7 +270,7 @@ class KubernetesClient {
         plural: 'languagetools'
       })
       
-      return (response.body as any).items || []
+      return (response.body as { items: LanguageTool[] }).items || []
     } catch (error) {
       console.error('Error fetching language tools:', error)
       return []
@@ -285,8 +285,8 @@ class KubernetesClient {
         namespace,
         plural: 'languagepersonas'
       })
-      
-      return (response.body as any).items || []
+
+      return (response.body as { items: LanguagePersona[] }).items || []
     } catch (error) {
       console.error('Error fetching language personas:', error)
       return []
@@ -301,8 +301,8 @@ class KubernetesClient {
         namespace,
         plural: 'languageclusters'
       })
-      
-      return (response.body as any).items || []
+
+      return (response.body as { items: LanguageCluster[] }).items || []
     } catch (error) {
       console.error('Error fetching language clusters:', error)
       return []

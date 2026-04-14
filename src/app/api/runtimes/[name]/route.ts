@@ -109,7 +109,7 @@ export async function PUT(
       spec,
     }
 
-    const response = await k8sClient.updateLanguageAgentRuntime(name, updatedRuntime)
+    const response = await k8sClient.updateLanguageAgentRuntime(name, updatedRuntime as unknown as import('@/types/runtime').LanguageAgentRuntime)
     console.log(`User ${email} updated LanguageAgentRuntime ${name}`)
 
     return NextResponse.json({

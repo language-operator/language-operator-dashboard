@@ -223,7 +223,7 @@ export async function POST(
     // Create the model in Kubernetes
     const response = await handleKubernetesOperation(
       'create model',
-      k8sClient.createLanguageModel(clusterName, modelSpec)
+      k8sClient.createLanguageModel(clusterName, modelSpec as import('@/types/model').LanguageModel)
     )
     
     console.log(`Model ${body.name} created successfully for cluster ${clusterName}`)

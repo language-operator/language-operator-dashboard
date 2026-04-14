@@ -1,12 +1,17 @@
 import { k8sClient } from './k8s-client'
-import { 
-  ClusterNotFoundError, 
-  ClusterAccessDeniedError, 
+import {
+  ClusterNotFoundError,
+  ClusterAccessDeniedError,
   InvalidClusterNameError,
   OrphanedResourceError,
   validateClusterNameFormat,
   handleKubernetesOperation
 } from './api-error-handler'
+import type { LanguageCluster } from '@/types/cluster'
+import type { LanguageAgent } from '@/types/agent'
+import type { LanguageModel } from '@/types/model'
+import type { LanguageTool } from '@/types/tool'
+import type { LanguagePersona } from '@/types/persona'
 
 export interface ClusterValidationOptions {
   requireClusterRef?: boolean
@@ -17,7 +22,7 @@ export interface ClusterValidationOptions {
 export interface ClusterValidationResult {
   exists: boolean
   accessible: boolean
-  cluster?: any
+  cluster?: LanguageCluster
 }
 
 export async function validateClusterExists(
@@ -30,10 +35,12 @@ export async function validateClusterExists(
 
   try {
     // Check if cluster exists in the namespace
-    const cluster = await handleKubernetesOperation(
+    const clusterResponse = await handleKubernetesOperation(
       `get cluster '${clusterName}'`,
       k8sClient.getLanguageCluster(namespace, clusterName)
     )
+    const cr = clusterResponse as { body?: LanguageCluster }
+    const cluster: LanguageCluster | undefined = cr?.body ?? (clusterResponse as unknown as LanguageCluster | undefined)
 
     if (!cluster) {
       throw new ClusterNotFoundError(clusterName, namespace)
@@ -68,16 +75,19 @@ export async function validateClusterExists(
   }
 }
 
-export function validateClusterAccessibility(cluster: any): boolean {
+export function validateClusterAccessibility(cluster: LanguageCluster): boolean {
   if (!cluster?.status) {
     return true // Allow clusters without status (newly created)
   }
 
   const phase = cluster.status.phase
-  
+  if (!phase) {
+    return true // Allow clusters without a phase (newly created)
+  }
+
   // Allow access to clusters in these phases
   const accessiblePhases = ['Ready', 'Pending', 'Scaling']
-  
+
   return accessiblePhases.includes(phase)
 }
 
@@ -93,8 +103,13 @@ export async function validateClusterAccess(
   // K8s RBAC via impersonation enforces actual access control
 }
 
+// Minimal structural type for cluster-ref validation — intentionally loose to accept
+// concrete types like LanguageAgent, LanguageModel, etc.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type ClusterRefResource = { metadata?: { name?: string }; kind?: string; spec?: any }
+
 export function validateClusterRef(
-  resource: any,
+  resource: ClusterRefResource,
   expectedClusterName: string,
   options: ClusterValidationOptions = {}
 ): void {
@@ -102,7 +117,7 @@ export function validateClusterRef(
     throw new Error('Resource is required for cluster reference validation')
   }
 
-  const resourceClusterRef = resource.spec?.clusterRef
+  const resourceClusterRef = resource.spec?.clusterRef as string | undefined
   const resourceName = resource.metadata?.name || 'unknown'
   const resourceType = resource.kind || 'Resource'
 
@@ -139,10 +154,10 @@ export function validateClusterRef(
 }
 
 export function validateResourceBelongsToCluster(
-  resources: any[],
+  resources: ClusterRefResource[],
   clusterName: string,
   options: ClusterValidationOptions = {}
-): any[] {
+): ClusterRefResource[] {
   return resources.filter(resource => {
     try {
       validateClusterRef(resource, clusterName, options)
@@ -230,20 +245,12 @@ export async function getClusterResourceCounts(
       'list agents',
       k8sClient.listLanguageAgents(clusterName)
     )
-    
-    let agents = []
-    if (agentsResponse.body && typeof agentsResponse.body === 'object') {
-      agents = (agentsResponse.body as any)?.items || []
-    } else if (agentsResponse.data && typeof agentsResponse.data === 'object') {
-      agents = (agentsResponse.data as any)?.items || []
-    } else if (Array.isArray(agentsResponse)) {
-      agents = agentsResponse
-    } else if ((agentsResponse as any)?.items) {
-      agents = (agentsResponse as any).items
-    }
 
-    counts.agents = validateResourceBelongsToCluster(agents, clusterName, { 
-      allowOrphanedResources: true 
+    const ar = agentsResponse as { body?: { items?: LanguageAgent[] }; data?: { items?: LanguageAgent[] }; items?: LanguageAgent[] }
+    const agents: LanguageAgent[] = ar?.body?.items ?? ar?.data?.items ?? ar?.items ?? (Array.isArray(agentsResponse) ? agentsResponse as LanguageAgent[] : [])
+
+    counts.agents = validateResourceBelongsToCluster(agents, clusterName, {
+      allowOrphanedResources: true
     }).length
 
   } catch (error) {
@@ -256,20 +263,12 @@ export async function getClusterResourceCounts(
       'list models',
       k8sClient.listLanguageModels(clusterName)
     )
-    
-    let models = []
-    if (modelsResponse.body && typeof modelsResponse.body === 'object') {
-      models = (modelsResponse.body as any)?.items || []
-    } else if (modelsResponse.data && typeof modelsResponse.data === 'object') {
-      models = (modelsResponse.data as any)?.items || []
-    } else if (Array.isArray(modelsResponse)) {
-      models = modelsResponse
-    } else if ((modelsResponse as any)?.items) {
-      models = (modelsResponse as any).items
-    }
 
-    counts.models = validateResourceBelongsToCluster(models, clusterName, { 
-      allowOrphanedResources: true 
+    const mr = modelsResponse as { body?: { items?: LanguageModel[] }; data?: { items?: LanguageModel[] }; items?: LanguageModel[] }
+    const models: LanguageModel[] = mr?.body?.items ?? mr?.data?.items ?? mr?.items ?? (Array.isArray(modelsResponse) ? modelsResponse as LanguageModel[] : [])
+
+    counts.models = validateResourceBelongsToCluster(models, clusterName, {
+      allowOrphanedResources: true
     }).length
 
   } catch (error) {
@@ -282,20 +281,12 @@ export async function getClusterResourceCounts(
       'list tools',
       k8sClient.listLanguageTools(clusterName)
     )
-    
-    let tools = []
-    if (toolsResponse.body && typeof toolsResponse.body === 'object') {
-      tools = (toolsResponse.body as any)?.items || []
-    } else if (toolsResponse.data && typeof toolsResponse.data === 'object') {
-      tools = (toolsResponse.data as any)?.items || []
-    } else if (Array.isArray(toolsResponse)) {
-      tools = toolsResponse
-    } else if ((toolsResponse as any)?.items) {
-      tools = (toolsResponse as any).items
-    }
 
-    counts.tools = validateResourceBelongsToCluster(tools, clusterName, { 
-      allowOrphanedResources: true 
+    const tr = toolsResponse as { body?: { items?: LanguageTool[] }; data?: { items?: LanguageTool[] }; items?: LanguageTool[] }
+    const tools: LanguageTool[] = tr?.body?.items ?? tr?.data?.items ?? tr?.items ?? (Array.isArray(toolsResponse) ? toolsResponse as LanguageTool[] : [])
+
+    counts.tools = validateResourceBelongsToCluster(tools, clusterName, {
+      allowOrphanedResources: true
     }).length
 
   } catch (error) {
@@ -308,20 +299,12 @@ export async function getClusterResourceCounts(
       'list personas',
       k8sClient.listLanguagePersonas(clusterName)
     )
-    
-    let personas = []
-    if (personasResponse.body && typeof personasResponse.body === 'object') {
-      personas = (personasResponse.body as any)?.items || []
-    } else if (personasResponse.data && typeof personasResponse.data === 'object') {
-      personas = (personasResponse.data as any)?.items || []
-    } else if (Array.isArray(personasResponse)) {
-      personas = personasResponse
-    } else if ((personasResponse as any)?.items) {
-      personas = (personasResponse as any).items
-    }
 
-    counts.personas = validateResourceBelongsToCluster(personas, clusterName, { 
-      allowOrphanedResources: true 
+    const pr = personasResponse as { body?: { items?: LanguagePersona[] }; data?: { items?: LanguagePersona[] }; items?: LanguagePersona[] }
+    const personas: LanguagePersona[] = pr?.body?.items ?? pr?.data?.items ?? pr?.items ?? (Array.isArray(personasResponse) ? personasResponse as LanguagePersona[] : [])
+
+    counts.personas = validateResourceBelongsToCluster(personas, clusterName, {
+      allowOrphanedResources: true
     }).length
 
   } catch (error) {

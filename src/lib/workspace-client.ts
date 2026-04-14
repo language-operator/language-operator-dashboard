@@ -55,11 +55,12 @@ export class WorkspaceClient {
         files: data.files || [],
         path: data.path || path
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof WorkspaceError) {
         throw error
       }
-      throw new WorkspaceError('POD_ERROR', `Network error: ${error.message}`)
+      const message = error instanceof Error ? error.message : String(error)
+      throw new WorkspaceError('POD_ERROR', `Network error: ${message}`)
     }
   }
 
@@ -93,11 +94,12 @@ export class WorkspaceClient {
       }
       
       return data.contents || data.content || ''
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof WorkspaceError) {
         throw error
       }
-      throw new WorkspaceError('POD_ERROR', `Network error: ${error.message}`)
+      const message = error instanceof Error ? error.message : String(error)
+      throw new WorkspaceError('POD_ERROR', `Network error: ${message}`)
     }
   }
 
@@ -137,11 +139,12 @@ export class WorkspaceClient {
           `Failed to upload file: ${response.statusText}`
         )
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof WorkspaceError) {
         throw error
       }
-      throw new WorkspaceError('POD_ERROR', `Network error: ${error.message}`)
+      const message = error instanceof Error ? error.message : String(error)
+      throw new WorkspaceError('POD_ERROR', `Network error: ${message}`)
     }
   }
 
@@ -164,11 +167,12 @@ export class WorkspaceClient {
           `Failed to delete file: ${response.statusText}`
         )
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof WorkspaceError) {
         throw error
       }
-      throw new WorkspaceError('POD_ERROR', `Network error: ${error.message}`)
+      const message = error instanceof Error ? error.message : String(error)
+      throw new WorkspaceError('POD_ERROR', `Network error: ${message}`)
     }
   }
 
@@ -193,11 +197,12 @@ export class WorkspaceClient {
       }
 
       return await response.blob()
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof WorkspaceError) {
         throw error
       }
-      throw new WorkspaceError('POD_ERROR', `Network error: ${error.message}`)
+      const message = error instanceof Error ? error.message : String(error)
+      throw new WorkspaceError('POD_ERROR', `Network error: ${message}`)
     }
   }
 

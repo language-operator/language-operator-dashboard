@@ -110,7 +110,7 @@ export async function PATCH(
         ...validatedData.spec,
         domain: validatedData.domain || validatedData.spec?.domain
       }
-    })
+    } as import('@/types/cluster').LanguageCluster)
 
     console.log(`Cluster updated: ${name} by ${email} in ${NAMESPACE}`)
 

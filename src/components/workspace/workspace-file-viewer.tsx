@@ -89,8 +89,8 @@ export function WorkspaceFileViewer({
       
       const content = await response.json()
       setFileContent(content)
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : String(err))
     } finally {
       setLoading(false)
     }
@@ -124,10 +124,10 @@ export function WorkspaceFileViewer({
         title: 'Download started',
         description: `Downloading ${selectedFile.name}`,
       })
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast({
         title: 'Download failed',
-        description: err.message,
+        description: err instanceof Error ? err.message : String(err),
         variant: 'destructive',
       })
     }
@@ -176,10 +176,10 @@ export function WorkspaceFileViewer({
       })
       
       onFileDelete()
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast({
         title: 'Delete failed',
-        description: err.message,
+        description: err instanceof Error ? err.message : String(err),
         variant: 'destructive',
       })
     } finally {

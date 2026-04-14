@@ -8,7 +8,7 @@ export interface SSEWatchOptions {
 
 export interface SSEWatchController {
   stream: ReadableStream
-  sendEvent: (data: any, event?: string) => boolean
+  sendEvent: (data: unknown, event?: string) => boolean
   isActive: () => boolean
 }
 
@@ -27,11 +27,12 @@ export function createSSEWatchStream(
 ): SSEWatchController {
   let isStreamActive = true
   const encoder = new TextEncoder()
-  let sendEventFn: ((data: any, event?: string) => boolean) | null = null
+  let sendEventFn: ((data: unknown, event?: string) => boolean) | null = null
+  let cleanupFn: (() => void) | null = null
 
   const stream = new ReadableStream({
     start(controller) {
-      const sendEvent = (data: any, event?: string): boolean => {
+      const sendEvent = (data: unknown, event?: string): boolean => {
         // Guard: Don't write if stream is inactive
         if (!isStreamActive) {
           return false
@@ -112,8 +113,8 @@ export function createSSEWatchStream(
         })
       }
 
-      // Store cleanup function for cancel
-      ;(controller as any).cleanup = () => {
+      // Store cleanup function for cancel via outer closure variable
+      cleanupFn = () => {
         isStreamActive = false
         if (heartbeatInterval) {
           clearInterval(heartbeatInterval)
@@ -134,9 +135,9 @@ export function createSSEWatchStream(
       isStreamActive = false
 
       // Call stored cleanup if available
-      if ((this as any).cleanup) {
+      if (cleanupFn) {
         try {
-          (this as any).cleanup()
+          cleanupFn()
         } catch (error) {
           console.error('Error in stream cancel cleanup:', error)
         }
@@ -146,7 +147,7 @@ export function createSSEWatchStream(
 
   return {
     stream,
-    sendEvent: (data: any, event?: string) => {
+    sendEvent: (data: unknown, event?: string) => {
       if (!sendEventFn) {
         console.error('⚠️  sendEvent called before stream initialization')
         return false
