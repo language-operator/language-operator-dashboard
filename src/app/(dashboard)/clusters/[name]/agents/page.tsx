@@ -2,7 +2,8 @@
 
 import { useState, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { EmptyState } from '@/components/ui/empty-state'
 import { FilterBar } from '@/components/ui/filter-bar'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -140,19 +141,20 @@ export default function ClusterAgents() {
             {clusterAgents.length === 0 ? (
               /* Empty State */
               <Card>
-                <CardContent className="flex flex-col items-center justify-center py-16">
-                  <Bot className="h-16 w-16 text-muted-foreground mb-4" />
-                  <CardTitle className="text-xl mb-2">No agents yet</CardTitle>
-                  <CardDescription className="text-center max-w-md mb-6">
-                    Agents combine models, personas, and tools to create intelligent 
-                    assistants. Deploy your first agent to get started.
-                  </CardDescription>
-                  <Button asChild>
-                    <Link href={`/clusters/${clusterName}/agents/new`}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Create Your First Agent
-                    </Link>
-                  </Button>
+                <CardContent>
+                  <EmptyState
+                    icon={Bot}
+                    title="No agents yet"
+                    description="Agents combine models, personas, and tools to create intelligent assistants. Deploy your first agent to get started."
+                    action={
+                      <Button asChild>
+                        <Link href={`/clusters/${clusterName}/agents/new`}>
+                          <Plus className="h-4 w-4 mr-2" />
+                          Create Your First Agent
+                        </Link>
+                      </Button>
+                    }
+                  />
                 </CardContent>
               </Card>
             ) : (

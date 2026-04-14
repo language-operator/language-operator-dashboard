@@ -3,6 +3,7 @@
 import React from 'react'
 import { useParams } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { EmptyState } from '@/components/ui/empty-state'
 import { FilterBar } from '@/components/ui/filter-bar'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -161,19 +162,20 @@ export default function ClusterPersonas() {
             {clusterPersonas.length === 0 ? (
               /* Empty State */
               <Card>
-                <CardContent className="flex flex-col items-center justify-center py-16">
-                  <Users className="h-16 w-16 text-muted-foreground mb-4" />
-                  <CardTitle className="text-xl mb-2">No personas yet</CardTitle>
-                  <CardDescription className="text-center max-w-md mb-6">
-                    Personas define the behavior, knowledge, and communication style 
-                    for AI agents. Create your first persona to get started.
-                  </CardDescription>
-                  <Button asChild>
-                    <Link href={`/clusters/${clusterName}/personas/new`}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Create Your First Persona
-                    </Link>
-                  </Button>
+                <CardContent>
+                  <EmptyState
+                    icon={Users}
+                    title="No personas yet"
+                    description="Personas define the behavior, knowledge, and communication style for AI agents. Create your first persona to get started."
+                    action={
+                      <Button asChild>
+                        <Link href={`/clusters/${clusterName}/personas/new`}>
+                          <Plus className="h-4 w-4 mr-2" />
+                          Create Your First Persona
+                        </Link>
+                      </Button>
+                    }
+                  />
                 </CardContent>
               </Card>
             ) : (
