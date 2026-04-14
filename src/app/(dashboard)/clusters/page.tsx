@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { FilterBar } from '@/components/ui/filter-bar'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ClusterStatusBadge } from '@/components/ui/resource-status-badge'
@@ -265,60 +266,53 @@ export default function ClustersPage() {
 
 
         {/* Filters */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Filters</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search clusters..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="pl-9"
-                  />
-                </div>
-              </div>
-              
-              <Select value={phaseFilter} onValueChange={setPhaseFilter}>
-                <SelectTrigger className="w-full md:w-48">
-                  <SelectValue placeholder="All Phases" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Phases</SelectItem>
-                  <SelectItem value="Ready">Ready</SelectItem>
-                  <SelectItem value="Pending">Pending</SelectItem>
-                  <SelectItem value="Failed">Failed</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select value={`${sortBy}-${sortOrder}`} onValueChange={(value) => {
-                const [newSortBy, newSortOrder] = value.split('-') as [typeof sortBy, typeof sortOrder]
-                setSortBy(newSortBy)
-                setSortOrder(newSortOrder)
-              }}>
-                <SelectTrigger className="w-full md:w-48">
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="name-asc">Name (A-Z)</SelectItem>
-                  <SelectItem value="name-desc">Name (Z-A)</SelectItem>
-                  <SelectItem value="domain-asc">Domain (A-Z)</SelectItem>
-                  <SelectItem value="domain-desc">Domain (Z-A)</SelectItem>
-                  <SelectItem value="agents-desc">Agents (Most)</SelectItem>
-                  <SelectItem value="agents-asc">Agents (Least)</SelectItem>
-                  <SelectItem value="status-desc">Status (Best First)</SelectItem>
-                  <SelectItem value="status-asc">Status (Worst First)</SelectItem>
-                  <SelectItem value="age-desc">Newest</SelectItem>
-                  <SelectItem value="age-asc">Oldest</SelectItem>
-                </SelectContent>
-              </Select>
+        <FilterBar>
+          <div className="flex-1">
+            <div className="relative">
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search clusters..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9"
+              />
             </div>
-          </CardContent>
-        </Card>
+          </div>
+
+          <Select value={phaseFilter} onValueChange={setPhaseFilter}>
+            <SelectTrigger className="w-full md:w-48">
+              <SelectValue placeholder="All Phases" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Phases</SelectItem>
+              <SelectItem value="Ready">Ready</SelectItem>
+              <SelectItem value="Pending">Pending</SelectItem>
+              <SelectItem value="Failed">Failed</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={`${sortBy}-${sortOrder}`} onValueChange={(value) => {
+            const [newSortBy, newSortOrder] = value.split('-') as [typeof sortBy, typeof sortOrder]
+            setSortBy(newSortBy)
+            setSortOrder(newSortOrder)
+          }}>
+            <SelectTrigger className="w-full md:w-48">
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="name-asc">Name (A-Z)</SelectItem>
+              <SelectItem value="name-desc">Name (Z-A)</SelectItem>
+              <SelectItem value="domain-asc">Domain (A-Z)</SelectItem>
+              <SelectItem value="domain-desc">Domain (Z-A)</SelectItem>
+              <SelectItem value="agents-desc">Agents (Most)</SelectItem>
+              <SelectItem value="agents-asc">Agents (Least)</SelectItem>
+              <SelectItem value="status-desc">Status (Best First)</SelectItem>
+              <SelectItem value="status-asc">Status (Worst First)</SelectItem>
+              <SelectItem value="age-desc">Newest</SelectItem>
+              <SelectItem value="age-asc">Oldest</SelectItem>
+            </SelectContent>
+          </Select>
+        </FilterBar>
 
         {/* Clusters Table */}
         <ClusterTable

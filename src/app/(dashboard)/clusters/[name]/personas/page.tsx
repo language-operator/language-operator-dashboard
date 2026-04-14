@@ -3,6 +3,7 @@
 import React from 'react'
 import { useParams } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { FilterBar } from '@/components/ui/filter-bar'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -101,40 +102,33 @@ export default function ClusterPersonas() {
         />
 
         {/* Filters */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Filters</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search personas..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="pl-9"
-                  />
-                </div>
-              </div>
-              
-              <Select value={toneFilter} onValueChange={setToneFilter}>
-                <SelectTrigger className="w-full md:w-48">
-                  <SelectValue placeholder="All Tones" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Tones</SelectItem>
-                  {tones.map((tone) => (
-                    <SelectItem key={tone} value={tone}>
-                      {tone}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+        <FilterBar>
+          <div className="flex-1">
+            <div className="relative">
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search personas..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9"
+              />
             </div>
-          </CardContent>
-        </Card>
+          </div>
+
+          <Select value={toneFilter} onValueChange={setToneFilter}>
+            <SelectTrigger className="w-full md:w-48">
+              <SelectValue placeholder="All Tones" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Tones</SelectItem>
+              {tones.map((tone) => (
+                <SelectItem key={tone} value={tone}>
+                  {tone}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </FilterBar>
 
         {/* Loading State */}
         {isLoading && (
