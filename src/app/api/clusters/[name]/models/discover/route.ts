@@ -6,6 +6,8 @@ import { validateClusterNameFormat } from '@/lib/api-error-handler'
 // POST /api/clusters/[name]/models/discover - Discover available models from an endpoint
 const NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
 
+interface ModelEntry { id?: string; name?: string }
+
 
 export async function POST(
   request: NextRequest,
@@ -72,21 +74,22 @@ export async function POST(
           const data = await response.json()
           console.log(`📊 Response data:`, data)
           
+          const isDefined = (m: string | undefined): m is string => Boolean(m)
           // OpenAI-compatible format: { data: [{ id: "model-name", ... }] }
           if (data.data && Array.isArray(data.data)) {
-            models = data.data.map((model: any) => model.id || model.name).filter(Boolean)
+            models = data.data.map((model: ModelEntry) => model.id || model.name).filter(isDefined)
           }
           // Some providers return different formats
           else if (data.models && Array.isArray(data.models)) {
-            models = data.models.map((model: any) => 
+            models = data.models.map((model: ModelEntry | string) =>
               typeof model === 'string' ? model : model.id || model.name
-            ).filter(Boolean)
+            ).filter(isDefined)
           }
           // Direct array format
           else if (Array.isArray(data)) {
-            models = data.map((model: any) => 
+            models = data.map((model: ModelEntry | string) =>
               typeof model === 'string' ? model : model.id || model.name
-            ).filter(Boolean)
+            ).filter(isDefined)
           }
         } else {
           console.error(`❌ Failed to fetch models: ${response.status} ${response.statusText}`)

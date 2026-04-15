@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthenticatedUser } from '@/lib/user-context'
-import { k8sClient } from '@/lib/k8s-client'
+import { k8sClient, extractItem } from '@/lib/k8s-client'
+import { LanguageTool } from '@/types/tool'
 import yaml from 'js-yaml'
 
 // GET /api/clusters/[name]/tools/[toolName]/yaml - Get tool YAML
@@ -20,19 +21,11 @@ export async function GET(
     }
 
     // Fetch specific tool from organization namespace
-    let tool: any = null
-    
+    let tool: LanguageTool | null = null
+
     try {
       const response = await k8sClient.getLanguageTool(clusterName, toolName)
-      
-      // Handle different response structures from k8s client
-      if ((response as any)?.body) {
-        tool = (response as any).body
-      } else if ((response as any)?.data) {
-        tool = (response as any).data
-      } else if (response) {
-        tool = response as any
-      }
+      tool = extractItem<LanguageTool>(response)
     } catch (k8sError) {
       // If tool not found, return 404
       if (k8sError instanceof Error && k8sError.message.includes('404')) {
