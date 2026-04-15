@@ -13,6 +13,7 @@ import { useAggregatedAgents } from '@/hooks/use-aggregated-agents'
 import { LanguageCluster } from '@/types/cluster'
 import { LanguageAgent } from '@/types/agent'
 import { ClusterStatusBadge, AgentStatusBadge } from '@/components/ui/resource-status-badge'
+import { EmptyState } from '@/components/ui/empty-state'
 import { useRouter } from 'next/navigation'
 
 type QuickActionType = 'agent' | 'model' | 'tool'
@@ -211,11 +212,12 @@ export default function OrganizationDashboard() {
                 <p className="text-sm text-stone-600 dark:text-stone-400">Failed to load clusters</p>
               </div>
             ) : !clustersData?.data || clustersData.data.length === 0 ? (
-              <div className="text-center py-4">
-                <Boxes className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                <p className="text-sm text-stone-600 dark:text-stone-400">No clusters deployed</p>
-                <p className="text-xs text-stone-500 dark:text-stone-500 mt-1">Deploy your first cluster to get started</p>
-              </div>
+              <EmptyState
+                icon={Boxes}
+                title="No clusters deployed"
+                description="Deploy your first cluster to get started"
+                className="py-4"
+              />
             ) : (
               <div className="space-y-3">
                 {clustersData.data.slice(0, 5).map((cluster: LanguageCluster) => (
@@ -295,11 +297,12 @@ export default function OrganizationDashboard() {
                 <p className="text-sm text-stone-600 dark:text-stone-400">Failed to load agents</p>
               </div>
             ) : !agentsData?.data || agentsData.data.length === 0 ? (
-              <div className="text-center py-4">
-                <Bot className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                <p className="text-sm text-stone-600 dark:text-stone-400">No agents deployed</p>
-                <p className="text-xs text-stone-500 dark:text-stone-500 mt-1">Create your first agent to get started</p>
-              </div>
+              <EmptyState
+                icon={Bot}
+                title="No agents deployed"
+                description="Create your first agent to get started"
+                className="py-4"
+              />
             ) : (
               <div className="space-y-3">
                 {agentsData.data.slice(0, 5).map((agent: LanguageAgent) => (

@@ -13,6 +13,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Server, ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
 import { useClusters } from '@/hooks/use-clusters'
 import { LanguageCluster, ClusterCapacitySpec, ClusterCapacityStatus } from '@/types/cluster'
 
@@ -216,8 +217,8 @@ export default function CapacityPage() {
               <TableBody>
                 {rows.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground py-12">
-                      No clusters found.
+                    <TableCell colSpan={7}>
+                      <EmptyState icon={Server} title="No clusters found" className="py-8" />
                     </TableCell>
                   </TableRow>
                 )}
