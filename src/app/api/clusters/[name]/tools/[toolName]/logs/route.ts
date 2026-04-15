@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthenticatedUser } from '@/lib/user-context'
-import { k8sClient } from '@/lib/k8s-client'
+import { k8sClient, extractItem, extractItems } from '@/lib/k8s-client'
+import { LanguageTool } from '@/types/tool'
+import { V1Pod, V1Container } from '@kubernetes/client-node'
 
 interface RouteParams {
   params: Promise<{
@@ -13,7 +15,7 @@ interface RouteParams {
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { email } = await getAuthenticatedUser(request)
-    
+
 
     const { name: clusterName, toolName } = await params
     const searchParams = new URL(request.url).searchParams
@@ -24,15 +26,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     // First, get the tool to understand its deployment mode
     const toolResource = await k8sClient.getLanguageTool(clusterName, toolName)
-    
-    let toolData: any
-    if ((toolResource as any)?.body) {
-      toolData = (toolResource as any).body
-    } else if ((toolResource as any)?.data) {
-      toolData = (toolResource as any).data
-    } else {
-      toolData = toolResource
-    }
+    const toolData = extractItem<LanguageTool>(toolResource)
 
     if (!toolData) {
       return NextResponse.json({ error: 'Tool not found' }, { status: 404 })
@@ -55,24 +49,15 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     })
 
     // Handle different response structures from k8s client
-    let podList: any[] = []
-    if ((pods as any)?.body?.items) {
-      podList = (pods as any).body.items
-    } else if ((pods as any)?.data?.items) {
-      podList = (pods as any).data.items
-    } else if (Array.isArray(pods)) {
-      podList = pods
-    } else if ((pods as any)?.items) {
-      podList = (pods as any).items
-    }
+    let podList: V1Pod[] = Array.isArray(pods) ? pods : extractItems<V1Pod>(pods)
 
     // For sidecar mode, filter to only pods that actually have this tool
     if (deploymentMode === 'sidecar') {
       podList = podList.filter(pod => {
-        const containers = pod.spec?.containers || []
-        const initContainers = pod.spec?.initContainers || []
+        const containers: V1Container[] = pod.spec?.containers || []
+        const initContainers: V1Container[] = pod.spec?.initContainers || []
         const allContainers = [...containers, ...initContainers]
-        return allContainers.some((c: any) => c.name?.includes(toolName) || c.image?.includes(toolName))
+        return allContainers.some((c: V1Container) => c.name?.includes(toolName) || c.image?.includes(toolName))
       })
     }
 
@@ -80,7 +65,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     if (podList.length === 0) {
       return NextResponse.json({
-        logs: deploymentMode === 'sidecar' 
+        logs: deploymentMode === 'sidecar'
           ? 'No agent pods found using this sidecar tool.'
           : 'No pods found for this service tool.',
         message: `Tool has no running pods in ${deploymentMode} mode`
@@ -88,61 +73,62 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     // Select the appropriate pod
-    let pod
+    let pod: V1Pod
     if (podName) {
       // Find the specific pod requested
-      pod = podList.find(p => p.metadata.name === podName)
-      if (!pod) {
+      const found = podList.find(p => p.metadata?.name === podName)
+      if (!found) {
         return NextResponse.json({
           error: `Pod "${podName}" not found`,
           message: `Pod "${podName}" not found for tool ${toolName}`
         }, { status: 404 })
       }
+      pod = found
     } else {
       // Default behavior: get the most recent running pod, or most recent if none running
       const runningPods = podList.filter(p => p.status?.phase === 'Running')
       if (runningPods.length > 0) {
-        pod = runningPods.sort((a, b) => 
-          new Date(b.metadata.creationTimestamp).getTime() - 
-          new Date(a.metadata.creationTimestamp).getTime()
+        pod = runningPods.sort((a, b) =>
+          new Date(b.metadata?.creationTimestamp ?? 0).getTime() -
+          new Date(a.metadata?.creationTimestamp ?? 0).getTime()
         )[0]
       } else {
-        pod = podList.sort((a, b) => 
-          new Date(b.metadata.creationTimestamp).getTime() - 
-          new Date(a.metadata.creationTimestamp).getTime()
+        pod = podList.sort((a, b) =>
+          new Date(b.metadata?.creationTimestamp ?? 0).getTime() -
+          new Date(a.metadata?.creationTimestamp ?? 0).getTime()
         )[0]
       }
     }
 
-    console.log(`Getting logs from pod: ${pod.metadata.name}`)
+    console.log(`Getting logs from pod: ${pod.metadata?.name}`)
 
     // Determine which container to get logs from
     let targetContainer = containerName
     if (!targetContainer) {
       // Auto-select the appropriate container
-      const containers = pod.spec?.containers || []
-      const initContainers = pod.spec?.initContainers || []
-      
-      
+      const containers: V1Container[] = pod.spec?.containers || []
+      const initContainers: V1Container[] = pod.spec?.initContainers || []
+
+
       if (deploymentMode === 'sidecar') {
         // For sidecar mode, prefer the tool container (check both regular and init containers)
         const allContainers = [...containers, ...initContainers]
-        
+
         // Try different matching strategies for tool containers
-        let toolContainer = allContainers.find((c: any) => 
+        let toolContainer = allContainers.find((c: V1Container) =>
           c.name?.includes(toolName) || c.image?.includes(toolName)
         )
-        
+
         // If not found with exact tool name, try common sidecar container naming patterns
         if (!toolContainer) {
-          toolContainer = allContainers.find((c: any) => 
-            c.name?.includes(`tool-${toolName}`) || 
+          toolContainer = allContainers.find((c: V1Container) =>
+            c.name?.includes(`tool-${toolName}`) ||
             c.name?.startsWith('tool-') ||
             c.name?.endsWith(`-${toolName}`)
           )
         }
-        
-        
+
+
         targetContainer = toolContainer?.name || containers[0]?.name
       } else {
         // For service mode, prefer the main container (usually the first one)
@@ -153,7 +139,13 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     console.log(`Getting logs from container: ${targetContainer}`)
 
     // Fetch logs from the pod/container
-    const logOptions: any = {
+    const logOptions: {
+      tailLines?: number
+      timestamps?: boolean
+      sinceSeconds?: number
+      container?: string
+      previous?: boolean
+    } = {
       tailLines: 500, // Get last 500 lines
       timestamps: true
     }
@@ -161,31 +153,22 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     // Add container name if specified
     if (targetContainer) {
       logOptions.container = targetContainer
-      
+
       // Check if this is an init container - if so, we need to handle it specially
-      const isInitContainer = pod.spec?.initContainers?.some((ic: any) => ic.name === targetContainer)
+      const isInitContainer = pod.spec?.initContainers?.some((ic: V1Container) => ic.name === targetContainer)
       if (isInitContainer) {
-        // For init containers, we need to include previous logs since they may have completed
-        logOptions.previous = false  // Get current logs, not just previous run
-        logOptions.sinceTime = undefined  // Remove any time restrictions for init containers
+        // For init containers, get current logs (not previous run)
+        logOptions.previous = false
       }
     }
 
-    const logs = await k8sClient.getPodLogs(clusterName, pod.metadata.name, logOptions)
+    const logs = await k8sClient.getPodLogs(clusterName, pod.metadata?.name ?? '', logOptions)
 
-    // Handle different response structures from k8s client
-    let logContent = ''
-    if (typeof logs === 'string') {
-      logContent = logs
-    } else if ((logs as any)?.body) {
-      logContent = (logs as any).body
-    } else if ((logs as any)?.data) {
-      logContent = (logs as any).data
-    }
+    const logContent = (typeof logs === 'string' ? logs : extractItem<string>(logs)) ?? ''
 
     return NextResponse.json({
       logs: logContent || 'No logs available',
-      podName: pod.metadata.name,
+      podName: pod.metadata?.name,
       containerName: targetContainer,
       deploymentMode,
       message: 'Logs retrieved successfully'
@@ -193,9 +176,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
   } catch (error) {
     console.error('Error fetching tool logs:', error)
-    
+
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to fetch tool logs',
         message: error instanceof Error ? error.message : 'Unknown error'
       },

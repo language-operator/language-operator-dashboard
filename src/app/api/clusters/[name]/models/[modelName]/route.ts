@@ -9,11 +9,11 @@ import {
   validateClusterNameFormat,
 } from '@/lib/api-error-handler'
 import { z } from 'zod'
-import { LanguageModel } from '@/types/model'
+import { LanguageModel, LanguageModelSpec } from '@/types/model'
 
 // Validation schema — mirrors the 6-field LanguageModelSpec CRD exactly
 const updateModelSchema = z.object({
-  provider: z.string().min(1).optional(),
+  provider: z.enum(['openai', 'anthropic', 'openai-compatible', 'azure', 'bedrock', 'vertex', 'custom']).optional(),
   modelName: z.string().min(1).optional(),
   endpoint: z.string().optional(),
   apiKeySecretName: z.string().optional(),
@@ -91,7 +91,7 @@ export async function PUT(
     }
 
     // Build spec with only the 6 CRD fields
-    const updatedSpec: Record<string, unknown> = {
+    const updatedSpec: LanguageModelSpec = {
       provider: validatedData.provider ?? existingModel.spec.provider,
       modelName: validatedData.modelName ?? existingModel.spec.modelName,
     }
@@ -130,7 +130,7 @@ export async function PUT(
       : existingModel.spec.timeout
     if (newTimeout) updatedSpec.timeout = newTimeout
 
-    const updatedModel = {
+    const updatedModel: LanguageModel = {
       ...existingModel,
       spec: updatedSpec,
     }
@@ -145,7 +145,7 @@ export async function PUT(
 
     const response = await handleKubernetesOperation(
       'update model',
-      k8sClient.replaceLanguageModel(clusterName, modelName, updatedModel as unknown as import('@/types/model').LanguageModel)
+      k8sClient.replaceLanguageModel(clusterName, modelName, updatedModel)
     )
 
     console.log(`Successfully updated model ${modelName} for cluster ${clusterName}`)
