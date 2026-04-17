@@ -114,6 +114,8 @@ export async function PATCH(
 
     // Update the cluster
     const updatedCluster = await client.updateLanguageCluster(NAMESPACE, name, {
+      apiVersion: existingCluster.apiVersion,
+      kind: existingCluster.kind,
       metadata: {
         ...existingCluster.metadata,
         annotations: {
@@ -127,7 +129,7 @@ export async function PATCH(
         ...validatedData.spec,
         domain: validatedData.domain || validatedData.spec?.domain
       }
-    } as LanguageCluster)
+    })
 
     console.log(`Cluster updated: ${name} by ${userId} in ${NAMESPACE}`)
 
