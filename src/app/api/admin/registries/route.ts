@@ -8,8 +8,8 @@ const REGISTRIES_KEY = 'allowed-registries'
 
 export async function GET(request: NextRequest) {
   try {
-    const { k8sToken } = await getAuthenticatedUser(request)
-    const client = k8sClient.forToken(k8sToken)
+    await getAuthenticatedUser(request)
+    const client = k8sClient
 
     try {
       const configMapResponse = await client.readConfigMap(OPERATOR_NAMESPACE, CONFIG_MAP_NAME)
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     } catch (k8sError) {
       console.error('Error reading ConfigMap:', k8sError)
 
-      if ((k8sError as { statusCode?: number }).statusCode === 404) {
+      if ((k8sError as { code?: number }).code === 404) {
         // ConfigMap doesn't exist, return empty list
         return NextResponse.json({ registries: [] })
       }
@@ -48,8 +48,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { k8sToken } = await getAuthenticatedUser(request)
-    const client = k8sClient.forToken(k8sToken)
+    await getAuthenticatedUser(request)
+    const client = k8sClient
 
     const body = await request.json()
     const { registries } = body
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
       try {
         existingConfigMap = await client.readConfigMap(OPERATOR_NAMESPACE, CONFIG_MAP_NAME)
       } catch (error) {
-        if ((error as { statusCode?: number }).statusCode === 404) {
+        if ((error as { code?: number }).code === 404) {
           configMapExists = false
         } else {
           throw error

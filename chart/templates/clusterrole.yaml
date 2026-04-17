@@ -45,3 +45,13 @@ rules:
   - get
   - list
   - watch
+# Manage registry whitelist ConfigMap in the operator namespace
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - create
+  - update
+  - patch

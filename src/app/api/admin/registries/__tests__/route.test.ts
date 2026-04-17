@@ -6,8 +6,9 @@
  * Auth: mock `next-auth/jwt`'s getToken to return { sub, k8sToken }.
  * getAuthenticatedUser() reads from getToken — no db mock needed.
  *
- * K8s: mock `@/lib/k8s-client` so k8sClient.forToken() returns a plain object
- * of jest.fn()s. The route calls forToken(k8sToken) then uses the returned client.
+ * K8s: mock `@/lib/k8s-client` so k8sClient is a plain object of jest.fn()s.
+ * The route uses the singleton k8sClient directly (not forToken) since registry
+ * config is operator-level and managed by the dashboard SA.
  */
 
 import { GET, POST } from '../route'
@@ -27,16 +28,17 @@ jest.mock('next/server', () => ({
 
 jest.mock('next-auth/jwt')
 
-// k8s methods returned by forToken() — reset in beforeEach
-const mockK8s = {
-  readConfigMap: jest.fn(),
-  replaceConfigMap: jest.fn(),
-  createConfigMap: jest.fn(),
-}
-
 jest.mock('@/lib/k8s-client', () => ({
-  k8sClient: { forToken: jest.fn(() => mockK8s) },
+  k8sClient: {
+    readConfigMap: jest.fn(),
+    replaceConfigMap: jest.fn(),
+    createConfigMap: jest.fn(),
+  },
 }))
+
+// k8sClient singleton methods — reset in beforeEach
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { k8sClient: mockK8s } = require('@/lib/k8s-client')
 
 const mockGetToken = getToken as jest.MockedFunction<typeof getToken>
 
@@ -74,7 +76,7 @@ describe('GET /api/admin/registries', () => {
   })
 
   it('returns empty array when ConfigMap does not exist (404)', async () => {
-    const err = Object.assign(new Error('Not found'), { statusCode: 404 })
+    const err = Object.assign(new Error('Not found'), { code: 404 })
     mockK8s.readConfigMap.mockRejectedValue(err)
 
     const res = await GET(makeRequest())
@@ -152,7 +154,7 @@ describe('POST /api/admin/registries', () => {
   })
 
   it('creates a new ConfigMap when one does not exist', async () => {
-    const notFound = Object.assign(new Error('Not found'), { statusCode: 404 })
+    const notFound = Object.assign(new Error('Not found'), { code: 404 })
     mockK8s.readConfigMap.mockRejectedValue(notFound)
     mockK8s.createConfigMap.mockResolvedValue({})
 
