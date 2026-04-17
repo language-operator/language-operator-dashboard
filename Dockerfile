@@ -1,5 +1,4 @@
 # Dockerfile for Language Operator Dashboard
-# Based on Prisma Docker best practices: https://www.prisma.io/docs/guides/docker
 
 FROM node:20-alpine AS base
 
@@ -25,10 +24,6 @@ WORKDIR /app
 COPY --from=build-deps /app/node_modules ./node_modules
 COPY . .
 
-# Generate Prisma Client
-ENV PRISMA_ENGINES_CHECKSUM_IGNORE_MISSING=1
-RUN npx prisma generate
-
 # Build Next.js application
 # Disable telemetry during build
 ENV NEXT_TELEMETRY_DISABLED=1
@@ -47,8 +42,6 @@ COPY --from=builder /app/next.config.ts ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Copy Prisma files and full node_modules for migrations
-COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nextjs:nodejs /app/src ./src
 
