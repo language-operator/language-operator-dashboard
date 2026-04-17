@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getAuthenticatedUser } from '@/lib/user-context'
 import { k8sClient, extractItems } from '@/lib/k8s-client'
 import type { V1Pod } from '@kubernetes/client-node'
+import { extractK8sStatusCode } from '@/lib/api-error-handler'
 
 interface RouteParams {
   params: Promise<{
@@ -94,9 +95,12 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     })
 
   } catch (error) {
-    const k8sStatus = (error as { response?: { statusCode?: number } })?.response?.statusCode
-    if (k8sStatus === 401 || k8sStatus === 403) {
+    const k8sStatus = extractK8sStatusCode(error)
+    if (k8sStatus === 401) {
       return NextResponse.json({ error: 'Token expired or unauthorized' }, { status: 401 })
+    }
+    if (k8sStatus === 403) {
+      return NextResponse.json({ error: 'Permission denied' }, { status: 403 })
     }
     console.error('Error fetching model logs:', error)
 

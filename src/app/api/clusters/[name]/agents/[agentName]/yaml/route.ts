@@ -3,6 +3,7 @@ import { k8sClient, extractItem } from '@/lib/k8s-client'
 import { getAuthenticatedUser } from '@/lib/user-context'
 import { LanguageAgent } from '@/types/agent'
 import yaml from 'js-yaml'
+import { extractK8sStatusCode } from '@/lib/api-error-handler'
 
 
 // GET /api/clusters/[name]/agents/[agentName]/yaml - Get agent YAML
@@ -61,9 +62,12 @@ export async function GET(
     })
 
   } catch (error) {
-    const k8sStatus = (error as { response?: { statusCode?: number } })?.response?.statusCode
-    if (k8sStatus === 401 || k8sStatus === 403) {
+    const k8sStatus = extractK8sStatusCode(error)
+    if (k8sStatus === 401) {
       return NextResponse.json({ error: 'Token expired or unauthorized' }, { status: 401 })
+    }
+    if (k8sStatus === 403) {
+      return NextResponse.json({ error: 'Permission denied' }, { status: 403 })
     }
     console.error('Error fetching agent YAML:', error)
     return NextResponse.json({

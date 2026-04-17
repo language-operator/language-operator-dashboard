@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getAuthenticatedUser } from '@/lib/user-context'
 import { k8sClient } from '@/lib/k8s-client'
 import { z } from 'zod'
+import { extractK8sStatusCode } from '@/lib/api-error-handler'
 
 const updateClusterSchema = z.object({
   domain: z.string().optional(),
@@ -71,9 +72,12 @@ export async function GET(
     
     return NextResponse.json({ cluster })
   } catch (error) {
-    const k8sStatus = (error as { response?: { statusCode?: number } })?.response?.statusCode
-    if (k8sStatus === 401 || k8sStatus === 403) {
+    const k8sStatus = extractK8sStatusCode(error)
+    if (k8sStatus === 401) {
       return NextResponse.json({ error: 'Token expired or unauthorized' }, { status: 401 })
+    }
+    if (k8sStatus === 403) {
+      return NextResponse.json({ error: 'Permission denied' }, { status: 403 })
     }
     console.error('Error fetching cluster:', error)
     return NextResponse.json(
@@ -124,9 +128,12 @@ export async function PATCH(
   } catch (error) {
     console.error('Error updating cluster:', error)
     
-    const k8sStatus = (error as { response?: { statusCode?: number } })?.response?.statusCode
-    if (k8sStatus === 401 || k8sStatus === 403) {
+    const k8sStatus = extractK8sStatusCode(error)
+    if (k8sStatus === 401) {
       return NextResponse.json({ error: 'Token expired or unauthorized' }, { status: 401 })
+    }
+    if (k8sStatus === 403) {
+      return NextResponse.json({ error: 'Permission denied' }, { status: 403 })
     }
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -165,9 +172,12 @@ export async function DELETE(
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    const k8sStatus = (error as { response?: { statusCode?: number } })?.response?.statusCode
-    if (k8sStatus === 401 || k8sStatus === 403) {
+    const k8sStatus = extractK8sStatusCode(error)
+    if (k8sStatus === 401) {
       return NextResponse.json({ error: 'Token expired or unauthorized' }, { status: 401 })
+    }
+    if (k8sStatus === 403) {
+      return NextResponse.json({ error: 'Permission denied' }, { status: 403 })
     }
     console.error('Error deleting cluster:', error)
     return NextResponse.json(

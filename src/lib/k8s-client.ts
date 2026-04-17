@@ -1,5 +1,6 @@
 import * as k8s from '@kubernetes/client-node'
 import { existsSync } from 'fs'
+import { extractK8sStatusCode } from '@/lib/api-error-handler'
 import type { LanguageAgent } from '@/types/agent'
 import type { LanguageModel } from '@/types/model'
 import type { LanguageTool } from '@/types/tool'
@@ -166,8 +167,7 @@ class KubernetesClient {
       if (!username) throw new Error('Could not determine user identity from token')
       return username
     } catch (error) {
-      const statusCode = (error as { response?: { statusCode?: number }; statusCode?: number })
-        ?.response?.statusCode ?? (error as { statusCode?: number })?.statusCode
+      const statusCode = extractK8sStatusCode(error)
       if (statusCode === 401 || statusCode === 403) {
         throw new Error('Invalid or expired token')
       }

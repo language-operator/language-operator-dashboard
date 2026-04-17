@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getAuthenticatedUser } from '@/lib/user-context'
 import { fetchToolCatalog, getToolById, prepareCatalogEntryForInstallation } from '@/lib/tool-catalog'
 import { k8sClient } from '@/lib/k8s-client'
+import { extractK8sStatusCode } from '@/lib/api-error-handler'
 const NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
 
 
@@ -60,19 +61,26 @@ export async function POST(request: NextRequest) {
         tool: response,
       })
     } catch (k8sError: any) {
+      const k8sStatus = extractK8sStatusCode(k8sError)
       // Check if tool already exists
-      if (k8sError.code === 409 || k8sError.response?.statusCode === 409) {
+      if (k8sError.code === 409 || k8sStatus === 409) {
         return NextResponse.json(
           { error: 'Tool already installed' },
           { status: 409 }
         )
       }
+      if (k8sStatus === 401) {
+        return NextResponse.json({ error: 'Token expired or unauthorized' }, { status: 401 })
+      }
+      if (k8sStatus === 403) {
+        return NextResponse.json({ error: 'Permission denied' }, { status: 403 })
+      }
 
       console.error('Kubernetes API error:', k8sError)
       return NextResponse.json(
-        { 
+        {
           error: 'Failed to install tool',
-          details: k8sError.body?.message || k8sError.message 
+          details: k8sError.body?.message || k8sError.message
         },
         { status: 500 }
       )
