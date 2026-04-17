@@ -1,0 +1,27 @@
+apiVersion: v1
+entries:
+  language-operator-dashboard:
+  - apiVersion: v2
+    appVersion: 0.1.0
+    created: "2026-04-17T01:53:29.768810432Z"
+    description: Web dashboard for managing Language Operator clusters, agents, models,
+      tools, and personas
+    digest: 419d382785e51d903f037727d9f26bb9b42f14a9d27621463a66aa02e52a6df5
+    home: https://github.com/language-operator/language-operator-dashboard
+    keywords:
+    - ai
+    - llm
+    - language-models
+    - agents
+    - dashboard
+    maintainers:
+    - email: james@theryans.io
+      name: James Ryan
+    name: language-operator-dashboard
+    sources:
+    - https://github.com/language-operator/language-operator-dashboard
+    type: application
+    urls:
+    - https://language-operator.github.io/language-operator-dashboard/language-operator-dashboard-0.1.0.tgz
+    version: 0.1.0
+generated: "2026-04-17T01:53:29.765165714Z"
