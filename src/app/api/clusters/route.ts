@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
       console.log(`Found ${clusters.length} clusters from Kubernetes API`)
     } catch (k8sError) {
       console.error('Error fetching clusters from Kubernetes:', k8sError instanceof Error ? k8sError.message : String(k8sError))
-      const statusCode = (k8sError as { response?: { statusCode?: number } })?.response?.statusCode
+      const statusCode = extractK8sStatusCode(k8sError)
       if (statusCode === 403) {
         return NextResponse.json(
           { error: 'Permission denied: check RBAC configuration (langop-admin ClusterRole may be missing)' },
