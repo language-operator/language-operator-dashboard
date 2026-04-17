@@ -48,13 +48,26 @@ export default function ClusterDashboard() {
     )
   }
 
+  if (error?.message === 'PERMISSION_DENIED') {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="text-lg" style={{ color: 'var(--color-error)' }}>Access denied</div>
+          <div className="text-sm text-muted-foreground mt-2">
+            You don&apos;t have permission to view cluster &quot;{clusterName}&quot;.
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   if (error || !cluster) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <div className="text-lg text-red-600">Cluster not found</div>
+          <div className="text-lg" style={{ color: 'var(--color-error)' }}>Cluster not found</div>
           <div className="text-sm text-muted-foreground mt-2">
-            The cluster "{clusterName}" could not be loaded.
+            The cluster &quot;{clusterName}&quot; could not be loaded.
           </div>
         </div>
       </div>

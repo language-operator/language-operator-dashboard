@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getAuthenticatedUser } from '@/lib/user-context'
 import { k8sClient } from '@/lib/k8s-client'
 import { z } from 'zod'
+import { extractK8sStatusCode } from '@/lib/api-error-handler'
 
 const updatePersonaSchema = z.object({
   spec: z.object({
@@ -54,9 +55,12 @@ export async function GET(
     
     return NextResponse.json({ persona })
   } catch (error) {
-    const k8sStatus = (error as { response?: { statusCode?: number } })?.response?.statusCode
-    if (k8sStatus === 401 || k8sStatus === 403) {
+    const k8sStatus = extractK8sStatusCode(error)
+    if (k8sStatus === 401) {
       return NextResponse.json({ error: 'Token expired or unauthorized' }, { status: 401 })
+    }
+    if (k8sStatus === 403) {
+      return NextResponse.json({ error: 'Permission denied' }, { status: 403 })
     }
     console.error('Error fetching persona:', error)
     return NextResponse.json(
@@ -114,9 +118,12 @@ export async function PATCH(
 
     return NextResponse.json({ persona: updatedPersona })
   } catch (error) {
-    const k8sStatus = (error as { response?: { statusCode?: number } })?.response?.statusCode
-    if (k8sStatus === 401 || k8sStatus === 403) {
+    const k8sStatus = extractK8sStatusCode(error)
+    if (k8sStatus === 401) {
       return NextResponse.json({ error: 'Token expired or unauthorized' }, { status: 401 })
+    }
+    if (k8sStatus === 403) {
+      return NextResponse.json({ error: 'Permission denied' }, { status: 403 })
     }
     console.error('Error updating persona:', error)
 
@@ -159,9 +166,12 @@ export async function DELETE(
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    const k8sStatus = (error as { response?: { statusCode?: number } })?.response?.statusCode
-    if (k8sStatus === 401 || k8sStatus === 403) {
+    const k8sStatus = extractK8sStatusCode(error)
+    if (k8sStatus === 401) {
       return NextResponse.json({ error: 'Token expired or unauthorized' }, { status: 401 })
+    }
+    if (k8sStatus === 403) {
+      return NextResponse.json({ error: 'Permission denied' }, { status: 403 })
     }
     console.error('Error deleting persona:', error)
     return NextResponse.json(

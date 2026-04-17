@@ -135,23 +135,34 @@ export class ResourceNotFoundError extends ApiError {
   }
 }
 
+export function extractK8sStatusCode(error: unknown): number | undefined {
+  const e = error as Record<string, any>
+  const structured = e?.response?.statusCode ?? e?.statusCode
+  if (typeof structured === 'number') return structured
+  const match = typeof e?.message === 'string'
+    ? e.message.match(/HTTP-Code:\s*(\d+)/)
+    : null
+  return match ? parseInt(match[1], 10) : undefined
+}
+
 export class KubernetesError extends ApiError {
   constructor(operation: string, error: any) {
-    const isNotFound = error?.response?.statusCode === 404 || error?.statusCode === 404
-    const isForbidden = error?.response?.statusCode === 403 || error?.statusCode === 403
+    const k8sStatus = extractK8sStatusCode(error)
+    const isNotFound = k8sStatus === 404
+    const isForbidden = k8sStatus === 403
     const isTimeout = error?.code === 'ETIMEDOUT' || error?.code === 'ECONNRESET'
-    
+
     let message = `Kubernetes ${operation} failed`
     let code: ApiErrorCode = 'KUBERNETES_ERROR'
     let statusCode = 500
-    
+
     if (isNotFound) {
       message = `Resource not found during ${operation}`
       code = 'RESOURCE_NOT_FOUND'
       statusCode = 404
     } else if (isForbidden) {
       message = `Permission denied for ${operation}`
-      code = 'PERMISSION_DENIED'  
+      code = 'PERMISSION_DENIED'
       statusCode = 403
     } else if (isTimeout) {
       message = `Timeout during ${operation}`
@@ -164,9 +175,9 @@ export class KubernetesError extends ApiError {
       code,
       statusCode,
       error?.message || error?.response?.body?.message || 'Unknown Kubernetes error',
-      { 
+      {
         operation,
-        k8sStatusCode: error?.response?.statusCode || error?.statusCode,
+        k8sStatusCode: k8sStatus,
         k8sReason: error?.response?.body?.reason,
         k8sCode: error?.code
       }

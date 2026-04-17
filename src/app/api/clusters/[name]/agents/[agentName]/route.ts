@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { k8sClient, extractItem } from '@/lib/k8s-client'
 import { getAuthenticatedUser } from '@/lib/user-context'
 import { LanguageAgent, LanguageAgentFormData, LanguageAgentSpec } from '@/types/agent'
+import { extractK8sStatusCode } from '@/lib/api-error-handler'
 
 
 // GET /api/clusters/[name]/agents/[agentName] - Get specific agent details
@@ -50,9 +51,12 @@ export async function GET(
     })
 
   } catch (error) {
-    const k8sStatus = (error as { response?: { statusCode?: number } })?.response?.statusCode
-    if (k8sStatus === 401 || k8sStatus === 403) {
+    const k8sStatus = extractK8sStatusCode(error)
+    if (k8sStatus === 401) {
       return NextResponse.json({ error: 'Token expired or unauthorized' }, { status: 401 })
+    }
+    if (k8sStatus === 403) {
+      return NextResponse.json({ error: 'Permission denied' }, { status: 403 })
     }
     console.error('Error fetching agent details:', error)
     return NextResponse.json({
@@ -175,9 +179,12 @@ export async function PATCH(
     }
 
   } catch (error) {
-    const k8sStatus = (error as { response?: { statusCode?: number } })?.response?.statusCode
-    if (k8sStatus === 401 || k8sStatus === 403) {
+    const k8sStatus = extractK8sStatusCode(error)
+    if (k8sStatus === 401) {
       return NextResponse.json({ error: 'Token expired or unauthorized' }, { status: 401 })
+    }
+    if (k8sStatus === 403) {
+      return NextResponse.json({ error: 'Permission denied' }, { status: 403 })
     }
     console.error('Error updating agent:', error)
     return NextResponse.json({
@@ -225,9 +232,12 @@ export async function DELETE(
     }
 
   } catch (error) {
-    const k8sStatus = (error as { response?: { statusCode?: number } })?.response?.statusCode
-    if (k8sStatus === 401 || k8sStatus === 403) {
+    const k8sStatus = extractK8sStatusCode(error)
+    if (k8sStatus === 401) {
       return NextResponse.json({ error: 'Token expired or unauthorized' }, { status: 401 })
+    }
+    if (k8sStatus === 403) {
+      return NextResponse.json({ error: 'Permission denied' }, { status: 403 })
     }
     console.error('Error deleting agent:', error)
     return NextResponse.json({

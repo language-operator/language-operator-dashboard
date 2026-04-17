@@ -29,6 +29,9 @@ export function useCluster(name: string) {
     queryKey: ['clusters', name],
     queryFn: async () => {
       const response = await fetch(`/api/clusters/${name}`)
+      if (response.status === 403) {
+        throw new Error('PERMISSION_DENIED')
+      }
       if (!response.ok) {
         throw new Error('Failed to fetch cluster')
       }
