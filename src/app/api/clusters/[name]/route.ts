@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthenticatedUser } from '@/lib/user-context'
-import { k8sClient } from '@/lib/k8s-client'
+import { k8sClient, extractItem } from '@/lib/k8s-client'
 import { z } from 'zod'
 import { extractK8sStatusCode } from '@/lib/api-error-handler'
+import type { LanguageCluster } from '@/types/cluster'
 
 const updateClusterSchema = z.object({
   domain: z.string().optional(),
@@ -61,15 +62,20 @@ export async function GET(
 ) {
   try {
     const { name } = await params
-    
+
     const { k8sToken } = await getAuthenticatedUser(request)
     const client = k8sClient.forToken(k8sToken)
-    const cluster = await client.getLanguageCluster(NAMESPACE, name)
-    
+    const response = await client.getLanguageCluster(NAMESPACE, name)
+    const cluster = extractItem<LanguageCluster>(response)
+
     if (!cluster) {
       return NextResponse.json({ error: 'Cluster not found' }, { status: 404 })
     }
-    
+
+    // LanguageCluster is cluster-scoped; K8s strips metadata.namespace.
+    // Inject the operator namespace so the UI can display it.
+    cluster.metadata = { ...cluster.metadata, namespace: NAMESPACE }
+
     return NextResponse.json({ cluster })
   } catch (error) {
     const k8sStatus = extractK8sStatusCode(error)
@@ -100,13 +106,16 @@ export async function PATCH(
     const validatedData = updateClusterSchema.parse(body)
 
     // Get existing cluster
-    const existingCluster = await client.getLanguageCluster(NAMESPACE, name)
+    const existingResponse = await client.getLanguageCluster(NAMESPACE, name)
+    const existingCluster = extractItem<LanguageCluster>(existingResponse)
     if (!existingCluster) {
       return NextResponse.json({ error: 'Cluster not found' }, { status: 404 })
     }
 
     // Update the cluster
     const updatedCluster = await client.updateLanguageCluster(NAMESPACE, name, {
+      apiVersion: existingCluster.apiVersion,
+      kind: existingCluster.kind,
       metadata: {
         ...existingCluster.metadata,
         annotations: {
@@ -120,14 +129,14 @@ export async function PATCH(
         ...validatedData.spec,
         domain: validatedData.domain || validatedData.spec?.domain
       }
-    } as import('@/types/cluster').LanguageCluster)
+    })
 
     console.log(`Cluster updated: ${name} by ${userId} in ${NAMESPACE}`)
 
     return NextResponse.json({ cluster: updatedCluster })
   } catch (error) {
     console.error('Error updating cluster:', error)
-    
+
     const k8sStatus = extractK8sStatusCode(error)
     if (k8sStatus === 401) {
       return NextResponse.json({ error: 'Token expired or unauthorized' }, { status: 401 })
@@ -160,7 +169,8 @@ export async function DELETE(
     const client = k8sClient.forToken(k8sToken)
 
     // Check if cluster exists
-    const existingCluster = await client.getLanguageCluster(NAMESPACE, name)
+    const existingResponse = await client.getLanguageCluster(NAMESPACE, name)
+    const existingCluster = extractItem<LanguageCluster>(existingResponse)
     if (!existingCluster) {
       return NextResponse.json({ error: 'Cluster not found' }, { status: 404 })
     }
