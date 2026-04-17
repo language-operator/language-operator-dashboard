@@ -17,7 +17,8 @@ export function useClusters(params?: LanguageClusterListParams) {
 
       const response = await fetch(`/api/clusters?${searchParams}`)
       if (!response.ok) {
-        throw new Error('Failed to fetch clusters')
+        const body = await response.json().catch(() => ({}))
+        throw new Error((body as { error?: string }).error || 'Failed to fetch clusters')
       }
       return response.json()
     },
