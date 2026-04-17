@@ -21,11 +21,6 @@ make dev-logs
 
 # Tear down dev resources from the cluster
 make dev-down
-
-# Database migrations:
-npm run db:migrate      # Push schema changes to database
-npm run db:generate     # Generate Prisma client
-npm run db:seed         # Seed database with initial data
 ```
 
 ### Testing
@@ -38,7 +33,6 @@ npm run test:coverage       # Generate coverage report
 ### Building
 ```bash
 npm run build          # Build production bundle
-npm run initialize-tenant   # Create admin user + K8s ClusterRoleBinding
 ```
 
 ### Running the App
@@ -48,9 +42,9 @@ npm run initialize-tenant   # Create admin user + K8s ClusterRoleBinding
 # Requires: language-operator Helm chart deployed in k3s
 make dev
 ```
-Builds the dev image, loads into k3s, deploys a standalone Postgres pod (`dashboard-dev-postgres`), runs migrations, port-forwards to `localhost:3000`.
+Builds the dev image, loads into k3s, port-forwards to `localhost:3000`.
 
-**Login**: `james@theryans.io` / `password123`
+**Login**: `kubectl create token langop-dashboard-admin -n language-operator` → paste at `/login`
 
 **Common Issues**:
 - Port-forward conflict: `netstat -tulpn | grep :3000`
@@ -63,22 +57,23 @@ Never run `npm run build` or `npm run dev` directly on the host for development.
 
 ### Tech Stack
 - **Framework**: Next.js 16 with App Router
-- **Database**: PostgreSQL with Prisma ORM (User/Account/Session only — no org tables; dev uses a standalone in-cluster Postgres pod)
-- **Auth**: NextAuth.js with email/password and OAuth
+- **Auth**: NextAuth.js — JWT-only sessions, no database. Login by pasting a K8s bearer token.
 - **State Management**: Zustand (`src/store/sidebar-state.ts` only)
 - **UI**: Radix UI + Tailwind CSS (custom Marfa design system — see `/styleguide` route or `src/app/styleguide/page.tsx`)
 - **Kubernetes**: @kubernetes/client-node for direct K8s API access
 
 ### Access Control Model
 
-K8s RBAC via impersonation (no application-level roles):
-- Every K8s API call is made impersonating the logged-in user's email address
-- `src/lib/user-context.ts` — `getAuthenticatedUser(request)` returns `{ userId, email }` from session
-- `src/lib/k8s-client.ts` — `k8sClient.forUser(email)` returns an impersonating client
-- All API routes authenticate then call K8s as that user; K8s RBAC enforces what they can do
-- `src/scripts/initialize-tenant.ts` — creates admin user in DB and binds their email to `langop-admin` ClusterRole
+K8s bearer token auth (kubernetes-dashboard style):
+- Users log in by pasting a K8s service account token; it is validated via `SelfSubjectReview` on login
+- The token is stored encrypted in a NextAuth JWT cookie (8-hour session)
+- `src/lib/user-context.ts` — `getAuthenticatedUser(request)` returns `{ userId, k8sToken }` from JWT
+- `src/lib/k8s-client.ts` — `k8sClient.forToken(k8sToken)` returns a per-user K8s client
+- All API routes call `k8sClient.forToken(k8sToken)` — K8s RBAC enforces what they can do
+- Watch routes (`/api/watch/*`) use the singleton dashboard SA token (phase 2 TODO)
+- No database, no impersonation, no Prisma
 
-Required Helm chart ClusterRoles (managed in separate `language-operator` repo):
+Required ClusterRoles (managed in `language-operator` repo):
 - `langop-admin` — full access to all `langop.io` resources cluster-wide
 - `langop-cluster-admin` — full access in a cluster's namespace (created per-cluster by operator)
 - `langop-cluster-viewer` — read-only in a cluster's namespace (created per-cluster by operator)
@@ -132,11 +127,15 @@ const items = response?.body?.items      // live k8s
 
 `src/lib/workspace-manager.ts` + `src/lib/workspace-client.ts` enable file browsing and terminal access inside agent pods via the Kubernetes exec API.
 
-### Database Schema
+### Helm Chart
 
-Minimal — authentication only:
-- `User`, `Account`, `Session`, `VerificationToken` (standard NextAuth.js models)
-- No organization, membership, or invitation tables
+`chart/` — standalone Helm chart for production deployment.
+
+Key design:
+- Dashboard SA bound to a `ClusterRole` with `get/list/watch` on langop.io resources (for SSE watch streams)
+- Admin SA (`langop-dashboard-admin`) bound to `langop-admin` for first-login token generation
+- `NEXTAUTH_SECRET` auto-generated via `randAlphaNum 32` on first install; preserved on upgrades via `lookup`
+- `OPERATOR_NAMESPACE` env var controls where LanguageCluster resources live (default: `language-operator`)
 
 ## Key Patterns
 

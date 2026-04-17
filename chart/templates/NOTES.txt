@@ -1,0 +1,46 @@
+Language Operator Dashboard {{ .Chart.AppVersion }} installed in namespace {{ .Release.Namespace }}.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  FIRST LOGIN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+{{- if .Values.adminServiceAccount.create }}
+An admin service account has been created. Generate a bearer token:
+
+  kubectl create token {{ .Values.adminServiceAccount.name }} \
+    -n {{ .Release.Namespace }} \
+    --duration=24h
+
+Paste the token at the login screen.
+{{- else }}
+No admin service account was created (adminServiceAccount.create=false).
+Provide a bearer token for a service account bound to the {{ .Values.adminServiceAccount.clusterRoleName }} ClusterRole.
+{{- end }}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  ACCESS THE DASHBOARD
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+{{- if .Values.ingress.enabled }}
+{{- range .Values.ingress.hosts }}
+  http{{ if $.Values.ingress.tls }}s{{ end }}://{{ .host }}
+{{- end }}
+{{- else if contains "NodePort" .Values.service.type }}
+  export NODE_PORT=$(kubectl get svc {{ include "langop-dashboard.fullname" . }} \
+    -n {{ .Release.Namespace }} -o jsonpath='{.spec.ports[0].nodePort}')
+  export NODE_IP=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[0].address}')
+  echo http://$NODE_IP:$NODE_PORT
+{{- else }}
+  kubectl port-forward svc/{{ include "langop-dashboard.fullname" . }} \
+    8080:{{ .Values.service.port }} -n {{ .Release.Namespace }}
+  # Then open: http://localhost:8080
+{{- end }}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  PREREQUISITES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+The language-operator chart must be installed first (provides CRDs and
+the {{ .Values.adminServiceAccount.clusterRoleName }} ClusterRole).
+
+  kubectl get clusterrole {{ .Values.adminServiceAccount.clusterRoleName }}

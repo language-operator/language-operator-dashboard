@@ -70,7 +70,7 @@ export default function LoginPage() {
                   className="w-full border border-stone-200 px-4 py-3 text-sm font-light font-mono focus:outline-none focus:border-amber-900/40 focus:ring-1 focus:ring-amber-900/20 transition-all disabled:opacity-50 bg-stone-50/30 dark:bg-stone-800/30 dark:border-stone-600 dark:text-stone-300 dark:focus:border-amber-600/60 dark:focus:ring-amber-600/30 resize-none"
                 />
                 <p className="text-[10px] font-light text-stone-500 dark:text-stone-500">
-                  kubectl create token &lt;service-account&gt; -n language-operator
+                  kubectl create token langop-dashboard-admin -n language-operator
                 </p>
               </div>
 

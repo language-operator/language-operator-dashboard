@@ -1,0 +1,150 @@
+# Default values for language-operator-dashboard.
+
+replicaCount: 1
+
+image:
+  repository: ghcr.io/language-operator/language-operator-dashboard
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+# Dashboard service account — used for SSE watch streams (singleton K8s client).
+# Bound to a ClusterRole with read/watch access to langop.io resources.
+serviceAccount:
+  create: true
+  annotations: {}
+  # If not set and create is true, a name is generated using the fullname template.
+  name: ""
+
+# Admin service account — created so operators can generate a first-login token.
+# Bound to the langop-admin ClusterRole from the language-operator chart.
+# Run: kubectl create token <name> -n <namespace> to get a login token.
+adminServiceAccount:
+  create: true
+  # Name of the admin service account.
+  name: "langop-dashboard-admin"
+  # ClusterRole to bind the admin SA to. Must already exist (provided by language-operator chart).
+  clusterRoleName: "langop-admin"
+
+# Pod annotations
+podAnnotations: {}
+
+# Pod security context
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1001
+  fsGroup: 1001
+  seccompProfile:
+    type: RuntimeDefault
+
+# Container security context
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: false  # Next.js writes to .next/ at startup
+  runAsNonRoot: true
+  runAsUser: 1001
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 3000
+  annotations: {}
+
+# Ingress configuration
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # cert-manager.io/cluster-issuer: letsencrypt-prod
+  hosts:
+    - host: dashboard.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+  #  - secretName: dashboard-tls
+  #    hosts:
+  #      - dashboard.example.com
+
+# Resource limits and requests
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 256Mi
+
+# Liveness probe
+livenessProbe:
+  httpGet:
+    path: /api/health
+    port: http
+  initialDelaySeconds: 30
+  periodSeconds: 30
+
+# Readiness probe
+readinessProbe:
+  httpGet:
+    path: /api/health
+    port: http
+  initialDelaySeconds: 10
+  periodSeconds: 10
+
+# Node selector
+nodeSelector: {}
+
+# Tolerations
+tolerations: []
+
+# Affinity
+affinity: {}
+
+# Pod labels
+podLabels: {}
+
+# Auth configuration
+auth:
+  # NEXTAUTH_SECRET: encryption key for the JWT session cookie.
+  # If left empty, a random 32-character secret is generated and stored in a Secret.
+  # WARNING: changing this value (or regenerating) invalidates all active sessions.
+  secret: ""
+  # NEXTAUTH_URL: the canonical URL of the dashboard (required for OAuth redirects).
+  # Example: https://dashboard.example.com
+  url: ""
+
+# Kubernetes connection
+# Defaults to in-cluster config (the dashboard SA token is auto-mounted).
+# Override these only if the dashboard runs outside the cluster.
+kubernetes:
+  # K8s API server URL. Empty = use in-cluster config.
+  serverUrl: ""
+  # Skip TLS verification. Only for development.
+  skipTlsVerify: false
+
+# Operator namespace — where LanguageCluster resources live.
+# Must match the namespace the language-operator chart was installed into.
+operatorNamespace: "language-operator"
+
+# Extra environment variables
+env: []
+
+# Extra environment variables from ConfigMap or Secret
+envFrom: []
+
+# Additional volumes
+volumes: []
+
+# Additional volume mounts
+volumeMounts: []
+
+# Priority class name
+priorityClassName: ""
