@@ -20,6 +20,7 @@ export async function GET(request: NextRequest) {
     let watchCleanup: (() => void) | null = null
     let retryTimeout: NodeJS.Timeout | null = null
     let lastResourceVersion: string | undefined = undefined
+    let retryCount = 0
 
     // Create safe SSE stream with automatic lifecycle management
     const { stream, sendEvent, isActive } = createSSEWatchStream(request, {
@@ -50,10 +51,7 @@ export async function GET(request: NextRequest) {
 
       try {
         // Build label selector
-        let labelSelector = ``
-        if (clusterName) {
-          labelSelector += `,langop.io/cluster=${clusterName}`
-        }
+        const labelSelector = clusterName ? `langop.io/cluster=${clusterName}` : undefined
 
         watchCleanup = await watchService.watchLanguageAgents(
           {
@@ -104,11 +102,14 @@ export async function GET(request: NextRequest) {
 
             // Retry only if client is still connected
             if (!request.signal.aborted && isActive()) {
-              console.log('🔄 Reconnecting agent watch immediately...')
-              retryTimeout = setTimeout(startWatch, 100) // 100ms delay to prevent tight loop
+              const delay = Math.min(1000 * Math.pow(2, retryCount), 30000)
+              retryCount++
+              console.log(`🔄 Reconnecting agent watch in ${delay}ms...`)
+              retryTimeout = setTimeout(startWatch, delay)
             }
           }
         )
+        retryCount = 0
       } catch (error) {
         console.error('Failed to start agent watch:', error)
 
