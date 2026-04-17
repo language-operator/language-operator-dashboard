@@ -26,6 +26,9 @@ yarn-error.log*
 .env*.local
 .env
 
+# Local Helm values (secrets/overrides for make install)
+chart/values.local.yaml
+
 # Vercel
 .vercel
 

@@ -4,7 +4,9 @@ GIT_SHA    := $(shell git rev-parse --short HEAD)
 SRC_PATH   := $(shell pwd)
 NAMESPACE  := language-operator
 
-.PHONY: dev dev-image dev-secrets dev-apply dev-forward dev-down dev-logs dev-rebuild dev-supervisor
+CHART_RELEASE := language-operator-dashboard
+
+.PHONY: dev dev-image dev-secrets dev-apply dev-forward dev-down dev-logs dev-rebuild dev-supervisor install
 
 # Full dev startup: build image, create secrets, apply manifests, port-forward
 dev: dev-image dev-secrets dev-apply dev-forward
@@ -49,6 +51,14 @@ dev-logs:
 # Rebuild image and redeploy (use after dependency changes)
 dev-rebuild: dev-image dev-apply
 
+# Install or upgrade the chart using chart/values.local.yaml for local overrides
+install:
+	helm upgrade --install $(CHART_RELEASE) ./chart \
+		--namespace $(NAMESPACE) \
+		--create-namespace \
+		$(if $(wildcard chart/values.local.yaml),--values chart/values.local.yaml,) \
+		--wait
+
 dev-supervisor:
 	claude "/delegate"
 
@@ -66,5 +76,6 @@ help:
 	@echo "  dev-logs     - Tail logs from the dev pod"
 	@echo "  dev-down     - Remove dev resources from the cluster"
 	@echo "  dev-rebuild  - Rebuild image and redeploy (after dependency changes)"
+	@echo "  install      - Helm install/upgrade using chart/values.local.yaml"
 	@echo "  dev-supervisor   - Run the supervisor agent (triage issues into queues)"
 	@echo "  dev-worker-N     - Run worker agent for queue N (0, 1, or 2)"
