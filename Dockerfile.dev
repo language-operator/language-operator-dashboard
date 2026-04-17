@@ -8,11 +8,6 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN npm ci
 
-# Generate Prisma client (writes into /app/node_modules/.prisma/client)
-COPY prisma ./prisma
-ENV PRISMA_ENGINES_CHECKSUM_IGNORE_MISSING=1
-RUN npx prisma generate
-
 # Move node_modules to /opt so the hostPath mount of /app doesn't shadow them.
 # The init container copies /opt/node_modules into the emptyDir at /app/node_modules.
 RUN mv /app/node_modules /opt/node_modules
