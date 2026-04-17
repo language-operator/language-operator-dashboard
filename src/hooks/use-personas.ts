@@ -4,6 +4,7 @@ import { LanguagePersona, LanguagePersonaListParams, LanguagePersonaFormData } f
 export function usePersonas(params: LanguagePersonaListParams & { clusterName: string }) {
   return useQuery({
     queryKey: ['personas', params.clusterName, params],
+    retry: false,
     queryFn: async () => {
       if (!params.clusterName) {
         throw new Error('Cluster name is required to fetch personas')

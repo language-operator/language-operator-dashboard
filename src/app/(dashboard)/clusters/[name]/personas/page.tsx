@@ -85,6 +85,84 @@ export default function ClusterPersonas() {
       .catch(() => toast.error('Failed to delete persona. Please try again.'))
   }
 
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <ResourceHeader
+          icon={Users}
+          title="Personas"
+          subtitle="Personalities and preferences agents can use to influence their behavior"
+          actions={
+            <Button asChild>
+              <Link href={`/clusters/${clusterName}/personas/new`}>
+                <Plus className="h-4 w-4 mr-2" />
+                New Persona
+              </Link>
+            </Button>
+          }
+        />
+        <FilterBar>
+          <div className="flex-1">
+            <div className="relative">
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search personas..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+          </div>
+          <Select value={toneFilter} onValueChange={setToneFilter}>
+            <SelectTrigger className="w-full md:w-48">
+              <SelectValue placeholder="All Tones" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Tones</SelectItem>
+            </SelectContent>
+          </Select>
+        </FilterBar>
+        <Card>
+          <CardContent className="flex items-center justify-center py-16">
+            <div className="text-center">
+              <Users className="h-8 w-8 animate-pulse mx-auto mb-4 text-muted-foreground" />
+              <p className="text-muted-foreground">Loading personas...</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <ResourceHeader
+          icon={Users}
+          title="Personas"
+          subtitle="Personalities and preferences agents can use to influence their behavior"
+          actions={
+            <Button asChild>
+              <Link href={`/clusters/${clusterName}/personas/new`}>
+                <Plus className="h-4 w-4 mr-2" />
+                New Persona
+              </Link>
+            </Button>
+          }
+        />
+        <Card>
+          <CardContent className="flex items-center justify-center py-16">
+            <div className="text-center">
+              <Users className="h-8 w-8 mx-auto mb-4 text-red-400" />
+              <p className="text-red-600 mb-2">Failed to load personas</p>
+              <p className="text-muted-foreground text-sm">{error.message}</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
         {/* Header */}
@@ -131,138 +209,109 @@ export default function ClusterPersonas() {
           </Select>
         </FilterBar>
 
-        {/* Loading State */}
-        {isLoading && (
-          <Card>
-            <CardContent className="flex items-center justify-center py-16">
-              <div className="text-center">
-                <Users className="h-8 w-8 animate-pulse mx-auto mb-4 text-muted-foreground" />
-                <p className="text-muted-foreground">Loading personas...</p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Error State */}
-        {error && (
-          <Card>
-            <CardContent className="flex items-center justify-center py-16">
-              <div className="text-center">
-                <Users className="h-8 w-8 mx-auto mb-4 text-red-400" />
-                <p className="text-red-600 mb-2">Failed to load personas</p>
-                <p className="text-muted-foreground text-sm">{error.message}</p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
         {/* Personas List */}
-        {!isLoading && !error && (
-          <>
-            {clusterPersonas.length === 0 ? (
-              /* Empty State */
-              <Card>
-                <CardContent>
-                  <EmptyState
-                    icon={Users}
-                    title="No personas yet"
-                    description="Personas define the behavior, knowledge, and communication style for AI agents. Create your first persona to get started."
-                    action={
-                      <Button asChild>
-                        <Link href={`/clusters/${clusterName}/personas/new`}>
-                          <Plus className="h-4 w-4 mr-2" />
-                          Create Your First Persona
+        {clusterPersonas.length === 0 ? (
+          /* Empty State */
+          <Card>
+            <CardContent>
+              <EmptyState
+                icon={Users}
+                title="No personas yet"
+                description="Personas define the behavior, knowledge, and communication style for AI agents. Create your first persona to get started."
+                action={
+                  <Button asChild>
+                    <Link href={`/clusters/${clusterName}/personas/new`}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Your First Persona
+                    </Link>
+                  </Button>
+                }
+              />
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle>Personas ({clusterPersonas.length})</CardTitle>
+              <CardDescription>Language personas in this cluster</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Tone</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Age</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {clusterPersonas.map((persona: LanguagePersona) => (
+                    <TableRow key={persona.metadata.name}>
+                      <TableCell className="font-light">
+                        <Link
+                          href={`/clusters/${clusterName}/personas/${persona.metadata.name}`}
+                          className="hover:underline"
+                        >
+                          {persona.metadata.name}
                         </Link>
-                      </Button>
-                    }
-                  />
-                </CardContent>
-              </Card>
-            ) : (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Personas ({clusterPersonas.length})</CardTitle>
-                  <CardDescription>Language personas in this cluster</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Tone</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Age</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {clusterPersonas.map((persona: LanguagePersona) => (
-                        <TableRow key={persona.metadata.name}>
-                          <TableCell className="font-light">
-                            <Link
-                              href={`/clusters/${clusterName}/personas/${persona.metadata.name}`}
-                              className="hover:underline"
+                      </TableCell>
+                      <TableCell>
+                        {persona.spec.tone ? (
+                          <Badge className="bg-muted text-muted-foreground" variant="secondary">
+                            {persona.spec.tone}
+                          </Badge>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <AnimatedStatus status={persona.status?.phase || 'Unknown'} size="sm" />
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm text-muted-foreground">
+                          {formatTimeAgo(persona.metadata.creationTimestamp)}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon-sm">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem asChild>
+                              <Link href={`/clusters/${clusterName}/personas/${persona.metadata.name}`}>
+                                <Eye className="h-4 w-4 mr-2" />
+                                View Details
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                              <Link href={`/clusters/${clusterName}/personas/${persona.metadata.name}/edit`}>
+                                <Edit className="h-4 w-4 mr-2" />
+                                Edit
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="text-destructive"
+                              onClick={() => setDeletingPersona(persona.metadata.name!)}
+                              disabled={deletePersona.isPending}
                             >
-                              {persona.metadata.name}
-                            </Link>
-                          </TableCell>
-                          <TableCell>
-                            {persona.spec.tone ? (
-                              <Badge className="bg-muted text-muted-foreground" variant="secondary">
-                                {persona.spec.tone}
-                              </Badge>
-                            ) : (
-                              <span className="text-sm text-muted-foreground">-</span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <AnimatedStatus status={persona.status?.phase || 'Unknown'} size="sm" />
-                          </TableCell>
-                          <TableCell>
-                            <span className="text-sm text-muted-foreground">
-                              {formatTimeAgo(persona.metadata.creationTimestamp)}
-                            </span>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon-sm">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem asChild>
-                                  <Link href={`/clusters/${clusterName}/personas/${persona.metadata.name}`}>
-                                    <Eye className="h-4 w-4 mr-2" />
-                                    View Details
-                                  </Link>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem asChild>
-                                  <Link href={`/clusters/${clusterName}/personas/${persona.metadata.name}/edit`}>
-                                    <Edit className="h-4 w-4 mr-2" />
-                                    Edit
-                                  </Link>
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                  className="text-destructive"
-                                  onClick={() => setDeletingPersona(persona.metadata.name!)}
-                                  disabled={deletePersona.isPending}
-                                >
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            )}
-          </>
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         )}
 
         {/* Persona Events */}
