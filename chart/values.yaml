@@ -26,7 +26,7 @@ serviceAccount:
 adminServiceAccount:
   create: true
   # Name of the admin service account.
-  name: "langop-dashboard-admin"
+  name: "language-operator-dashboard-admin"
   # ClusterRole to bind the admin SA to. Must already exist (provided by language-operator chart).
   clusterRoleName: "langop-admin"
 

@@ -44,7 +44,7 @@ make dev
 ```
 Builds the dev image, loads into k3s, port-forwards to `localhost:3000`.
 
-**Login**: `kubectl create token langop-dashboard-admin -n language-operator` → paste at `/login`
+**Login**: `kubectl create token language-operator-dashboard-admin -n language-operator` → paste at `/login`
 
 **Common Issues**:
 - Port-forward conflict: `netstat -tulpn | grep :3000`
@@ -133,7 +133,7 @@ const items = response?.body?.items      // live k8s
 
 Key design:
 - Dashboard SA bound to a `ClusterRole` with `get/list/watch` on langop.io resources (for SSE watch streams)
-- Admin SA (`langop-dashboard-admin`) bound to `langop-admin` for first-login token generation
+- Admin SA (`language-operator-dashboard-admin`) bound to `langop-admin` for first-login token generation
 - `NEXTAUTH_SECRET` auto-generated via `randAlphaNum 32` on first install; preserved on upgrades via `lookup`
 - `OPERATOR_NAMESPACE` env var controls where LanguageCluster resources live (default: `language-operator`)
 
