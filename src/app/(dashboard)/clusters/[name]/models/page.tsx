@@ -99,6 +99,35 @@ export default function ClusterModels() {
     )
   }
 
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <ResourceHeader
+          icon={Cpu}
+          title="Models"
+          subtitle="Large language models used for reasoning"
+          actions={
+            <Button asChild>
+              <Link href={`/clusters/${clusterName}/models/new`}>
+                <Plus className="h-4 w-4 mr-2" />
+                New Model
+              </Link>
+            </Button>
+          }
+        />
+        <Card>
+          <CardContent className="flex items-center justify-center py-16">
+            <div className="text-center">
+              <Cpu className="h-8 w-8 mx-auto mb-4 text-red-400" />
+              <p className="text-red-600 mb-2">Failed to load models</p>
+              <p className="text-muted-foreground text-sm">{error.message}</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
         {/* Header */}
