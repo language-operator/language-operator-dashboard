@@ -14,20 +14,19 @@ export async function GET(
 ) {
   try {
     const { name: clusterName, toolName } = await params
-    const { email } = await getAuthenticatedUser(request)
-    
-
+    const { k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
 
     // Validate cluster name format
     validateClusterNameFormat(clusterName)
-    
+
     // Validate cluster exists and user has access
     await validateClusterExists(NAMESPACE, clusterName, { validateAccess: true })
 
     // Get the specific tool
     const response = await handleKubernetesOperation(
       'get tool',
-      k8sClient.getLanguageTool(clusterName, toolName)
+      client.getLanguageTool(clusterName, toolName)
     )
     
     if (!response) {
@@ -49,13 +48,12 @@ export async function PUT(
 ) {
   try {
     const { name: clusterName, toolName } = await params
-    const { email } = await getAuthenticatedUser(request)
-    
-
+    const { userId, k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
 
     // Validate cluster name format
     validateClusterNameFormat(clusterName)
-    
+
     // Validate cluster exists and user has access
     await validateClusterExists(NAMESPACE, clusterName, { validateAccess: true })
 
@@ -70,7 +68,7 @@ export async function PUT(
     // Get existing tool to validate it exists and belongs to the cluster
     const existingTool = await handleKubernetesOperation(
       'get existing tool',
-      k8sClient.getLanguageTool(clusterName, toolName)
+      client.getLanguageTool(clusterName, toolName)
     )
     
     if (!existingTool) {
@@ -94,11 +92,11 @@ export async function PUT(
     // Update the tool via Kubernetes API using replace (not patch)
     const updatedResult = await handleKubernetesOperation(
       'update tool',
-      k8sClient.replaceLanguageTool(clusterName, toolName, updatedTool)
+      client.replaceLanguageTool(clusterName, toolName, updatedTool)
     )
 
     // Log the update for audit trail
-    console.log(`Tool updated: ${toolName} in cluster ${clusterName} by ${email}`)
+    console.log(`Tool updated: ${toolName} in cluster ${clusterName} by ${userId}`)
 
     return createSuccessResponse(updatedResult, undefined, { cluster: clusterName })
     
@@ -115,20 +113,19 @@ export async function DELETE(
 ) {
   try {
     const { name: clusterName, toolName } = await params
-    const { email } = await getAuthenticatedUser(request)
-    
-
+    const { userId, k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
 
     // Validate cluster name format
     validateClusterNameFormat(clusterName)
-    
+
     // Validate cluster exists and user has access
     await validateClusterExists(NAMESPACE, clusterName, { validateAccess: true })
 
     // Check if tool exists
     const existingTool = await handleKubernetesOperation(
       'get existing tool',
-      k8sClient.getLanguageTool(clusterName, toolName)
+      client.getLanguageTool(clusterName, toolName)
     )
 
     if (!existingTool) {
@@ -138,11 +135,11 @@ export async function DELETE(
     // Delete the tool
     await handleKubernetesOperation(
       'delete tool',
-      k8sClient.deleteLanguageTool(clusterName, toolName)
+      client.deleteLanguageTool(clusterName, toolName)
     )
 
     // Log the deletion for audit trail
-    console.log(`Tool deleted: ${toolName} in cluster ${clusterName} by ${email}`)
+    console.log(`Tool deleted: ${toolName} in cluster ${clusterName} by ${userId}`)
 
     return createSuccessResponse(null, undefined, { cluster: clusterName })
     

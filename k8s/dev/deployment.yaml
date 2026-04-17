@@ -32,43 +32,6 @@ spec:
             - name: node-modules
               mountPath: /app/node_modules
 
-        # Run Prisma migrations against the in-cluster postgres
-        - name: db-migrate
-          image: docker.io/library/language-operator-dashboard-dev:dev
-          imagePullPolicy: Never
-          command:
-            - node
-            - /app/node_modules/.bin/prisma
-            - migrate
-            - deploy
-          workingDir: /app
-          envFrom:
-            - secretRef:
-                name: dashboard-dev-config
-          volumeMounts:
-            - name: source
-              mountPath: /app
-            - name: node-modules
-              mountPath: /app/node_modules
-
-        # Initialize admin user and default organization (idempotent)
-        - name: initialize-tenant
-          image: docker.io/library/language-operator-dashboard-dev:dev
-          imagePullPolicy: Never
-          command:
-            - node
-            - /app/node_modules/.bin/tsx
-            - src/scripts/initialize-tenant.ts
-          workingDir: /app
-          envFrom:
-            - secretRef:
-                name: dashboard-dev-config
-          volumeMounts:
-            - name: source
-              mountPath: /app
-            - name: node-modules
-              mountPath: /app/node_modules
-
       containers:
         - name: dashboard
           image: docker.io/library/language-operator-dashboard-dev:dev

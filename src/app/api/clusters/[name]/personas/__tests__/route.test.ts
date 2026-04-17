@@ -3,21 +3,15 @@
  *
  * Tests for GET /api/clusters/[name]/personas and POST /api/clusters/[name]/personas
  *
- * Pattern mirrors src/app/api/admin/registries/__tests__/route.test.ts:
- * - Auth: mock getServerSession to return { user: { id, email } }
- * - K8s: mock k8sClient methods directly (route calls k8sClient.listLanguagePersonas etc.)
- * - Cluster validation: mock validateClusterExists / validateClusterForResourceCreation
- *   to resolve immediately (K8s RBAC enforces real access; unit tests skip that layer)
- *
- * NOTE: jest.mock() is hoisted before variable declarations, so mocks that
- * reference outer variables must use inline jest.fn() inside the factory.
- * Access mock functions after import via `k8sClient.listLanguagePersonas as jest.Mock`.
+ * Auth: mock `next-auth/jwt`'s getToken to return { sub, k8sToken }.
+ * K8s: mock k8sClient.forToken() to return a plain object of jest.fn()s.
+ * Cluster validation: mock validateClusterExists / validateClusterForResourceCreation
+ * to resolve immediately (K8s RBAC enforces real access; unit tests skip that layer).
  */
 
 import { GET, POST } from '../route'
-import { getServerSession } from 'next-auth'
+import { getToken } from 'next-auth/jwt'
 import { NextRequest } from 'next/server'
-import { k8sClient } from '@/lib/k8s-client'
 
 // ── Mocks ──────────────────────────────────────────────────────────────────
 
@@ -30,13 +24,15 @@ jest.mock('next/server', () => ({
   },
 }))
 
-jest.mock('next-auth')
+jest.mock('next-auth/jwt')
+
+const mockK8s = {
+  listLanguagePersonas: jest.fn(),
+  createLanguagePersona: jest.fn(),
+}
 
 jest.mock('@/lib/k8s-client', () => ({
-  k8sClient: {
-    listLanguagePersonas: jest.fn(),
-    createLanguagePersona: jest.fn(),
-  },
+  k8sClient: { forToken: jest.fn(() => mockK8s) },
   extractItems: (response: unknown) => {
     const r = response as Record<string, unknown>
     return (
@@ -55,7 +51,6 @@ jest.mock('@/lib/k8s-client', () => ({
   },
 }))
 
-// Validation mocks: let the route proceed to k8s without hitting the cluster
 jest.mock('@/lib/cluster-validation', () => ({
   validateClusterExists: jest.fn().mockResolvedValue(undefined),
   validateClusterForResourceCreation: jest.fn().mockResolvedValue(undefined),
@@ -70,9 +65,7 @@ jest.mock('@/lib/cluster-utils', () => ({
   filterByClusterRef: jest.fn((items: unknown[]) => items),
 }))
 
-const mockSession = getServerSession as jest.MockedFunction<typeof getServerSession>
-const mockListPersonas = k8sClient.listLanguagePersonas as jest.Mock
-const mockCreatePersona = k8sClient.createLanguagePersona as jest.Mock
+const mockGetToken = getToken as jest.MockedFunction<typeof getToken>
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -87,7 +80,7 @@ function makeParams(name = 'test-cluster') {
   return { params: Promise.resolve({ name }) }
 }
 
-const AUTHED_SESSION = { user: { id: 'user-1', email: 'admin@example.com' } }
+const AUTHED_TOKEN = { sub: 'user-1', k8sToken: 'test-token' }
 
 function makePersona(name: string, specOverrides: Record<string, unknown> = {}) {
   return {
@@ -113,12 +106,12 @@ function makePersona(name: string, specOverrides: Record<string, unknown> = {}) 
 describe('GET /api/clusters/[name]/personas', () => {
   beforeEach(() => {
     jest.clearAllMocks()
-    mockSession.mockResolvedValue(AUTHED_SESSION as any)
+    mockGetToken.mockResolvedValue(AUTHED_TOKEN as any)
   })
 
   it('returns paginated personas for a cluster', async () => {
     const personas = [makePersona('alpha'), makePersona('beta')]
-    mockListPersonas.mockResolvedValue({ items: personas })
+    mockK8s.listLanguagePersonas.mockResolvedValue({ items: personas })
 
     const res = await GET(makeRequest(), makeParams())
     const body = await res.json()
@@ -126,11 +119,11 @@ describe('GET /api/clusters/[name]/personas', () => {
     expect(res.status).toBe(200)
     expect(body.success).toBe(true)
     expect(body.data).toHaveLength(2)
-    expect(mockListPersonas).toHaveBeenCalledWith('test-cluster')
+    expect(mockK8s.listLanguagePersonas).toHaveBeenCalledWith('test-cluster')
   })
 
   it('handles body.items response structure from k8s', async () => {
-    mockListPersonas.mockResolvedValue({ body: { items: [makePersona('alpha')] } })
+    mockK8s.listLanguagePersonas.mockResolvedValue({ body: { items: [makePersona('alpha')] } })
 
     const res = await GET(makeRequest(), makeParams())
     const body = await res.json()
@@ -140,7 +133,7 @@ describe('GET /api/clusters/[name]/personas', () => {
   })
 
   it('handles data.items response structure from k8s', async () => {
-    mockListPersonas.mockResolvedValue({ data: { items: [makePersona('alpha')] } })
+    mockK8s.listLanguagePersonas.mockResolvedValue({ data: { items: [makePersona('alpha')] } })
 
     const res = await GET(makeRequest(), makeParams())
     const body = await res.json()
@@ -150,7 +143,7 @@ describe('GET /api/clusters/[name]/personas', () => {
   })
 
   it('returns empty array when no personas exist', async () => {
-    mockListPersonas.mockResolvedValue({ items: [] })
+    mockK8s.listLanguagePersonas.mockResolvedValue({ items: [] })
 
     const res = await GET(makeRequest(), makeParams())
     const body = await res.json()
@@ -164,7 +157,7 @@ describe('GET /api/clusters/[name]/personas', () => {
       makePersona('go-engineer', { expertise: 'Go language expert' }),
       makePersona('python-expert', { expertise: 'Python developer' }),
     ]
-    mockListPersonas.mockResolvedValue({ items: personas })
+    mockK8s.listLanguagePersonas.mockResolvedValue({ items: personas })
 
     const res = await GET(makeRequest(undefined, '?search=go'), makeParams())
     const body = await res.json()
@@ -179,7 +172,7 @@ describe('GET /api/clusters/[name]/personas', () => {
       makePersona('alpha', { personality: 'Curious and experimental' }),
       makePersona('beta', { personality: 'Methodical and precise' }),
     ]
-    mockListPersonas.mockResolvedValue({ items: personas })
+    mockK8s.listLanguagePersonas.mockResolvedValue({ items: personas })
 
     const res = await GET(makeRequest(undefined, '?search=methodical'), makeParams())
     const body = await res.json()
@@ -194,7 +187,7 @@ describe('GET /api/clusters/[name]/personas', () => {
       makePersona('alpha', { expertise: 'Senior Go engineer' }),
       makePersona('beta', { expertise: 'Python data scientist' }),
     ]
-    mockListPersonas.mockResolvedValue({ items: personas })
+    mockK8s.listLanguagePersonas.mockResolvedValue({ items: personas })
 
     const res = await GET(makeRequest(undefined, '?search=python'), makeParams())
     const body = await res.json()
@@ -208,7 +201,7 @@ describe('GET /api/clusters/[name]/personas', () => {
       makePersona('alpha', { tone: 'professional' }),
       makePersona('beta', { tone: 'casual' }),
     ]
-    mockListPersonas.mockResolvedValue({ items: personas })
+    mockK8s.listLanguagePersonas.mockResolvedValue({ items: personas })
 
     const res = await GET(makeRequest(undefined, '?tone=professional'), makeParams())
     const body = await res.json()
@@ -218,7 +211,7 @@ describe('GET /api/clusters/[name]/personas', () => {
   })
 
   it('returns 500 when unauthenticated', async () => {
-    mockSession.mockResolvedValue(null)
+    mockGetToken.mockResolvedValue(null)
 
     const res = await GET(makeRequest(), makeParams())
 
@@ -226,7 +219,7 @@ describe('GET /api/clusters/[name]/personas', () => {
   })
 
   it('returns 500 on k8s error', async () => {
-    mockListPersonas.mockRejectedValue(new Error('k8s unavailable'))
+    mockK8s.listLanguagePersonas.mockRejectedValue(new Error('k8s unavailable'))
 
     const res = await GET(makeRequest(), makeParams())
 
@@ -239,8 +232,8 @@ describe('GET /api/clusters/[name]/personas', () => {
 describe('POST /api/clusters/[name]/personas', () => {
   beforeEach(() => {
     jest.clearAllMocks()
-    mockSession.mockResolvedValue(AUTHED_SESSION as any)
-    mockCreatePersona.mockResolvedValue(makePersona('new-persona'))
+    mockGetToken.mockResolvedValue(AUTHED_TOKEN as any)
+    mockK8s.createLanguagePersona.mockResolvedValue(makePersona('new-persona'))
   })
 
   it('creates a persona with CRD fields only', async () => {
@@ -253,7 +246,7 @@ describe('POST /api/clusters/[name]/personas', () => {
     expect(res.status).toBe(200)
     expect(body.success).toBe(true)
 
-    const createdPersona = mockCreatePersona.mock.calls[0][1]
+    const createdPersona = mockK8s.createLanguagePersona.mock.calls[0][1]
     expect(createdPersona.spec).toEqual({
       tone: 'professional',
       personality: 'Methodical',
@@ -266,7 +259,6 @@ describe('POST /api/clusters/[name]/personas', () => {
       makeRequest({
         name: 'new-persona',
         tone: 'professional',
-        // extra fields not in the CRD spec
         displayName: 'Display Name',
         description: 'A description',
         systemPrompt: 'You are...',
@@ -276,7 +268,7 @@ describe('POST /api/clusters/[name]/personas', () => {
       makeParams()
     )
 
-    const createdPersona = mockCreatePersona.mock.calls[0][1]
+    const createdPersona = mockK8s.createLanguagePersona.mock.calls[0][1]
     expect(createdPersona.spec).not.toHaveProperty('displayName')
     expect(createdPersona.spec).not.toHaveProperty('description')
     expect(createdPersona.spec).not.toHaveProperty('systemPrompt')
@@ -289,21 +281,21 @@ describe('POST /api/clusters/[name]/personas', () => {
     const body = await res.json()
 
     expect(res.status).toBe(200)
-    const createdPersona = mockCreatePersona.mock.calls[0][1]
+    const createdPersona = mockK8s.createLanguagePersona.mock.calls[0][1]
     expect(createdPersona.spec).toEqual({})
   })
 
   it('sets correct metadata (namespace = clusterName, label, annotation)', async () => {
     await POST(makeRequest({ name: 'new-persona', tone: 'professional' }), makeParams())
 
-    const createdPersona = mockCreatePersona.mock.calls[0][1]
+    const createdPersona = mockK8s.createLanguagePersona.mock.calls[0][1]
     expect(createdPersona.metadata.namespace).toBe('test-cluster')
     expect(createdPersona.metadata.labels['langop.io/cluster']).toBe('test-cluster')
-    expect(createdPersona.metadata.annotations['langop.io/created-by-email']).toBe('admin@example.com')
+    expect(createdPersona.metadata.annotations['langop.io/created-by']).toBe('user-1')
   })
 
   it('returns 500 when unauthenticated', async () => {
-    mockSession.mockResolvedValue(null)
+    mockGetToken.mockResolvedValue(null)
 
     const res = await POST(makeRequest({ name: 'new-persona' }), makeParams())
 
@@ -311,7 +303,7 @@ describe('POST /api/clusters/[name]/personas', () => {
   })
 
   it('returns 500 on k8s error during creation', async () => {
-    mockCreatePersona.mockRejectedValue(new Error('k8s write failed'))
+    mockK8s.createLanguagePersona.mockRejectedValue(new Error('k8s write failed'))
 
     const res = await POST(makeRequest({ name: 'new-persona' }), makeParams())
 

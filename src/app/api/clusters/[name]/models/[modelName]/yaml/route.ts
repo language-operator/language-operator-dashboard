@@ -12,19 +12,19 @@ export async function GET(
   { params }: { params: Promise<{ name: string; modelName: string }> }
 ) {
   try {
-    const { email } = await getAuthenticatedUser(request)
-    
+    const { k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
 
     const { name: clusterName, modelName } = await params
     if (!clusterName || !modelName) {
       return NextResponse.json({ error: 'Cluster name and model name are required' }, { status: 400 })
     }
 
-    // Fetch specific model from organization namespace
+    // Fetch specific model from cluster namespace
     let model: LanguageModel | null = null
 
     try {
-      const response = await k8sClient.getLanguageModel(clusterName, modelName)
+      const response = await client.getLanguageModel(clusterName, modelName)
       model = extractItem<LanguageModel>(response)
     } catch (k8sError) {
       // If model not found, return 404
@@ -72,8 +72,12 @@ export async function GET(
     })
 
   } catch (error) {
+    const k8sStatus = (error as { response?: { statusCode?: number } })?.response?.statusCode
+    if (k8sStatus === 401 || k8sStatus === 403) {
+      return NextResponse.json({ error: 'Token expired or unauthorized' }, { status: 401 })
+    }
     console.error('Error fetching model YAML:', error)
-    return NextResponse.json({ 
+    return NextResponse.json({
       error: 'Failed to fetch model YAML',
       details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 })

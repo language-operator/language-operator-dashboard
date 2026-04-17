@@ -50,9 +50,10 @@ export async function GET(
 ) {
   try {
     const { name } = await params
-    const { email } = await getAuthenticatedUser(request)
+    const { k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
     const namespace = NAMESPACE
-    const model = await k8sClient.getLanguageModel(namespace, name)
+    const model = await client.getLanguageModel(namespace, name)
     
     if (!model) {
       return NextResponse.json({ error: 'Model not found' }, { status: 404 })
@@ -60,6 +61,10 @@ export async function GET(
     
     return NextResponse.json({ data: model })
   } catch (error) {
+    const k8sStatus = (error as { response?: { statusCode?: number } })?.response?.statusCode
+    if (k8sStatus === 401 || k8sStatus === 403) {
+      return NextResponse.json({ error: 'Token expired or unauthorized' }, { status: 401 })
+    }
     console.error('Error fetching model:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
@@ -75,7 +80,8 @@ export async function PATCH(
 ) {
   try {
     const { name } = await params
-    const { email } = await getAuthenticatedUser(request)
+    const { userId, k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
     const namespace = NAMESPACE
 
     // Parse and validate request body
@@ -83,19 +89,19 @@ export async function PATCH(
     const validatedData = updateModelSchema.parse(body)
 
     // Get existing model
-    const existingModel = await k8sClient.getLanguageModel(namespace, name)
+    const existingModel = await client.getLanguageModel(namespace, name)
     if (!existingModel) {
       return NextResponse.json({ error: 'Model not found' }, { status: 404 })
     }
 
     // Update the model
-    const updatedModel = await k8sClient.updateLanguageModel(namespace, name, {
+    const updatedModel = await client.updateLanguageModel(namespace, name, {
       metadata: {
         ...existingModel.metadata,
         annotations: {
           ...existingModel.metadata.annotations,
           'langop.io/updated-at': new Date().toISOString(),
-          'langop.io/updated-by': email || 'unknown'
+          'langop.io/updated-by': userId || 'unknown'
         }
       },
       spec: {
@@ -111,12 +117,16 @@ export async function PATCH(
     } as import('@/types/model').LanguageModel)
 
     // Log the update for audit trail
-    console.log(`Model updated: ${name} by ${email} in ${namespace}`)
+    console.log(`Model updated: ${name} by ${userId} in ${namespace}`)
 
     return NextResponse.json({ data: updatedModel })
   } catch (error) {
+    const k8sStatus = (error as { response?: { statusCode?: number } })?.response?.statusCode
+    if (k8sStatus === 401 || k8sStatus === 403) {
+      return NextResponse.json({ error: 'Token expired or unauthorized' }, { status: 401 })
+    }
     console.error('Error updating model:', error)
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: 'Invalid input', details: error.issues },
@@ -140,7 +150,8 @@ export async function PUT(
     console.log('🔥 PUT /api/models/[name] - Starting model update')
     const { name } = await params
     console.log('🔥 Model name:', name)
-    const { email } = await getAuthenticatedUser(request)
+    const { userId, k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
     const namespace = NAMESPACE
 
     // Parse and validate request body
@@ -148,20 +159,20 @@ export async function PUT(
     const validatedData = updateModelSchema.parse(body)
 
     // Get existing model
-    const existingModel = await k8sClient.getLanguageModel(namespace, name)
+    const existingModel = await client.getLanguageModel(namespace, name)
     if (!existingModel) {
       return NextResponse.json({ error: 'Model not found' }, { status: 404 })
     }
 
     console.log('🔥 About to call replaceLanguageModel with namespace:', namespace, 'name:', name)
     // Replace the model using PUT semantics
-    const updatedModel = await k8sClient.replaceLanguageModel(namespace, name, {
+    const updatedModel = await client.replaceLanguageModel(namespace, name, {
       metadata: {
         ...existingModel.metadata,
         annotations: {
           ...existingModel.metadata.annotations,
           'langop.io/updated-at': new Date().toISOString(),
-          'langop.io/updated-by': email || 'unknown'
+          'langop.io/updated-by': userId || 'unknown'
         }
       },
       spec: {
@@ -177,13 +188,17 @@ export async function PUT(
     } as import('@/types/model').LanguageModel)
 
     // Log the update for audit trail
-    console.log(`Model updated via PUT: ${name} by ${email} in ${namespace}`)
+    console.log(`Model updated via PUT: ${name} by ${userId} in ${namespace}`)
 
     return NextResponse.json({ data: updatedModel })
   } catch (error) {
+    const k8sStatus = (error as { response?: { statusCode?: number } })?.response?.statusCode
+    if (k8sStatus === 401 || k8sStatus === 403) {
+      return NextResponse.json({ error: 'Token expired or unauthorized' }, { status: 401 })
+    }
     console.error('🔥 Error updating model via PUT:', error)
     console.error('🔥 Error stack:', error instanceof Error ? error.stack : 'No stack trace')
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: 'Invalid input', details: error.issues },
@@ -205,23 +220,28 @@ export async function DELETE(
 ) {
   try {
     const { name } = await params
-    const { email } = await getAuthenticatedUser(request)
+    const { userId, k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
     const namespace = NAMESPACE
 
     // Check if model exists
-    const existingModel = await k8sClient.getLanguageModel(namespace, name)
+    const existingModel = await client.getLanguageModel(namespace, name)
     if (!existingModel) {
       return NextResponse.json({ error: 'Model not found' }, { status: 404 })
     }
 
     // Delete the model
-    await k8sClient.deleteLanguageModel(namespace, name)
+    await client.deleteLanguageModel(namespace, name)
 
     // Log the deletion for audit trail
-    console.log(`Model deleted: ${name} by ${email} in ${namespace}`)
+    console.log(`Model deleted: ${name} by ${userId} in ${namespace}`)
 
     return NextResponse.json({ success: true })
   } catch (error) {
+    const k8sStatus = (error as { response?: { statusCode?: number } })?.response?.statusCode
+    if (k8sStatus === 401 || k8sStatus === 403) {
+      return NextResponse.json({ error: 'Token expired or unauthorized' }, { status: 401 })
+    }
     console.error('Error deleting model:', error)
     return NextResponse.json(
       { error: 'Internal server error' },

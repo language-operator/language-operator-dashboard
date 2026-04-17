@@ -8,9 +8,8 @@ const NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
 
 export async function GET(request: NextRequest) {
   try {
-    const { email } = await getAuthenticatedUser(request)
-    
-    // Check permissions
+    const { k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
 
     // Parse query parameters
     const url = new URL(request.url)
@@ -44,7 +43,7 @@ export async function GET(request: NextRequest) {
     // If cluster name is specified, try to find the cluster's namespace
     if (clusterName && !namespace) {
       try {
-        const clusterResponse = await k8sClient.getLanguageCluster(NAMESPACE, clusterName)
+        const clusterResponse = await client.getLanguageCluster(NAMESPACE, clusterName)
         const cluster = (clusterResponse as any)?.body || (clusterResponse as any)?.data || clusterResponse
         targetNamespace = cluster?.metadata?.namespace || NAMESPACE
       } catch (error) {
@@ -55,7 +54,7 @@ export async function GET(request: NextRequest) {
 
     // Fetch events from Kubernetes
     // Note: We don't use labelSelector because Events don't inherit labels from involved resources
-    const eventsResponse = await k8sClient.listEvents(targetNamespace, {
+    const eventsResponse = await client.listEvents(targetNamespace, {
       limit: Math.min(limit * 2, 100), // Fetch more than requested to account for filtering
       fieldSelector: fieldSelector || undefined,
     })
@@ -105,10 +104,10 @@ export async function GET(request: NextRequest) {
       try {
         // Fetch all Language Operator resources in the namespace
         const [agentsResp, modelsResp, toolsResp, personasResp] = await Promise.all([
-          k8sClient.listLanguageAgents(targetNamespace).catch(() => ({ items: [] })),
-          k8sClient.listLanguageModels(targetNamespace).catch(() => ({ items: [] })),
-          k8sClient.listLanguageTools(targetNamespace).catch(() => ({ items: [] })),
-          k8sClient.listLanguagePersonas(targetNamespace).catch(() => ({ items: [] })),
+          client.listLanguageAgents(targetNamespace).catch(() => ({ items: [] })),
+          client.listLanguageModels(targetNamespace).catch(() => ({ items: [] })),
+          client.listLanguageTools(targetNamespace).catch(() => ({ items: [] })),
+          client.listLanguagePersonas(targetNamespace).catch(() => ({ items: [] })),
         ])
 
         // Extract items from responses (handle different response structures)
@@ -193,9 +192,13 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
+    const k8sStatus = (error as { response?: { statusCode?: number } })?.response?.statusCode
+    if (k8sStatus === 401 || k8sStatus === 403) {
+      return NextResponse.json({ error: 'Token expired or unauthorized' }, { status: 401 })
+    }
     console.error('Error fetching events:', error)
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to fetch events',
         details: error instanceof Error ? error.message : 'Unknown error'
       },

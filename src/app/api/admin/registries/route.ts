@@ -8,8 +8,8 @@ const REGISTRIES_KEY = 'allowed-registries'
 
 export async function GET(request: NextRequest) {
   try {
-    const { email } = await getAuthenticatedUser(request)
-    const client = k8sClient.forUser(email)
+    const { k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
 
     try {
       const configMapResponse = await client.readConfigMap(OPERATOR_NAMESPACE, CONFIG_MAP_NAME)
@@ -48,8 +48,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { email } = await getAuthenticatedUser(request)
-    const client = k8sClient.forUser(email)
+    const { k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
 
     const body = await request.json()
     const { registries } = body

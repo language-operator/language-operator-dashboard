@@ -31,7 +31,8 @@ export async function GET(
   { params }: { params: Promise<{ name: string; modelName: string }> }
 ) {
   try {
-    await getAuthenticatedUser(request)
+    const { k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
 
     const { name: clusterName, modelName } = await params
 
@@ -40,7 +41,7 @@ export async function GET(
 
     const response = await handleKubernetesOperation(
       'get model',
-      k8sClient.getLanguageModel(clusterName, modelName)
+      client.getLanguageModel(clusterName, modelName)
     )
 
     const model = extractItem<LanguageModel>(response)
@@ -65,7 +66,8 @@ export async function PUT(
   { params }: { params: Promise<{ name: string; modelName: string }> }
 ) {
   try {
-    await getAuthenticatedUser(request)
+    const { k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
 
     const { name: clusterName, modelName } = await params
 
@@ -78,7 +80,7 @@ export async function PUT(
     // Fetch existing model to merge updates
     const existingResponse = await handleKubernetesOperation(
       'get model for update',
-      k8sClient.getLanguageModel(clusterName, modelName)
+      client.getLanguageModel(clusterName, modelName)
     )
 
     const existingModel = extractItem<LanguageModel>(existingResponse)
@@ -145,7 +147,7 @@ export async function PUT(
 
     const response = await handleKubernetesOperation(
       'update model',
-      k8sClient.replaceLanguageModel(clusterName, modelName, updatedModel)
+      client.replaceLanguageModel(clusterName, modelName, updatedModel)
     )
 
     console.log(`Successfully updated model ${modelName} for cluster ${clusterName}`)
@@ -162,7 +164,8 @@ export async function DELETE(
   { params }: { params: Promise<{ name: string; modelName: string }> }
 ) {
   try {
-    await getAuthenticatedUser(request)
+    const { k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
 
     const { name: clusterName, modelName } = await params
 
@@ -171,7 +174,7 @@ export async function DELETE(
 
     const response = await handleKubernetesOperation(
       'delete model',
-      k8sClient.deleteLanguageModel(clusterName, modelName)
+      client.deleteLanguageModel(clusterName, modelName)
     )
 
     console.log(`Successfully deleted model ${modelName} for cluster ${clusterName}`)

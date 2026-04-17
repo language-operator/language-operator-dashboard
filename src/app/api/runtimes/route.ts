@@ -11,7 +11,8 @@ import {
 // GET /api/runtimes — list all LanguageAgentRuntimes (cluster-scoped)
 export async function GET(request: NextRequest) {
   try {
-    await getAuthenticatedUser(request)
+    const { k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
 
     const url = new URL(request.url)
     const params: LanguageAgentRuntimeListParams = {
@@ -25,7 +26,7 @@ export async function GET(request: NextRequest) {
     let runtimes: LanguageAgentRuntime[] = []
 
     try {
-      const response = await k8sClient.listLanguageAgentRuntimes()
+      const response = await client.listLanguageAgentRuntimes()
       const responseBody = (response as any)?.body
       const responseData = (response as any)?.data
       const responseItems = (response as any)?.items
@@ -89,7 +90,8 @@ export async function GET(request: NextRequest) {
 // POST /api/runtimes — create a LanguageAgentRuntime
 export async function POST(request: NextRequest) {
   try {
-    const { email } = await getAuthenticatedUser(request)
+    const { userId, k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
     const formData: LanguageAgentRuntimeFormData = await request.json()
 
     const spec: Record<string, unknown> = {}
@@ -155,15 +157,15 @@ export async function POST(request: NextRequest) {
       metadata: {
         name: formData.name,
         annotations: {
-          'langop.io/created-by-email': email,
+          'langop.io/created-by': userId,
           'langop.io/created-at': new Date().toISOString(),
         },
       },
       spec,
     }
 
-    const response = await k8sClient.createLanguageAgentRuntime(runtime)
-    console.log(`User ${email} created LanguageAgentRuntime ${formData.name}`)
+    const response = await client.createLanguageAgentRuntime(runtime)
+    console.log(`User ${userId} created LanguageAgentRuntime ${formData.name}`)
 
     return NextResponse.json({
       success: true,

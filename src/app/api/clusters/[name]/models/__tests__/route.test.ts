@@ -3,16 +3,14 @@
  *
  * Tests for GET /api/clusters/[name]/models and POST /api/clusters/[name]/models
  *
- * Pattern mirrors src/app/api/clusters/[name]/personas/__tests__/route.test.ts:
- * - Auth: mock getServerSession to return { user: { id, email } }
- * - K8s: mock k8sClient methods directly
- * - Cluster validation: mock validateClusterExists to resolve immediately
+ * Auth: mock `next-auth/jwt`'s getToken to return { sub, k8sToken }.
+ * K8s: mock k8sClient.forToken() to return a plain object of jest.fn()s.
+ * Cluster validation: mock validateClusterExists to resolve immediately.
  */
 
 import { GET, POST } from '../route'
-import { getServerSession } from 'next-auth'
+import { getToken } from 'next-auth/jwt'
 import { NextRequest } from 'next/server'
-import { k8sClient } from '@/lib/k8s-client'
 
 // ── Mocks ──────────────────────────────────────────────────────────────────
 
@@ -25,13 +23,15 @@ jest.mock('next/server', () => ({
   },
 }))
 
-jest.mock('next-auth')
+jest.mock('next-auth/jwt')
+
+const mockK8s = {
+  listLanguageModels: jest.fn(),
+  createLanguageModel: jest.fn(),
+}
 
 jest.mock('@/lib/k8s-client', () => ({
-  k8sClient: {
-    listLanguageModels: jest.fn(),
-    createLanguageModel: jest.fn(),
-  },
+  k8sClient: { forToken: jest.fn(() => mockK8s) },
   extractItems: (response: unknown) => {
     const r = response as Record<string, unknown>
     return (
@@ -60,9 +60,7 @@ jest.mock('@/lib/cluster-utils', () => ({
   filterByClusterRef: jest.fn((items: unknown[]) => items),
 }))
 
-const mockSession = getServerSession as jest.MockedFunction<typeof getServerSession>
-const mockListModels = k8sClient.listLanguageModels as jest.Mock
-const mockCreateModel = k8sClient.createLanguageModel as jest.Mock
+const mockGetToken = getToken as jest.MockedFunction<typeof getToken>
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -77,7 +75,7 @@ function makeParams(name = 'test-cluster') {
   return { params: Promise.resolve({ name }) }
 }
 
-const AUTHED_SESSION = { user: { id: 'user-1', email: 'admin@example.com' } }
+const AUTHED_TOKEN = { sub: 'user-1', k8sToken: 'test-token' }
 
 function makeModel(name: string, specOverrides: Record<string, unknown> = {}) {
   return {
@@ -102,12 +100,12 @@ function makeModel(name: string, specOverrides: Record<string, unknown> = {}) {
 describe('GET /api/clusters/[name]/models', () => {
   beforeEach(() => {
     jest.clearAllMocks()
-    mockSession.mockResolvedValue(AUTHED_SESSION as any)
+    mockGetToken.mockResolvedValue(AUTHED_TOKEN as any)
   })
 
   it('returns models for a cluster', async () => {
     const models = [makeModel('alpha'), makeModel('beta')]
-    mockListModels.mockResolvedValue({ items: models })
+    mockK8s.listLanguageModels.mockResolvedValue({ items: models })
 
     const res = await GET(makeRequest(), makeParams())
     const body = await res.json()
@@ -115,11 +113,11 @@ describe('GET /api/clusters/[name]/models', () => {
     expect(res.status).toBe(200)
     expect(body.success).toBe(true)
     expect(body.data).toHaveLength(2)
-    expect(mockListModels).toHaveBeenCalledWith('test-cluster')
+    expect(mockK8s.listLanguageModels).toHaveBeenCalledWith('test-cluster')
   })
 
   it('handles body.items response structure from k8s', async () => {
-    mockListModels.mockResolvedValue({ body: { items: [makeModel('alpha')] } })
+    mockK8s.listLanguageModels.mockResolvedValue({ body: { items: [makeModel('alpha')] } })
 
     const res = await GET(makeRequest(), makeParams())
     const body = await res.json()
@@ -129,7 +127,7 @@ describe('GET /api/clusters/[name]/models', () => {
   })
 
   it('handles data.items response structure from k8s', async () => {
-    mockListModels.mockResolvedValue({ data: { items: [makeModel('alpha')] } })
+    mockK8s.listLanguageModels.mockResolvedValue({ data: { items: [makeModel('alpha')] } })
 
     const res = await GET(makeRequest(), makeParams())
     const body = await res.json()
@@ -139,7 +137,7 @@ describe('GET /api/clusters/[name]/models', () => {
   })
 
   it('returns empty array when no models exist', async () => {
-    mockListModels.mockResolvedValue({ items: [] })
+    mockK8s.listLanguageModels.mockResolvedValue({ items: [] })
 
     const res = await GET(makeRequest(), makeParams())
     const body = await res.json()
@@ -153,7 +151,7 @@ describe('GET /api/clusters/[name]/models', () => {
       makeModel('gpt4-prod', { provider: 'openai', modelName: 'gpt-4o' }),
       makeModel('claude-staging', { provider: 'anthropic', modelName: 'claude-3-5-sonnet-20241022' }),
     ]
-    mockListModels.mockResolvedValue({ items: models })
+    mockK8s.listLanguageModels.mockResolvedValue({ items: models })
 
     const res = await GET(makeRequest(undefined, '?search=gpt'), makeParams())
     const body = await res.json()
@@ -168,7 +166,7 @@ describe('GET /api/clusters/[name]/models', () => {
       makeModel('alpha', { provider: 'openai', modelName: 'gpt-4o' }),
       makeModel('beta', { provider: 'anthropic', modelName: 'claude-3-5-sonnet-20241022' }),
     ]
-    mockListModels.mockResolvedValue({ items: models })
+    mockK8s.listLanguageModels.mockResolvedValue({ items: models })
 
     const res = await GET(makeRequest(undefined, '?search=anthropic'), makeParams())
     const body = await res.json()
@@ -183,7 +181,7 @@ describe('GET /api/clusters/[name]/models', () => {
       makeModel('alpha', { provider: 'openai' }),
       makeModel('beta', { provider: 'anthropic' }),
     ]
-    mockListModels.mockResolvedValue({ items: models })
+    mockK8s.listLanguageModels.mockResolvedValue({ items: models })
 
     const res = await GET(makeRequest(undefined, '?provider=anthropic'), makeParams())
     const body = await res.json()
@@ -193,7 +191,7 @@ describe('GET /api/clusters/[name]/models', () => {
   })
 
   it('returns 500 when unauthenticated', async () => {
-    mockSession.mockResolvedValue(null)
+    mockGetToken.mockResolvedValue(null)
 
     const res = await GET(makeRequest(), makeParams())
 
@@ -201,7 +199,7 @@ describe('GET /api/clusters/[name]/models', () => {
   })
 
   it('returns 500 on k8s error', async () => {
-    mockListModels.mockRejectedValue(new Error('k8s unavailable'))
+    mockK8s.listLanguageModels.mockRejectedValue(new Error('k8s unavailable'))
 
     const res = await GET(makeRequest(), makeParams())
 
@@ -214,8 +212,8 @@ describe('GET /api/clusters/[name]/models', () => {
 describe('POST /api/clusters/[name]/models', () => {
   beforeEach(() => {
     jest.clearAllMocks()
-    mockSession.mockResolvedValue(AUTHED_SESSION as any)
-    mockCreateModel.mockResolvedValue(makeModel('new-model'))
+    mockGetToken.mockResolvedValue(AUTHED_TOKEN as any)
+    mockK8s.createLanguageModel.mockResolvedValue(makeModel('new-model'))
   })
 
   it('creates a model with CRD fields only', async () => {
@@ -228,7 +226,7 @@ describe('POST /api/clusters/[name]/models', () => {
     expect(res.status).toBe(200)
     expect(body.success).toBe(true)
 
-    const created = mockCreateModel.mock.calls[0][1]
+    const created = mockK8s.createLanguageModel.mock.calls[0][1]
     expect(created.spec.provider).toBe('openai')
     expect(created.spec.modelName).toBe('gpt-4o')
   })
@@ -248,7 +246,7 @@ describe('POST /api/clusters/[name]/models', () => {
       makeParams()
     )
 
-    const created = mockCreateModel.mock.calls[0][1]
+    const created = mockK8s.createLanguageModel.mock.calls[0][1]
     expect(created.spec).not.toHaveProperty('temperature')
     expect(created.spec).not.toHaveProperty('maxTokens')
     expect(created.spec).not.toHaveProperty('topP')
@@ -272,7 +270,7 @@ describe('POST /api/clusters/[name]/models', () => {
       makeParams()
     )
 
-    const created = mockCreateModel.mock.calls[0][1]
+    const created = mockK8s.createLanguageModel.mock.calls[0][1]
     expect(created.spec.endpoint).toBe('http://localhost:11434/v1')
     expect(created.spec.apiKeySecretRef).toEqual({ name: 'llama-secret', key: 'api-key' })
     expect(created.spec.rateLimits).toEqual({ requestsPerMinute: 60, tokensPerMinute: 10000 })
@@ -285,7 +283,7 @@ describe('POST /api/clusters/[name]/models', () => {
       makeParams()
     )
 
-    const created = mockCreateModel.mock.calls[0][1]
+    const created = mockK8s.createLanguageModel.mock.calls[0][1]
     expect(created.metadata.namespace).toBe('test-cluster')
     expect(created.metadata.labels['langop.io/cluster']).toBe('test-cluster')
   })
@@ -297,7 +295,7 @@ describe('POST /api/clusters/[name]/models', () => {
     )
 
     expect(res.status).toBe(500)
-    expect(mockCreateModel).not.toHaveBeenCalled()
+    expect(mockK8s.createLanguageModel).not.toHaveBeenCalled()
   })
 
   it('returns 500 when provider is missing', async () => {
@@ -307,7 +305,7 @@ describe('POST /api/clusters/[name]/models', () => {
     )
 
     expect(res.status).toBe(500)
-    expect(mockCreateModel).not.toHaveBeenCalled()
+    expect(mockK8s.createLanguageModel).not.toHaveBeenCalled()
   })
 
   it('returns 500 when modelName is missing', async () => {
@@ -317,11 +315,11 @@ describe('POST /api/clusters/[name]/models', () => {
     )
 
     expect(res.status).toBe(500)
-    expect(mockCreateModel).not.toHaveBeenCalled()
+    expect(mockK8s.createLanguageModel).not.toHaveBeenCalled()
   })
 
   it('returns 500 when unauthenticated', async () => {
-    mockSession.mockResolvedValue(null)
+    mockGetToken.mockResolvedValue(null)
 
     const res = await POST(
       makeRequest({ name: 'new-model', provider: 'openai', modelName: 'gpt-4o' }),
@@ -332,7 +330,7 @@ describe('POST /api/clusters/[name]/models', () => {
   })
 
   it('returns 500 on k8s error during creation', async () => {
-    mockCreateModel.mockRejectedValue(new Error('k8s write failed'))
+    mockK8s.createLanguageModel.mockRejectedValue(new Error('k8s write failed'))
 
     const res = await POST(
       makeRequest({ name: 'new-model', provider: 'openai', modelName: 'gpt-4o' }),

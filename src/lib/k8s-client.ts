@@ -107,26 +107,72 @@ class KubernetesClient {
   }
 
   /**
-   * Return a new client that impersonates the given user email.
-   * The dashboard SA must have `impersonate` rights on `users`.
-   * K8s RBAC is then evaluated as that user — they only see what they're permitted to see.
+   * Return a new client that authenticates directly with the given bearer token.
+   * K8s RBAC is evaluated as the token's own identity — no impersonation.
    */
-  public forUser(email: string): KubernetesClient {
-    const impersonated = Object.create(KubernetesClient.prototype) as KubernetesClient
+  public forToken(token: string): KubernetesClient {
+    const derived = Object.create(KubernetesClient.prototype) as KubernetesClient
     const kc = new k8s.KubeConfig()
     kc.loadFromOptions({
       clusters: this.kc.getClusters(),
-      users: this.kc.getUsers().map(u => ({ ...u, impersonate: email })),
-      contexts: this.kc.getContexts(),
-      currentContext: this.kc.getCurrentContext(),
+      users: [{ name: 'user-token', token }],
+      contexts: [{
+        name: 'token-context',
+        user: 'user-token',
+        cluster: this.kc.getClusters()[0].name,
+      }],
+      currentContext: 'token-context',
     })
-    impersonated.kc = kc
-    impersonated.coreV1Api = kc.makeApiClient(k8s.CoreV1Api)
-    impersonated.customObjectsApi = kc.makeApiClient(k8s.CustomObjectsApi)
-    impersonated.batchV1Api = kc.makeApiClient(k8s.BatchV1Api)
-    impersonated.rbacV1Api = kc.makeApiClient(k8s.RbacAuthorizationV1Api)
-    impersonated.DEFAULT_TIMEOUT = this.DEFAULT_TIMEOUT
-    return impersonated
+    derived.kc = kc
+    derived.coreV1Api = kc.makeApiClient(k8s.CoreV1Api)
+    derived.customObjectsApi = kc.makeApiClient(k8s.CustomObjectsApi)
+    derived.batchV1Api = kc.makeApiClient(k8s.BatchV1Api)
+    derived.rbacV1Api = kc.makeApiClient(k8s.RbacAuthorizationV1Api)
+    derived.DEFAULT_TIMEOUT = this.DEFAULT_TIMEOUT
+    return derived
+  }
+
+  /**
+   * Validate a bearer token by calling SelfSubjectReview against the K8s API.
+   * Returns the K8s username associated with the token.
+   * Throws 'Invalid or expired token' if the token is rejected.
+   */
+  public async validateToken(token: string): Promise<string> {
+    const kc = new k8s.KubeConfig()
+    kc.loadFromOptions({
+      clusters: this.kc.getClusters(),
+      users: [{ name: 'user-token', token }],
+      contexts: [{
+        name: 'token-context',
+        user: 'user-token',
+        cluster: this.kc.getClusters()[0].name,
+      }],
+      currentContext: 'token-context',
+    })
+    const authApi = kc.makeApiClient(k8s.AuthenticationV1Api)
+
+    try {
+      const response = await authApi.createSelfSubjectReview({
+        body: {
+          apiVersion: 'authentication.k8s.io/v1',
+          kind: 'SelfSubjectReview',
+        },
+      })
+      const r = response as { body?: k8s.V1SelfSubjectReview; data?: k8s.V1SelfSubjectReview } | k8s.V1SelfSubjectReview
+      const review = (r as { body?: k8s.V1SelfSubjectReview }).body
+        ?? (r as { data?: k8s.V1SelfSubjectReview }).data
+        ?? (r as k8s.V1SelfSubjectReview)
+      const username = review?.status?.userInfo?.username
+      if (!username) throw new Error('Could not determine user identity from token')
+      return username
+    } catch (error) {
+      const statusCode = (error as { response?: { statusCode?: number }; statusCode?: number })
+        ?.response?.statusCode ?? (error as { statusCode?: number })?.statusCode
+      if (statusCode === 401 || statusCode === 403) {
+        throw new Error('Invalid or expired token')
+      }
+      throw error
+    }
   }
 
   /**

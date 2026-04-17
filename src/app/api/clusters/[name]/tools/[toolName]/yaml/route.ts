@@ -12,19 +12,19 @@ export async function GET(
   { params }: { params: Promise<{ name: string; toolName: string }> }
 ) {
   try {
-    const { email } = await getAuthenticatedUser(request)
-    
+    const { k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
 
     const { name: clusterName, toolName } = await params
     if (!clusterName || !toolName) {
       return NextResponse.json({ error: 'Cluster name and tool name are required' }, { status: 400 })
     }
 
-    // Fetch specific tool from organization namespace
+    // Fetch specific tool from cluster namespace
     let tool: LanguageTool | null = null
 
     try {
-      const response = await k8sClient.getLanguageTool(clusterName, toolName)
+      const response = await client.getLanguageTool(clusterName, toolName)
       tool = extractItem<LanguageTool>(response)
     } catch (k8sError) {
       // If tool not found, return 404
@@ -72,8 +72,12 @@ export async function GET(
     })
 
   } catch (error) {
+    const k8sStatus = (error as { response?: { statusCode?: number } })?.response?.statusCode
+    if (k8sStatus === 401 || k8sStatus === 403) {
+      return NextResponse.json({ error: 'Token expired or unauthorized' }, { status: 401 })
+    }
     console.error('Error fetching tool YAML:', error)
-    return NextResponse.json({ 
+    return NextResponse.json({
       error: 'Failed to fetch tool YAML',
       details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 })

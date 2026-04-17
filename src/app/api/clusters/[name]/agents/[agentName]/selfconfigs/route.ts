@@ -11,7 +11,8 @@ interface RouteParams {
 // Lists LanguageAgentSelfConfig resources in the cluster namespace, filtered to this agent.
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
-    await getAuthenticatedUser(request)
+    const { k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
 
     const { name: clusterName, agentName } = await params
     if (!clusterName || !agentName) {
@@ -24,7 +25,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     let allItems: LanguageAgentSelfConfig[] = []
 
     try {
-      const response = await k8sClient.listLanguageAgentSelfConfigs(clusterName)
+      const response = await client.listLanguageAgentSelfConfigs(clusterName)
       allItems = extractItems<LanguageAgentSelfConfig>(response)
     } catch (k8sError) {
       console.error(
@@ -42,6 +43,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json({ success: true, data: items })
   } catch (error) {
+    const k8sStatus = (error as { response?: { statusCode?: number } })?.response?.statusCode
+    if (k8sStatus === 401 || k8sStatus === 403) {
+      return NextResponse.json({ error: 'Token expired or unauthorized' }, { status: 401 })
+    }
     console.error('Error fetching agent self-configs:', error)
     return NextResponse.json(
       {

@@ -13,7 +13,8 @@ interface RouteParams {
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
-    const { email } = await getAuthenticatedUser(request)
+    const { k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
 
     const { name: clusterName, agentName } = await params
     const url = new URL(request.url)
@@ -22,7 +23,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     console.log(`Starting log stream for agent ${agentName} in cluster ${clusterName}${podName ? `, pod ${podName}` : ''}`)
 
     // Find the pod for this agent
-    const pods = await k8sClient.listPods(clusterName, {
+    const pods = await client.listPods(clusterName, {
       labelSelector: `app.kubernetes.io/name=${agentName}`
     })
 
@@ -64,7 +65,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
         const streamLogs = async () => {
           try {
-            const logStream = await k8sClient.streamPodLogs(clusterName, podMetaName, {
+            const logStream = await client.streamPodLogs(clusterName, podMetaName, {
               follow: true,
               timestamps: true,
               tailLines: 10
@@ -82,7 +83,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
             } else {
               const pollLogs = async () => {
                 try {
-                  const logs = await k8sClient.getPodLogs(clusterName, podMetaName, {
+                  const logs = await client.getPodLogs(clusterName, podMetaName, {
                     tailLines: 1,
                     timestamps: true,
                     sinceSeconds: 1

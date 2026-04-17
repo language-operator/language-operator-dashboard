@@ -19,8 +19,8 @@ export async function GET(
   { params }: { params: Promise<{ name: string; personaName: string }> }
 ) {
   try {
-    const { email } = await getAuthenticatedUser(request)
-    
+    const { k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
 
     const { name: clusterName, personaName } = await params
 
@@ -33,7 +33,7 @@ export async function GET(
     // Fetch specific persona from cluster namespace
     const response = await handleKubernetesOperation(
       'get persona for YAML',
-      k8sClient.getLanguagePersona(clusterName, personaName)
+      client.getLanguagePersona(clusterName, personaName)
     )
 
     const persona = extractItem<LanguagePersona>(response)

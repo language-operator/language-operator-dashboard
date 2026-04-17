@@ -14,14 +14,15 @@ interface RouteParams {
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
-    const { email } = await getAuthenticatedUser(request)
+    const { k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
 
     const { name: clusterName, toolName } = await params
 
     console.log(`Fetching pods for tool ${toolName} in cluster ${clusterName}, namespace ${clusterName}`)
 
     // First, get the tool to understand its deployment mode
-    const toolResource = await k8sClient.getLanguageTool(clusterName, toolName)
+    const toolResource = await client.getLanguageTool(clusterName, toolName)
     const toolData = extractItem<LanguageTool>(toolResource)
 
     if (!toolData) {
@@ -46,7 +47,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     // Find all relevant pods
-    const podsResponse = await k8sClient.listPods(clusterName, {
+    const podsResponse = await client.listPods(clusterName, {
       labelSelector
     })
 
@@ -142,10 +143,14 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     })
 
   } catch (error) {
+    const k8sStatus = (error as { response?: { statusCode?: number } })?.response?.statusCode
+    if (k8sStatus === 401 || k8sStatus === 403) {
+      return NextResponse.json({ error: 'Token expired or unauthorized' }, { status: 401 })
+    }
     console.error('Error fetching tool pods:', error)
-    
+
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to fetch tool pods',
         message: error instanceof Error ? error.message : 'Unknown error'
       },

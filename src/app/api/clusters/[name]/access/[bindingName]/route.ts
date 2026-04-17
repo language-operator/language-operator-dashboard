@@ -12,13 +12,14 @@ export async function DELETE(
 ) {
   try {
     const { name: clusterName, bindingName } = await params
-    const { email } = await getAuthenticatedUser(request)
+    const { userId, k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
     validateClusterNameFormat(clusterName)
     await validateClusterExists(NAMESPACE, clusterName)
 
-    await k8sClient.deleteRoleBinding(clusterName, bindingName)
+    await client.deleteRoleBinding(clusterName, bindingName)
 
-    console.log(`User ${email} revoked binding ${bindingName} in cluster ${clusterName}`)
+    console.log(`User ${userId} revoked binding ${bindingName} in cluster ${clusterName}`)
     return NextResponse.json({ success: true })
   } catch (error) {
     return createErrorResponse(error, 'Failed to delete access binding')

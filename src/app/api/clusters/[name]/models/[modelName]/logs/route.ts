@@ -12,8 +12,8 @@ interface RouteParams {
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
-    const { email } = await getAuthenticatedUser(request)
-    
+    const { k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
 
     const { name: clusterName, modelName } = await params
     const searchParams = new URL(request.url).searchParams
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     // Models no longer have their own pods. Find the shared proxy pod in the cluster's namespace.
     // The operator creates a namespace named after the cluster and deploys 'proxy' there.
-    const pods = await k8sClient.listPods(clusterName, {
+    const pods = await client.listPods(clusterName, {
       labelSelector: `langop.io/kind=proxy,langop.io/cluster=${clusterName}`
     })
 
@@ -72,7 +72,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     console.log(`Getting logs from pod: ${pod.metadata?.name}`)
 
     // Fetch logs from the proxy pod (in the cluster's namespace)
-    const logs = await k8sClient.getPodLogs(clusterName, pod.metadata?.name || '', {
+    const logs = await client.getPodLogs(clusterName, pod.metadata?.name || '', {
       tailLines: 500, // Get last 500 lines
       timestamps: true
     })
@@ -94,10 +94,14 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     })
 
   } catch (error) {
+    const k8sStatus = (error as { response?: { statusCode?: number } })?.response?.statusCode
+    if (k8sStatus === 401 || k8sStatus === 403) {
+      return NextResponse.json({ error: 'Token expired or unauthorized' }, { status: 401 })
+    }
     console.error('Error fetching model logs:', error)
-    
+
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to fetch model logs',
         message: error instanceof Error ? error.message : 'Unknown error'
       },

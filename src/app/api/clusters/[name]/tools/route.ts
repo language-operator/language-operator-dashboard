@@ -15,15 +15,14 @@ export async function GET(
   { params }: { params: Promise<{ name: string }> }
 ) {
   try {
-    const { email } = await getAuthenticatedUser(request)
-    
-
+    const { k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
 
     const { name: clusterName } = await params
-    
+
     // Validate cluster name format
     validateClusterNameFormat(clusterName)
-    
+
     // Validate cluster exists and user has access
     await validateClusterExists(NAMESPACE, clusterName, { validateAccess: true })
 
@@ -41,7 +40,7 @@ export async function GET(
     // Fetch all tools from cluster namespace with proper error handling
     const response = await handleKubernetesOperation(
       'list tools',
-      k8sClient.listLanguageTools(clusterName)
+      client.listLanguageTools(clusterName)
     )
     
     // Handle different response structures from k8s client
@@ -120,9 +119,8 @@ export async function POST(
   { params }: { params: Promise<{ name: string }> }
 ) {
   try {
-    const { email } = await getAuthenticatedUser(request)
-
-
+    const { userId, k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
 
     const { name: clusterName } = await params
 
@@ -143,7 +141,7 @@ export async function POST(
           'langop.io/cluster': clusterName,
         },
         annotations: {
-          'langop.io/created-by-email': email,
+          'langop.io/created-by': userId,
         },
       },
       spec: {
@@ -157,7 +155,7 @@ export async function POST(
     // Create the tool using k8s client with proper error handling
     const result = await handleKubernetesOperation(
       'create tool',
-      k8sClient.createLanguageTool(clusterName, tool)
+      client.createLanguageTool(clusterName, tool)
     )
 
     return createSuccessResponse(

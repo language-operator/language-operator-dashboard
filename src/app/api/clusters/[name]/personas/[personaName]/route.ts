@@ -19,7 +19,8 @@ export async function GET(
   { params }: { params: Promise<{ name: string; personaName: string }> }
 ) {
   try {
-    const { email } = await getAuthenticatedUser(request)
+    const { k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
 
     const { name: clusterName, personaName } = await params
 
@@ -28,7 +29,7 @@ export async function GET(
 
     const response = await handleKubernetesOperation(
       'get persona',
-      k8sClient.getLanguagePersona(clusterName, personaName)
+      client.getLanguagePersona(clusterName, personaName)
     )
 
     const persona = extractItem<LanguagePersona>(response)
@@ -56,7 +57,8 @@ export async function PATCH(
   { params }: { params: Promise<{ name: string; personaName: string }> }
 ) {
   try {
-    const { email } = await getAuthenticatedUser(request)
+    const { k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
 
     const { name: clusterName, personaName } = await params
 
@@ -68,7 +70,7 @@ export async function PATCH(
     // Fetch existing persona to merge with updates
     const existingResponse = await handleKubernetesOperation(
       'get persona for update',
-      k8sClient.getLanguagePersona(clusterName, personaName)
+      client.getLanguagePersona(clusterName, personaName)
     )
 
     const existingPersona = extractItem<LanguagePersona>(existingResponse)
@@ -93,7 +95,7 @@ export async function PATCH(
 
     const response = await handleKubernetesOperation(
       'update persona',
-      k8sClient.updateLanguagePersona(clusterName, personaName, updatedPersona)
+      client.updateLanguagePersona(clusterName, personaName, updatedPersona)
     )
 
     console.log(`Successfully updated persona ${personaName} for cluster ${clusterName}`)
@@ -112,7 +114,8 @@ export async function DELETE(
   { params }: { params: Promise<{ name: string; personaName: string }> }
 ) {
   try {
-    const { email } = await getAuthenticatedUser(request)
+    const { k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
 
     const { name: clusterName, personaName } = await params
 
@@ -121,7 +124,7 @@ export async function DELETE(
 
     const response = await handleKubernetesOperation(
       'delete persona',
-      k8sClient.deleteLanguagePersona(clusterName, personaName)
+      client.deleteLanguagePersona(clusterName, personaName)
     )
 
     console.log(`Successfully deleted persona ${personaName} for cluster ${clusterName}`)

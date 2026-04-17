@@ -12,8 +12,8 @@ const NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
 
 export async function GET(request: NextRequest) {
   try {
-    const { email } = await getAuthenticatedUser(request)
-    
+    const { k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
 
     const url = new URL(request.url)
     const params: LanguageClusterListParams = {
@@ -31,8 +31,8 @@ export async function GET(request: NextRequest) {
     
     try {
       console.log(`Fetching clusters from namespace: ${NAMESPACE}`)
-      const response = await k8sClient.listLanguageClusters(NAMESPACE)
-      
+      const response = await client.listLanguageClusters(NAMESPACE)
+
       // Handle different response structures from k8s client
       clusters = extractItems<LanguageCluster>(response)
       console.log(`Found ${clusters.length} clusters from Kubernetes API`)
@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
     let agentCountsByCluster: Record<string, number> = {}
     
     try {
-      const agentsResponse = await k8sClient.listLanguageAgents('')
+      const agentsResponse = await client.listLanguageAgents('')
       
       // Handle different response structures from k8s client
       const allAgents = extractItems<LanguageAgent>(agentsResponse)
@@ -111,6 +111,10 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
+    const k8sStatus = (error as { response?: { statusCode?: number } })?.response?.statusCode
+    if (k8sStatus === 401 || k8sStatus === 403) {
+      return NextResponse.json({ error: 'Token expired or unauthorized' }, { status: 401 })
+    }
     console.error('Error fetching clusters:', error)
     return NextResponse.json({ error: 'Failed to fetch clusters' }, { status: 500 })
   }
@@ -119,8 +123,8 @@ export async function GET(request: NextRequest) {
 // POST /api/clusters - Create a new cluster
 export async function POST(request: NextRequest) {
   try {
-    const { email } = await getAuthenticatedUser(request)
-    
+    const { userId, k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
 
     const formData: LanguageClusterFormData = await request.json()
 
@@ -133,7 +137,7 @@ export async function POST(request: NextRequest) {
         labels: {
         },
         annotations: {
-          'langop.io/created-by-email': email,
+          'langop.io/created-by': userId,
           'langop.io/created-at': new Date().toISOString(),
         },
       },
@@ -164,9 +168,9 @@ export async function POST(request: NextRequest) {
       },
     }
 
-    const response = await k8sClient.createLanguageCluster(NAMESPACE, cluster)
-    
-    console.log(`User ${email} created LanguageCluster ${formData.name}`)
+    const response = await client.createLanguageCluster(NAMESPACE, cluster)
+
+    console.log(`User ${userId} created LanguageCluster ${formData.name}`)
     console.log('K8s API response structure:', JSON.stringify(response, null, 2))
 
     return NextResponse.json({
@@ -175,6 +179,10 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
+    const k8sStatus = (error as { response?: { statusCode?: number } })?.response?.statusCode
+    if (k8sStatus === 401 || k8sStatus === 403) {
+      return NextResponse.json({ error: 'Token expired or unauthorized' }, { status: 401 })
+    }
     console.error('Error creating cluster:', error)
     return NextResponse.json({ error: 'Failed to create cluster' }, { status: 500 })
   }

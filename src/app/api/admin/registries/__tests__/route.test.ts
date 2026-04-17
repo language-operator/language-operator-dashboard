@@ -1,39 +1,21 @@
 /**
  * @jest-environment node
  *
- * API route tests must use the node environment (not jsdom) because
- * Next.js server internals depend on Node globals (Request, Response, etc.).
- * Add this docblock to every __tests__ file under src/app/api/.
- *
  * Tests for /api/admin/registries
  *
- * Pattern for API route tests in this codebase:
+ * Auth: mock `next-auth/jwt`'s getToken to return { sub, k8sToken }.
+ * getAuthenticatedUser() reads from getToken — no db mock needed.
  *
- * 1. Auth: mock `next-auth`'s getServerSession to return a user with { id, email }.
- *    getAuthenticatedUser() reads from getServerSession — no db mock needed.
- *
- * 2. K8s: mock `@/lib/k8s-client` so k8sClient.forUser() returns a plain object
- *    of jest.fn()s. The route calls forUser(email) then uses the returned client,
- *    so the mock must be at the forUser level, not on k8sClient directly.
- *
- * 3. Requests: build minimal NextRequest-shaped objects with a json() mock.
- *    For routes that don't read the body (GET), pass a bare object.
- *
- * 4. Access control: this route has no application-level permission check —
- *    K8s RBAC enforces it. A 403 from K8s surfaces as a 500 here because
- *    the route catches all non-404 k8s errors as internal errors.
+ * K8s: mock `@/lib/k8s-client` so k8sClient.forToken() returns a plain object
+ * of jest.fn()s. The route calls forToken(k8sToken) then uses the returned client.
  */
 
 import { GET, POST } from '../route'
-import { getServerSession } from 'next-auth'
+import { getToken } from 'next-auth/jwt'
 import { NextRequest } from 'next/server'
 
 // ── Mocks ──────────────────────────────────────────────────────────────────
 
-// NextResponse doesn't initialise cleanly in Jest's Node environment because
-// it depends on Web API globals (Response, Headers) that aren't provided by
-// the Node test runner. Mock it to a minimal shape that mirrors the real API.
-// All API route test files under src/app/api/ should include this mock.
 jest.mock('next/server', () => ({
   NextResponse: {
     json: jest.fn((body: unknown, init?: { status?: number }) => ({
@@ -43,9 +25,9 @@ jest.mock('next/server', () => ({
   },
 }))
 
-jest.mock('next-auth')
+jest.mock('next-auth/jwt')
 
-// k8s methods returned by forUser() — reset in beforeEach
+// k8s methods returned by forToken() — reset in beforeEach
 const mockK8s = {
   readConfigMap: jest.fn(),
   replaceConfigMap: jest.fn(),
@@ -53,10 +35,10 @@ const mockK8s = {
 }
 
 jest.mock('@/lib/k8s-client', () => ({
-  k8sClient: { forUser: jest.fn(() => mockK8s) },
+  k8sClient: { forToken: jest.fn(() => mockK8s) },
 }))
 
-const mockSession = getServerSession as jest.MockedFunction<typeof getServerSession>
+const mockGetToken = getToken as jest.MockedFunction<typeof getToken>
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -64,14 +46,14 @@ function makeRequest(body?: unknown): NextRequest {
   return { json: jest.fn().mockResolvedValue(body) } as unknown as NextRequest
 }
 
-const AUTHED_SESSION = { user: { id: 'user-1', email: 'admin@example.com' } }
+const AUTHED_TOKEN = { sub: 'user-1', k8sToken: 'test-token' }
 
 // ── Tests ──────────────────────────────────────────────────────────────────
 
 describe('GET /api/admin/registries', () => {
   beforeEach(() => {
     jest.clearAllMocks()
-    mockSession.mockResolvedValue(AUTHED_SESSION as any)
+    mockGetToken.mockResolvedValue(AUTHED_TOKEN as any)
   })
 
   it('returns parsed registries from ConfigMap', async () => {
@@ -133,7 +115,7 @@ describe('GET /api/admin/registries', () => {
   })
 
   it('returns 500 when unauthenticated', async () => {
-    mockSession.mockResolvedValue(null)
+    mockGetToken.mockResolvedValue(null)
 
     const res = await GET(makeRequest())
 
@@ -144,7 +126,7 @@ describe('GET /api/admin/registries', () => {
 describe('POST /api/admin/registries', () => {
   beforeEach(() => {
     jest.clearAllMocks()
-    mockSession.mockResolvedValue(AUTHED_SESSION as any)
+    mockGetToken.mockResolvedValue(AUTHED_TOKEN as any)
   })
 
   it('updates existing ConfigMap with sorted, deduplicated registries', async () => {
@@ -215,7 +197,7 @@ describe('POST /api/admin/registries', () => {
   })
 
   it('returns 500 when unauthenticated', async () => {
-    mockSession.mockResolvedValue(null)
+    mockGetToken.mockResolvedValue(null)
 
     const res = await POST(makeRequest({ registries: ['docker.io'] }))
 

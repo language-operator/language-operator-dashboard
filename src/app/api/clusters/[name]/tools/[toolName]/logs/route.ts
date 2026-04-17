@@ -14,8 +14,8 @@ interface RouteParams {
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
-    const { email } = await getAuthenticatedUser(request)
-
+    const { k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
 
     const { name: clusterName, toolName } = await params
     const searchParams = new URL(request.url).searchParams
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     console.log(`Fetching logs for tool ${toolName} in cluster ${clusterName}, namespace ${clusterName}${podName ? `, pod ${podName}` : ''}${containerName ? `, container ${containerName}` : ''}`)
 
     // First, get the tool to understand its deployment mode
-    const toolResource = await k8sClient.getLanguageTool(clusterName, toolName)
+    const toolResource = await client.getLanguageTool(clusterName, toolName)
     const toolData = extractItem<LanguageTool>(toolResource)
 
     if (!toolData) {
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       labelSelector = `app.kubernetes.io/name=${toolName}`
     }
 
-    const pods = await k8sClient.listPods(clusterName, {
+    const pods = await client.listPods(clusterName, {
       labelSelector
     })
 
@@ -162,7 +162,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       }
     }
 
-    const logs = await k8sClient.getPodLogs(clusterName, pod.metadata?.name ?? '', logOptions)
+    const logs = await client.getPodLogs(clusterName, pod.metadata?.name ?? '', logOptions)
 
     const logContent = (typeof logs === 'string' ? logs : extractItem<string>(logs)) ?? ''
 
@@ -175,6 +175,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     })
 
   } catch (error) {
+    const k8sStatus = (error as { response?: { statusCode?: number } })?.response?.statusCode
+    if (k8sStatus === 401 || k8sStatus === 403) {
+      return NextResponse.json({ error: 'Token expired or unauthorized' }, { status: 401 })
+    }
     console.error('Error fetching tool logs:', error)
 
     return NextResponse.json(

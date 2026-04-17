@@ -7,8 +7,8 @@ const NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
 
 export async function POST(request: NextRequest) {
   try {
-    const { email } = await getAuthenticatedUser(request)
-    
+    const { userId, k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
 
     const body = await request.json()
     const { toolId, clusterName } = body
@@ -42,17 +42,17 @@ export async function POST(request: NextRequest) {
       languageTool.metadata.labels = {}
     }
     languageTool.metadata.labels['langop.io/organization-id'] = ''
-    languageTool.metadata.labels['langop.io/created-by'] = ''
-    
+    languageTool.metadata.labels['langop.io/created-by'] = userId
+
     if (!languageTool.metadata.annotations) {
       languageTool.metadata.annotations = {}
     }
-    languageTool.metadata.annotations['langop.io/created-by-email'] = email
+    languageTool.metadata.annotations['langop.io/created-by'] = userId
     languageTool.metadata.annotations['langop.io/created-at'] = new Date().toISOString()
 
     try {
       // Apply the LanguageTool CRD to Kubernetes
-      const response = await k8sClient.createLanguageTool(NAMESPACE, languageTool)
+      const response = await client.createLanguageTool(NAMESPACE, languageTool)
 
       return NextResponse.json({
         success: true,

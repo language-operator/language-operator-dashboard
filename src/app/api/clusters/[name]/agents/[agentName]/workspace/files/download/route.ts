@@ -10,7 +10,7 @@ export async function GET(
   { params }: { params: Promise<{ name: string; agentName: string }> }
 ) {
   try {
-    const { email } = await getAuthenticatedUser(request)
+    await getAuthenticatedUser(request)
 
     const { name: clusterName, agentName } = await params
     const { searchParams } = new URL(request.url)

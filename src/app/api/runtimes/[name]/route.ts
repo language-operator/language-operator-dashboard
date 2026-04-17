@@ -9,10 +9,11 @@ export async function GET(
   { params }: { params: Promise<{ name: string }> }
 ) {
   try {
-    await getAuthenticatedUser(request)
+    const { k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
     const { name } = await params
 
-    const response = await k8sClient.getLanguageAgentRuntime(name)
+    const response = await client.getLanguageAgentRuntime(name)
     const runtime = (response as any)?.body || (response as any)?.data || response
 
     if (!runtime) {
@@ -35,12 +36,13 @@ export async function PUT(
   { params }: { params: Promise<{ name: string }> }
 ) {
   try {
-    const { email } = await getAuthenticatedUser(request)
+    const { userId, k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
     const { name } = await params
     const formData: LanguageAgentRuntimeFormData = await request.json()
 
     // Fetch existing to preserve metadata/resourceVersion
-    const existing = await k8sClient.getLanguageAgentRuntime(name)
+    const existing = await client.getLanguageAgentRuntime(name)
     const existingRuntime = (existing as any)?.body || (existing as any)?.data || existing
 
     const spec: Record<string, unknown> = {}
@@ -102,15 +104,15 @@ export async function PUT(
         ...existingRuntime?.metadata,
         annotations: {
           ...(existingRuntime?.metadata?.annotations || {}),
-          'langop.io/updated-by-email': email,
+          'langop.io/updated-by': userId,
           'langop.io/updated-at': new Date().toISOString(),
         },
       },
       spec,
     }
 
-    const response = await k8sClient.updateLanguageAgentRuntime(name, updatedRuntime as unknown as import('@/types/runtime').LanguageAgentRuntime)
-    console.log(`User ${email} updated LanguageAgentRuntime ${name}`)
+    const response = await client.updateLanguageAgentRuntime(name, updatedRuntime as unknown as import('@/types/runtime').LanguageAgentRuntime)
+    console.log(`User ${userId} updated LanguageAgentRuntime ${name}`)
 
     return NextResponse.json({
       success: true,
@@ -128,11 +130,12 @@ export async function DELETE(
   { params }: { params: Promise<{ name: string }> }
 ) {
   try {
-    const { email } = await getAuthenticatedUser(request)
+    const { userId, k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
     const { name } = await params
 
-    await k8sClient.deleteLanguageAgentRuntime(name)
-    console.log(`User ${email} deleted LanguageAgentRuntime ${name}`)
+    await client.deleteLanguageAgentRuntime(name)
+    console.log(`User ${userId} deleted LanguageAgentRuntime ${name}`)
 
     return NextResponse.json({ success: true })
   } catch (error) {

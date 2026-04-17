@@ -58,7 +58,6 @@ export function GlobalLayout({ children }: GlobalLayoutProps) {
           <DropdownMenu>
             <DropdownMenuTrigger className="outline-none">
               <Avatar>
-                <AvatarImage src={session?.user?.image || undefined} />
                 <AvatarFallback>
                   {getInitials(session?.user?.name)}
                 </AvatarFallback>
@@ -67,8 +66,7 @@ export function GlobalLayout({ children }: GlobalLayoutProps) {
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-light text-stone-900 dark:text-stone-300">{session?.user?.name}</p>
-                  <p className="text-[11px] font-light text-stone-600 dark:text-stone-400">{session?.user?.email}</p>
+                  <p className="text-sm font-light font-mono text-stone-900 dark:text-stone-300">{session?.user?.name}</p>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />

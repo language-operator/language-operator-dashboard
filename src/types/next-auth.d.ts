@@ -4,23 +4,13 @@ declare module 'next-auth' {
   interface Session {
     user: {
       id: string
-      email: string
       name?: string | null
-      image?: string | null
     }
-    organizations: Array<{
-      id: string
-      name: string
-      slug: string
-      namespace: string
-      role: string
-    }>
-    activeOrganization: {
-      id: string
-      name: string
-      slug: string
-      namespace: string
-      role: string
-    } | null
+  }
+}
+
+declare module 'next-auth/jwt' {
+  interface JWT {
+    k8sToken?: string
   }
 }

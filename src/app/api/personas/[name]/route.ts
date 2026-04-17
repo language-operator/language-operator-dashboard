@@ -43,9 +43,10 @@ export async function GET(
 ) {
   try {
     const { name } = await params
-    const { email } = await getAuthenticatedUser(request)
+    const { k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
     const namespace = NAMESPACE
-    const persona = await k8sClient.getLanguagePersona(namespace, name)
+    const persona = await client.getLanguagePersona(namespace, name)
     
     if (!persona) {
       return NextResponse.json({ error: 'Persona not found' }, { status: 404 })
@@ -53,6 +54,10 @@ export async function GET(
     
     return NextResponse.json({ persona })
   } catch (error) {
+    const k8sStatus = (error as { response?: { statusCode?: number } })?.response?.statusCode
+    if (k8sStatus === 401 || k8sStatus === 403) {
+      return NextResponse.json({ error: 'Token expired or unauthorized' }, { status: 401 })
+    }
     console.error('Error fetching persona:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
@@ -68,7 +73,8 @@ export async function PATCH(
 ) {
   try {
     const { name } = await params
-    const { email } = await getAuthenticatedUser(request)
+    const { userId, k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
     const namespace = NAMESPACE
 
     // Parse and validate request body
@@ -77,7 +83,7 @@ export async function PATCH(
 
     // Get existing persona
     console.log('Fetching existing persona:', name, 'in namespace:', namespace)
-    const existingPersona = await k8sClient.getLanguagePersona(namespace, name)
+    const existingPersona = await client.getLanguagePersona(namespace, name)
     if (!existingPersona) {
       return NextResponse.json({ error: 'Persona not found' }, { status: 404 })
     }
@@ -90,7 +96,7 @@ export async function PATCH(
         annotations: {
           ...existingPersona.metadata.annotations,
           'langop.io/updated-at': new Date().toISOString(),
-          'langop.io/updated-by': email || 'unknown'
+          'langop.io/updated-by': userId || 'unknown'
         }
       },
       spec: {
@@ -101,15 +107,19 @@ export async function PATCH(
     console.log('Update payload:', JSON.stringify(updatePayload, null, 2))
 
     // Update the persona
-    const updatedPersona = await k8sClient.updateLanguagePersona(namespace, name, updatePayload as import('@/types/persona').LanguagePersona)
+    const updatedPersona = await client.updateLanguagePersona(namespace, name, updatePayload as import('@/types/persona').LanguagePersona)
 
     // Log the update for audit trail
-    console.log(`Persona updated: ${name} by ${email} in ${namespace}`)
+    console.log(`Persona updated: ${name} by ${userId} in ${namespace}`)
 
     return NextResponse.json({ persona: updatedPersona })
   } catch (error) {
+    const k8sStatus = (error as { response?: { statusCode?: number } })?.response?.statusCode
+    if (k8sStatus === 401 || k8sStatus === 403) {
+      return NextResponse.json({ error: 'Token expired or unauthorized' }, { status: 401 })
+    }
     console.error('Error updating persona:', error)
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: 'Invalid input', details: error.issues },
@@ -131,23 +141,28 @@ export async function DELETE(
 ) {
   try {
     const { name } = await params
-    const { email } = await getAuthenticatedUser(request)
+    const { userId, k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
     const namespace = NAMESPACE
 
     // Check if persona exists
-    const existingPersona = await k8sClient.getLanguagePersona(namespace, name)
+    const existingPersona = await client.getLanguagePersona(namespace, name)
     if (!existingPersona) {
       return NextResponse.json({ error: 'Persona not found' }, { status: 404 })
     }
 
     // Delete the persona
-    await k8sClient.deleteLanguagePersona(namespace, name)
+    await client.deleteLanguagePersona(namespace, name)
 
     // Log the deletion for audit trail
-    console.log(`Persona deleted: ${name} by ${email} in ${namespace}`)
+    console.log(`Persona deleted: ${name} by ${userId} in ${namespace}`)
 
     return NextResponse.json({ success: true })
   } catch (error) {
+    const k8sStatus = (error as { response?: { statusCode?: number } })?.response?.statusCode
+    if (k8sStatus === 401 || k8sStatus === 403) {
+      return NextResponse.json({ error: 'Token expired or unauthorized' }, { status: 401 })
+    }
     console.error('Error deleting persona:', error)
     return NextResponse.json(
       { error: 'Internal server error' },

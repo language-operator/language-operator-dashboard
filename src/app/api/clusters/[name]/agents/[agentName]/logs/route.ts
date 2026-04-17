@@ -13,7 +13,8 @@ interface RouteParams {
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
-    const { email } = await getAuthenticatedUser(request)
+    const { k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
 
     const { name: clusterName, agentName } = await params
     const searchParams = new URL(request.url).searchParams
@@ -22,7 +23,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     console.log(`Fetching logs for agent ${agentName} in cluster ${clusterName}, namespace ${clusterName}${podName ? `, pod ${podName}` : ''}`)
 
     // Find the pod for this agent
-    const pods = await k8sClient.listPods(clusterName, {
+    const pods = await client.listPods(clusterName, {
       labelSelector: `app.kubernetes.io/name=${agentName}`
     })
 
@@ -66,7 +67,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     console.log(`Getting logs from pod: ${pod.metadata?.name}`)
 
     // Fetch logs from the pod
-    const logs = await k8sClient.getPodLogs(clusterName, pod.metadata?.name ?? '', {
+    const logs = await client.getPodLogs(clusterName, pod.metadata?.name ?? '', {
       tailLines: 500,
       timestamps: true
     })
@@ -88,6 +89,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     })
 
   } catch (error) {
+    const k8sStatus = (error as { response?: { statusCode?: number } })?.response?.statusCode
+    if (k8sStatus === 401 || k8sStatus === 403) {
+      return NextResponse.json({ error: 'Token expired or unauthorized' }, { status: 401 })
+    }
     console.error('Error fetching agent logs:', error)
 
     return NextResponse.json(

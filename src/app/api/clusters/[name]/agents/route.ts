@@ -15,8 +15,8 @@ export async function GET(
   { params }: { params: Promise<{ name: string }> }
 ) {
   try {
-    const { email } = await getAuthenticatedUser(request)
-    const client = k8sClient.forUser(email)
+    const { k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
 
     const { name: clusterName } = await params
 
@@ -39,7 +39,7 @@ export async function GET(
     // Fetch all agents from namespace with proper error handling
     const response = await handleKubernetesOperation(
       'list agents',
-      k8sClient.listLanguageAgents(clusterName)
+      client.listLanguageAgents(clusterName)
     )
 
     // Handle different response structures from k8s client
@@ -110,8 +110,8 @@ export async function POST(
   { params }: { params: Promise<{ name: string }> }
 ) {
   try {
-    const { email } = await getAuthenticatedUser(request)
-    const client = k8sClient.forUser(email)
+    const { userId, k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
 
     const { name: clusterName } = await params
 
@@ -130,7 +130,7 @@ export async function POST(
         namespace: clusterName,
         labels: {},
         annotations: {
-          'langop.io/created-by-email': email,
+          'langop.io/created-by': userId,
         },
       },
       spec: {
@@ -179,7 +179,7 @@ export async function POST(
     // Create the agent using k8s client with proper error handling
     const result = await handleKubernetesOperation(
       'create agent',
-      k8sClient.createLanguageAgent(clusterName, agentCrd)
+      client.createLanguageAgent(clusterName, agentCrd)
     )
 
     return createSuccessResponse(

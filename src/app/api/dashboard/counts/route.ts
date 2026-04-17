@@ -5,8 +5,8 @@ import { getAuthenticatedUser } from '@/lib/user-context'
 // GET /api/dashboard/counts - Get global resource counts across all accessible clusters
 export async function GET(request: NextRequest) {
   try {
-    const { email } = await getAuthenticatedUser(request)
-    const client = k8sClient.forUser(email)
+    const { k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
 
     // List all clusters the user can see (cluster-scoped, impersonation filters by RBAC)
     const clustersRes = await client.listLanguageClusters('')
@@ -38,6 +38,10 @@ export async function GET(request: NextRequest) {
       },
     })
   } catch (error) {
+    const k8sStatus = (error as { response?: { statusCode?: number } })?.response?.statusCode
+    if (k8sStatus === 401 || k8sStatus === 403) {
+      return NextResponse.json({ error: 'Token expired or unauthorized' }, { status: 401 })
+    }
     console.error('Error fetching dashboard counts:', error)
     return NextResponse.json(
       { error: 'Failed to fetch dashboard counts' },

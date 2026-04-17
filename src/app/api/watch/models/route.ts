@@ -7,8 +7,8 @@ const NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
 
 export async function GET(request: NextRequest) {
   try {
-    const { email } = await getAuthenticatedUser(request)
-
+    // TODO: phase 2 — pass user token to watch service
+    await getAuthenticatedUser(request)
 
     // Get optional cluster filter from query params
     const url = new URL(request.url)

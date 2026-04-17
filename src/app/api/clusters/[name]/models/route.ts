@@ -15,16 +15,14 @@ export async function GET(
   { params }: { params: Promise<{ name: string }> }
 ) {
   try {
-    const { email } = await getAuthenticatedUser(request)
-    
-
-    // Check permissions
+    const { k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
 
     const { name: clusterName } = await params
-    
+
     // Validate cluster name format
     validateClusterNameFormat(clusterName)
-    
+
     // Validate cluster exists and user has access
     await validateClusterExists(NAMESPACE, clusterName, { validateAccess: true })
 
@@ -46,7 +44,7 @@ export async function GET(
 
     const response = await handleKubernetesOperation(
       'list models',
-      k8sClient.listLanguageModels(clusterName)
+      client.listLanguageModels(clusterName)
     )
     
     // Handle different response structures
@@ -148,16 +146,14 @@ export async function POST(
   { params }: { params: Promise<{ name: string }> }
 ) {
   try {
-    const { email } = await getAuthenticatedUser(request)
-    
-
-    // Check permissions
+    const { k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
 
     const { name: clusterName } = await params
-    
+
     // Validate cluster name format
     validateClusterNameFormat(clusterName)
-    
+
     // Validate cluster exists and user has access
     await validateClusterExists(NAMESPACE, clusterName, { validateAccess: true })
 
@@ -223,7 +219,7 @@ export async function POST(
     // Create the model in Kubernetes
     const response = await handleKubernetesOperation(
       'create model',
-      k8sClient.createLanguageModel(clusterName, modelSpec as import('@/types/model').LanguageModel)
+      client.createLanguageModel(clusterName, modelSpec as import('@/types/model').LanguageModel)
     )
     
     console.log(`Model ${body.name} created successfully for cluster ${clusterName}`)

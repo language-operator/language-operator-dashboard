@@ -13,14 +13,15 @@ interface RouteParams {
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
-    const { email } = await getAuthenticatedUser(request)
+    const { k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
 
     const { name: clusterName, agentName } = await params
 
     console.log(`Fetching pods for agent ${agentName} in cluster ${clusterName}, namespace ${clusterName}`)
 
     // Find all pods for this agent (only agent pods, not trigger pods)
-    const pods = await k8sClient.listPods(clusterName, {
+    const pods = await client.listPods(clusterName, {
       labelSelector: `app.kubernetes.io/name=${agentName},langop.io/component=agent`
     })
 
@@ -71,10 +72,14 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     })
 
   } catch (error) {
+    const k8sStatus = (error as { response?: { statusCode?: number } })?.response?.statusCode
+    if (k8sStatus === 401 || k8sStatus === 403) {
+      return NextResponse.json({ error: 'Token expired or unauthorized' }, { status: 401 })
+    }
     console.error('Error fetching agent pods:', error)
-    
+
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to fetch agent pods',
         message: error instanceof Error ? error.message : 'Unknown error'
       },

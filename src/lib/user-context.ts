@@ -1,26 +1,24 @@
-import { getServerSession } from 'next-auth'
+import { getToken } from 'next-auth/jwt'
 import { NextRequest } from 'next/server'
-import { authOptions } from './auth'
 
 export interface AuthenticatedUser {
   userId: string
-  email: string
+  k8sToken: string
 }
 
 /**
- * Get the authenticated user from the current request session.
- * Replaces getUserOrganization() — returns only user identity.
- * K8s RBAC (via impersonation) handles what the user is permitted to do.
+ * Get the authenticated user's identity and K8s bearer token from the session JWT.
+ * The token is used directly for all K8s API calls — no impersonation.
  */
-export async function getAuthenticatedUser(_request?: NextRequest): Promise<AuthenticatedUser> {
-  const session = await getServerSession(authOptions)
+export async function getAuthenticatedUser(request: NextRequest): Promise<AuthenticatedUser> {
+  const token = await getToken({ req: request })
 
-  if (!session?.user?.id || !session?.user?.email) {
+  if (!token?.sub || !token?.k8sToken) {
     throw new Error('Authentication required')
   }
 
   return {
-    userId: session.user.id,
-    email: session.user.email,
+    userId: token.sub as string,
+    k8sToken: token.k8sToken as string,
   }
 }

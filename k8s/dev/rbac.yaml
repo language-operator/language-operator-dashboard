@@ -9,13 +9,8 @@ kind: ClusterRole
 metadata:
   name: dashboard-dev
 rules:
-  # Impersonation — allows the dashboard SA to make K8s calls as the logged-in user.
-  # K8s RBAC is then evaluated as that user's identity (their email address).
-  - apiGroups: [""]
-    resources: ["users", "groups", "serviceaccounts"]
-    verbs: ["impersonate"]
-
-  # CRD access for all language-operator resources
+  # CRD access — used by the watch service (singleton SA token for SSE streams).
+  # Individual API calls use the user's own bearer token via forToken().
   - apiGroups: ["langop.io"]
     resources:
       - languageagents

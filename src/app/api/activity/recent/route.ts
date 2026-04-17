@@ -9,16 +9,15 @@ const NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
 
 export async function GET(request: NextRequest) {
   try {
-    const { email } = await getAuthenticatedUser(request)
-    
-    // Check permissions
+    const { k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
 
     // Parse query parameters
     const url = new URL(request.url)
     const limit = parseInt(url.searchParams.get('limit') || '10')
 
-    // Fetch recent events from organization's namespace
-    const eventsResponse = await k8sClient.listEvents(NAMESPACE, {
+    // Fetch recent events from operator namespace
+    const eventsResponse = await client.listEvents(NAMESPACE, {
       limit: Math.min(limit, 50), // Cap at 50 for performance
             // Sort by creation timestamp descending (most recent first)
     })
@@ -73,9 +72,13 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
+    const k8sStatus = (error as { response?: { statusCode?: number } })?.response?.statusCode
+    if (k8sStatus === 401 || k8sStatus === 403) {
+      return NextResponse.json({ error: 'Token expired or unauthorized' }, { status: 401 })
+    }
     console.error('Error fetching recent activity:', error)
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to fetch recent activity',
         details: error instanceof Error ? error.message : 'Unknown error'
       },

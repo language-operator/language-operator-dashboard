@@ -14,11 +14,12 @@ export async function GET(
 ) {
   try {
     const { name: clusterName } = await params
-    await getAuthenticatedUser(request)
+    const { k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
     validateClusterNameFormat(clusterName)
     await validateClusterExists(NAMESPACE, clusterName)
 
-    const response = await k8sClient.listRoleBindings(clusterName)
+    const response = await client.listRoleBindings(clusterName)
     const items = extractItems<k8s.V1RoleBinding>(response)
 
     // Normalise to a stable shape for the UI
@@ -43,7 +44,8 @@ export async function POST(
 ) {
   try {
     const { name: clusterName } = await params
-    const { email } = await getAuthenticatedUser(request)
+    const { userId, k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
     validateClusterNameFormat(clusterName)
     await validateClusterExists(NAMESPACE, clusterName)
 
@@ -58,19 +60,19 @@ export async function POST(
 
     const bindingName = `${role}-${userEmail.replace(/[^a-z0-9]/gi, '-').toLowerCase()}`
 
-    await k8sClient.createRoleBinding(clusterName, {
+    await client.createRoleBinding(clusterName, {
       apiVersion: 'rbac.authorization.k8s.io/v1',
       kind: 'RoleBinding',
       metadata: {
         name: bindingName,
         namespace: clusterName,
-        annotations: { 'langop.io/granted-by': email },
+        annotations: { 'langop.io/granted-by': userId },
       },
       subjects: [{ kind: 'User', name: userEmail, apiGroup: 'rbac.authorization.k8s.io' }],
       roleRef: { kind: 'Role', name: role, apiGroup: 'rbac.authorization.k8s.io' },
     })
 
-    console.log(`User ${email} granted ${role} to ${userEmail} in cluster ${clusterName}`)
+    console.log(`User ${userId} granted ${role} to ${userEmail} in cluster ${clusterName}`)
     return NextResponse.json({ success: true, data: { name: bindingName, role, userEmail } })
   } catch (error) {
     return createErrorResponse(error, 'Failed to create access binding')

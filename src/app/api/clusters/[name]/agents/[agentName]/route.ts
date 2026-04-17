@@ -10,7 +10,8 @@ export async function GET(
   { params }: { params: Promise<{ name: string; agentName: string }> }
 ) {
   try {
-    const { email } = await getAuthenticatedUser(request)
+    const { k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
 
     const { name: clusterName, agentName } = await params
     if (!clusterName || !agentName) {
@@ -21,7 +22,7 @@ export async function GET(
     let agent: LanguageAgent | null = null
 
     try {
-      const response = await k8sClient.getLanguageAgent(clusterName, agentName)
+      const response = await client.getLanguageAgent(clusterName, agentName)
       agent = extractItem<LanguageAgent>(response)
     } catch (k8sError) {
       if (k8sError instanceof Error && k8sError.message.includes('404')) {
@@ -49,6 +50,10 @@ export async function GET(
     })
 
   } catch (error) {
+    const k8sStatus = (error as { response?: { statusCode?: number } })?.response?.statusCode
+    if (k8sStatus === 401 || k8sStatus === 403) {
+      return NextResponse.json({ error: 'Token expired or unauthorized' }, { status: 401 })
+    }
     console.error('Error fetching agent details:', error)
     return NextResponse.json({
       error: 'Failed to fetch agent details',
@@ -63,7 +68,8 @@ export async function PATCH(
   { params }: { params: Promise<{ name: string; agentName: string }> }
 ) {
   try {
-    const { email } = await getAuthenticatedUser(request)
+    const { userId, k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
 
     const { name: clusterName, agentName } = await params
     if (!clusterName || !agentName) {
@@ -75,7 +81,7 @@ export async function PATCH(
     // First, get the current agent to ensure it exists and get its current state
     let currentAgent: LanguageAgent | null = null
     try {
-      const response = await k8sClient.getLanguageAgent(clusterName, agentName)
+      const response = await client.getLanguageAgent(clusterName, agentName)
       currentAgent = extractItem<LanguageAgent>(response)
     } catch (k8sError) {
       if (k8sError instanceof Error && k8sError.message.includes('404')) {
@@ -153,9 +159,9 @@ export async function PATCH(
 
     // Update agent in Kubernetes
     try {
-      const response = await k8sClient.updateLanguageAgent(clusterName, agentName, updatedAgent)
+      const response = await client.updateLanguageAgent(clusterName, agentName, updatedAgent)
 
-      console.log(`User ${email} updated LanguageAgent ${agentName} in cluster ${clusterName}`)
+      console.log(`User ${userId} updated LanguageAgent ${agentName} in cluster ${clusterName}`)
 
       return NextResponse.json({
         success: true,
@@ -169,6 +175,10 @@ export async function PATCH(
     }
 
   } catch (error) {
+    const k8sStatus = (error as { response?: { statusCode?: number } })?.response?.statusCode
+    if (k8sStatus === 401 || k8sStatus === 403) {
+      return NextResponse.json({ error: 'Token expired or unauthorized' }, { status: 401 })
+    }
     console.error('Error updating agent:', error)
     return NextResponse.json({
       error: 'Failed to update agent',
@@ -183,7 +193,8 @@ export async function DELETE(
   { params }: { params: Promise<{ name: string; agentName: string }> }
 ) {
   try {
-    const { email } = await getAuthenticatedUser(request)
+    const { userId, k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
 
     const { name: clusterName, agentName } = await params
     if (!clusterName || !agentName) {
@@ -192,9 +203,9 @@ export async function DELETE(
 
     // Delete agent from namespace
     try {
-      await k8sClient.deleteLanguageAgent(clusterName, agentName)
+      await client.deleteLanguageAgent(clusterName, agentName)
 
-      console.log(`User ${email} deleted LanguageAgent ${agentName} from cluster ${clusterName}`)
+      console.log(`User ${userId} deleted LanguageAgent ${agentName} from cluster ${clusterName}`)
 
       return NextResponse.json({
         success: true,
@@ -214,6 +225,10 @@ export async function DELETE(
     }
 
   } catch (error) {
+    const k8sStatus = (error as { response?: { statusCode?: number } })?.response?.statusCode
+    if (k8sStatus === 401 || k8sStatus === 403) {
+      return NextResponse.json({ error: 'Token expired or unauthorized' }, { status: 401 })
+    }
     console.error('Error deleting agent:', error)
     return NextResponse.json({
       error: 'Failed to delete agent',

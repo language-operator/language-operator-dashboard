@@ -13,7 +13,7 @@ export async function GET(
   try {
     const { name: clusterName } = await params
 
-    const { email } = await getAuthenticatedUser(request)
+    await getAuthenticatedUser(request)
 
     // Validate cluster name format
     validateClusterNameFormat(clusterName)

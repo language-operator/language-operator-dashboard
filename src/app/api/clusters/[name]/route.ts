@@ -61,8 +61,9 @@ export async function GET(
   try {
     const { name } = await params
     
-    const { email } = await getAuthenticatedUser(request)
-    const cluster = await k8sClient.getLanguageCluster(NAMESPACE, name)
+    const { k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
+    const cluster = await client.getLanguageCluster(NAMESPACE, name)
     
     if (!cluster) {
       return NextResponse.json({ error: 'Cluster not found' }, { status: 404 })
@@ -70,6 +71,10 @@ export async function GET(
     
     return NextResponse.json({ cluster })
   } catch (error) {
+    const k8sStatus = (error as { response?: { statusCode?: number } })?.response?.statusCode
+    if (k8sStatus === 401 || k8sStatus === 403) {
+      return NextResponse.json({ error: 'Token expired or unauthorized' }, { status: 401 })
+    }
     console.error('Error fetching cluster:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
@@ -85,24 +90,25 @@ export async function PATCH(
 ) {
   try {
     const { name } = await params
-    const { email } = await getAuthenticatedUser(request)
+    const { userId, k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
     const body = await request.json()
     const validatedData = updateClusterSchema.parse(body)
 
     // Get existing cluster
-    const existingCluster = await k8sClient.getLanguageCluster(NAMESPACE, name)
+    const existingCluster = await client.getLanguageCluster(NAMESPACE, name)
     if (!existingCluster) {
       return NextResponse.json({ error: 'Cluster not found' }, { status: 404 })
     }
 
     // Update the cluster
-    const updatedCluster = await k8sClient.updateLanguageCluster(NAMESPACE, name, {
+    const updatedCluster = await client.updateLanguageCluster(NAMESPACE, name, {
       metadata: {
         ...existingCluster.metadata,
         annotations: {
           ...existingCluster.metadata.annotations,
           'langop.io/updated-at': new Date().toISOString(),
-          'langop.io/updated-by': email
+          'langop.io/updated-by': userId
         }
       },
       spec: {
@@ -112,12 +118,16 @@ export async function PATCH(
       }
     } as import('@/types/cluster').LanguageCluster)
 
-    console.log(`Cluster updated: ${name} by ${email} in ${NAMESPACE}`)
+    console.log(`Cluster updated: ${name} by ${userId} in ${NAMESPACE}`)
 
     return NextResponse.json({ cluster: updatedCluster })
   } catch (error) {
     console.error('Error updating cluster:', error)
     
+    const k8sStatus = (error as { response?: { statusCode?: number } })?.response?.statusCode
+    if (k8sStatus === 401 || k8sStatus === 403) {
+      return NextResponse.json({ error: 'Token expired or unauthorized' }, { status: 401 })
+    }
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: 'Invalid input', details: error.issues },
@@ -139,21 +149,26 @@ export async function DELETE(
 ) {
   try {
     const { name } = await params
-    const { email } = await getAuthenticatedUser(request)
+    const { userId, k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
 
     // Check if cluster exists
-    const existingCluster = await k8sClient.getLanguageCluster(NAMESPACE, name)
+    const existingCluster = await client.getLanguageCluster(NAMESPACE, name)
     if (!existingCluster) {
       return NextResponse.json({ error: 'Cluster not found' }, { status: 404 })
     }
 
     // Delete the cluster
-    await k8sClient.deleteLanguageCluster(NAMESPACE, name)
+    await client.deleteLanguageCluster(NAMESPACE, name)
 
-    console.log(`Cluster deleted: ${name} by ${email} in ${NAMESPACE}`)
+    console.log(`Cluster deleted: ${name} by ${userId} in ${NAMESPACE}`)
 
     return NextResponse.json({ success: true })
   } catch (error) {
+    const k8sStatus = (error as { response?: { statusCode?: number } })?.response?.statusCode
+    if (k8sStatus === 401 || k8sStatus === 403) {
+      return NextResponse.json({ error: 'Token expired or unauthorized' }, { status: 401 })
+    }
     console.error('Error deleting cluster:', error)
     return NextResponse.json(
       { error: 'Internal server error' },

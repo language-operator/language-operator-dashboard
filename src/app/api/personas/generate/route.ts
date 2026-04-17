@@ -19,10 +19,8 @@ const NAMESPACE = process.env.OPERATOR_NAMESPACE || 'language-operator'
 
 export async function POST(request: NextRequest) {
   try {
-    const { email } = await getAuthenticatedUser(request)
-
-
-    // Check permissions
+    const { k8sToken } = await getAuthenticatedUser(request)
+    const client = k8sClient.forToken(k8sToken)
 
     const body = await request.json()
     const { idea, modelName } = body
@@ -69,7 +67,7 @@ Guidelines:
     let clusterRef: string | undefined
     let modelStatus: string | undefined
     try {
-      const modelResource = await k8sClient.getLanguageModel(NAMESPACE, modelName)
+      const modelResource = await client.getLanguageModel(NAMESPACE, modelName)
       const modelBody = (modelResource as { body?: { spec?: { modelName?: string; clusterRef?: string }; status?: { phase?: string } } })?.body ?? modelResource as { spec?: { modelName?: string; clusterRef?: string }; status?: { phase?: string } }
       actualModelName = modelBody.spec?.modelName ?? ''
       clusterRef = modelBody.spec?.clusterRef
