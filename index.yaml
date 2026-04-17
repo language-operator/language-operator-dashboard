@@ -3,10 +3,10 @@ entries:
   language-operator-dashboard:
   - apiVersion: v2
     appVersion: 0.1.0
-    created: "2026-04-17T03:13:05.023664476Z"
+    created: "2026-04-17T03:14:50.465517502Z"
     description: Web dashboard for managing Language Operator clusters, agents, models,
       tools, and personas
-    digest: 377309d383edee56362ca3496f0afb94de217b20fec91f60a051b21f589b7457
+    digest: 15ba680544c9b7319ba973cfc6aa90bd7827436a71f0b650add97fb02f2b933c
     home: https://github.com/language-operator/language-operator-dashboard
     keywords:
     - ai
@@ -24,4 +24,4 @@ entries:
     urls:
     - https://language-operator.github.io/language-operator-dashboard/language-operator-dashboard-0.1.0.tgz
     version: 0.1.0
-generated: "2026-04-17T03:13:05.023007952Z"
+generated: "2026-04-17T03:14:50.464812392Z"
