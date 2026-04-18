@@ -123,8 +123,8 @@ export default function ClusterDashboard() {
                 </div>
               )}
               <div>
-                <dt className="text-sm font-light text-stone-600 dark:text-stone-400">Namespace</dt>
-                <dd className="mt-1 text-sm text-stone-900 dark:text-stone-300">{cluster.metadata?.namespace}</dd>
+                <dt className="text-sm font-light text-stone-600 dark:text-stone-400">Resource Namespace</dt>
+                <dd className="mt-1 text-sm text-stone-900 dark:text-stone-300">{cluster.metadata?.name}</dd>
               </div>
               <div>
                 <dt className="text-sm font-light text-stone-600 dark:text-stone-400">Status</dt>
