@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { k8sClient, extractItems } from '@/lib/k8s-client'
 import { getAuthenticatedUser } from '@/lib/user-context'
-import { filterByClusterRef } from '@/lib/cluster-utils'
 import { validateClusterForResourceCreation, validateClusterExists, validateResourceBelongsToCluster } from '@/lib/cluster-validation'
 import { createErrorResponse, createSuccessResponse, handleKubernetesOperation, validateClusterNameFormat, ApiError, createAuthenticationRequiredError } from '@/lib/api-error-handler'
 import { validateClusterName, safeValidateLanguageAgent } from '@/lib/validation'
