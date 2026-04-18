@@ -127,29 +127,18 @@ export function validateClusterRef(
     throw new OrphanedResourceError(resourceType, resourceName, resourceClusterRef)
   }
   
-  // Check if clusterRef is required
-  if (options.requireClusterRef && !resourceClusterRef) {
-    throw new InvalidClusterNameError(
-      '',
-      `${resourceType} '${resourceName}' is missing required clusterRef field`
-    )
-  }
-  
-  // If resource has no clusterRef, handle based on requirements
+  // Resource has no clusterRef — namespace already scopes it to the correct cluster
   if (!resourceClusterRef) {
     if (options.requireClusterRef) {
-      // Already handled above
-      return
+      throw new InvalidClusterNameError(
+        '',
+        `${resourceType} '${resourceName}' is missing required clusterRef field`
+      )
     }
     if (!options.allowOrphanedResources) {
       throw new OrphanedResourceError(resourceType, resourceName, 'none')
     }
-    // If allowOrphanedResources is true, we still exclude resources without clusterRef
-    // from cluster-scoped views to maintain proper separation
-    console.warn(
-      `Excluding ${resourceType}/${resourceName} with no clusterRef from cluster '${expectedClusterName}'`
-    )
-    throw new OrphanedResourceError(resourceType, resourceName, 'none')
+    return
   }
 }
 
