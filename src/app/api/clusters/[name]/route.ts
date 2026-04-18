@@ -72,10 +72,6 @@ export async function GET(
       return NextResponse.json({ error: 'Cluster not found' }, { status: 404 })
     }
 
-    // LanguageCluster is cluster-scoped; K8s strips metadata.namespace.
-    // Inject the operator namespace so the UI can display it.
-    cluster.metadata = { ...cluster.metadata, namespace: NAMESPACE }
-
     return NextResponse.json({ cluster })
   } catch (error) {
     const k8sStatus = extractK8sStatusCode(error)

@@ -81,7 +81,7 @@ describe('GET /api/clusters/[name]', () => {
     mockGetToken.mockResolvedValue(AUTHED_TOKEN as any)
   })
 
-  it('returns the cluster with namespace injected', async () => {
+  it('returns the cluster', async () => {
     mockK8s.getLanguageCluster.mockResolvedValue(makeCluster('my-cluster'))
 
     const res = await GET(makeRequest(), makeParams())
@@ -89,27 +89,26 @@ describe('GET /api/clusters/[name]', () => {
 
     expect(res.status).toBe(200)
     expect(body.cluster.metadata.name).toBe('my-cluster')
-    expect(body.cluster.metadata.namespace).toBe('language-operator')
   })
 
-  it('handles body-wrapped k8s response and injects namespace', async () => {
+  it('handles body-wrapped k8s response', async () => {
     mockK8s.getLanguageCluster.mockResolvedValue({ body: makeCluster('my-cluster') })
 
     const res = await GET(makeRequest(), makeParams())
     const body = await res.json()
 
     expect(res.status).toBe(200)
-    expect(body.cluster.metadata.namespace).toBe('language-operator')
+    expect(body.cluster.metadata.name).toBe('my-cluster')
   })
 
-  it('handles data-wrapped k8s response and injects namespace', async () => {
+  it('handles data-wrapped k8s response', async () => {
     mockK8s.getLanguageCluster.mockResolvedValue({ data: makeCluster('my-cluster') })
 
     const res = await GET(makeRequest(), makeParams())
     const body = await res.json()
 
     expect(res.status).toBe(200)
-    expect(body.cluster.metadata.namespace).toBe('language-operator')
+    expect(body.cluster.metadata.name).toBe('my-cluster')
   })
 
   it('returns 404 when cluster not found', async () => {
