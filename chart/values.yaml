@@ -20,13 +20,13 @@ serviceAccount:
   name: ""
 
 # Admin service account — created so operators can generate a first-login token.
-# Bound to the langop-admin ClusterRole from the language-operator chart.
+# Bound to the langop-admin ClusterRole defined in chart/templates/user-clusterroles.yaml.
 # Run: kubectl create token <name> -n <namespace> to get a login token.
 adminServiceAccount:
   create: true
   # Name of the admin service account.
   name: "language-operator-dashboard-admin"
-  # ClusterRole to bind the admin SA to. Must already exist (provided by language-operator chart).
+  # ClusterRole to bind the admin SA to. Defined in chart/templates/user-clusterroles.yaml.
   clusterRoleName: "langop-admin"
 
 # Pod annotations
