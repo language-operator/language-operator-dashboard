@@ -16,6 +16,7 @@ export function useAccess(clusterName: string) {
       return response.json() as Promise<{ success: boolean; data: AccessBinding[] }>
     },
     enabled: !!clusterName,
+    retry: false,
   })
 }
 
